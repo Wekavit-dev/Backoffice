@@ -8,7 +8,7 @@ import DepositList from './DepositList';
 // ==============================|| SAMPLE PAGE ||============================== //
 
 const SamplePage = () => (
-  <MainCard title="Deposit" sx={{ height: '100%', overflow: 'auto' }}>
+  <MainCard title="Utilisateurs" sx={{ height: '100%', overflow: 'auto' }}>
     <DepositList />
   </MainCard>
 );

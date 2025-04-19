@@ -14,6 +14,9 @@ import logo from 'ui-component/logo.png';
 import AuthFooter from 'ui-component/cards/AuthFooter';
 import { AuthentificationAPI } from 'api';
 import { AppContext } from 'AppContext';
+import ResponsiveDialog from 'ui-component/modal/reponsiveFormModal';
+import CustomizableAlert from 'ui-component/alert/alertModal';
+import { useSnackbar } from 'notistack';
 
 // assets
 
@@ -22,31 +25,92 @@ import { AppContext } from 'AppContext';
 const Login = () => {
   // eslint-disable-next-line no-unused-vars
   const { globalState, setGlobalState } = useContext(AppContext);
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const navigate = useNavigate();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
+  const [open, setOpen] = React.useState(false);
+  const [openAlert, setOpenAlert] = React.useState(false);
+  const [load, setLoad] = React.useState(false);
+  const [email, setEmail] = React.useState('');
+  const handleOpen = () => {
+    setOpen(true);
+  };
   const handleVerification = (data) => {
+    setLoad(true);
+    // enqueueSnackbar('Vérification en cours', { variant: 'info', autoHideDuration: 4000 });
     AuthentificationAPI.signIn(data)
       .then((res) => {
+        if (res.data) {
+          console.log(res.data);
+
+          let status = res.status;
+          if (status == (200 || 201)) {
+            // Assuming verification is successful
+            enqueueSnackbar(res.data.message, { variant: 'info', autoHideDuration: 4000 });
+            setLoad(false);
+            setGlobalState({ key: res.data.key, message: res.data.message });
+            // setTimeout(() => {
+            //   handleOpenAltert();
+            // }, 0);
+            setEmail(data.email);
+            handleOpen();
+            setLoad(false);
+          }
+        } else {
+          const response = res.response;
+          alertModal(response.status, response.data.message);
+          enqueueSnackbar(response.data.message, { variant: 'info', autoHideDuration: 4000 });
+          setLoad(false);
+        }
+      })
+      .catch((err, data) => {
+        console.log('err111', data);
+        enqueueSnackbar(err, { variant: 'error', autoHideDuration: 4000 });
+        setLoad(false);
+      });
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleCloseAltert = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpenAlert(false);
+  };
+
+  const handleSubmit = (code) => {
+    // Handle the email submission here
+    setLoad(true);
+    const data = { secretKey: code, email: email };
+    AuthentificationAPI.VerifyCode(data, globalState?.key)
+      .then((res) => {
+        console.log('res000', res);
         if (res.data) {
           let status = res.status;
           if (status == (200 || 201)) {
             // Assuming verification is successful
+            setLoad(false);
             setGlobalState({ ...res.data.data, key: res.data.key });
             navigate('/wekavit/Dashboard/Default');
           }
         } else {
           const response = res.response;
           alertModal(response.status, response.data.message);
-          setLoad(true);
+          setLoad(false);
         }
       })
       .catch((err) => {
-        console.log(err);
-        alertModal(500, err);
+        enqueueSnackbar(err, { variant: 'error', autoHideDuration: 4000 });
+        setLoad(false);
       });
+    console.log('Email submitted:', email);
   };
-
+  console.log('globalState', load);
   return (
     <AuthWrapper1>
       <Grid container direction="column" justifyContent="flex-end" sx={{ minHeight: '100vh' }}>
@@ -75,7 +139,7 @@ const Login = () => {
                     </Grid>
                   </Grid>
                   <Grid item xs={12}>
-                    <AuthLogin handleVerification={handleVerification} />
+                    <AuthLogin handleVerification={handleVerification} load={load} />
                   </Grid>
                   <Grid item xs={12}>
                     <Divider />
@@ -96,6 +160,23 @@ const Login = () => {
           <AuthFooter />
         </Grid>
       </Grid>
+      <ResponsiveDialog
+        text="Code secret"
+        description="Entrez votre code secret réçu sur votre mail, pour vous connecter"
+        open={open}
+        handleClose={handleClose}
+        handleSubmit={handleSubmit}
+        header="Vérification du code secret"
+        load={load}
+      />
+      <CustomizableAlert
+        vertical="top"
+        horizontal="right"
+        message={globalState.message}
+        open={openAlert}
+        handleClose={handleCloseAltert}
+        status="success"
+      />
     </AuthWrapper1>
   );
 };

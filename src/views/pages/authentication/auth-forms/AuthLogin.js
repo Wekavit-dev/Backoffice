@@ -28,6 +28,7 @@ import { Formik } from 'formik';
 // project imports
 import useScriptRef from 'hooks/useScriptRef';
 import AnimateButton from 'ui-component/extended/AnimateButton';
+import CircularProgress from '@mui/material/CircularProgress';
 
 // assets
 import Visibility from '@mui/icons-material/Visibility';
@@ -38,7 +39,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 // ============================|| FIREBASE - LOGIN ||============================ //
 
 // eslint-disable-next-line react/prop-types
-const FirebaseLogin = ({ handleVerification, ...others }) => {
+const FirebaseLogin = ({ handleVerification, load, ...others }) => {
   const theme = useTheme();
   const scriptedRef = useScriptRef();
   // const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
@@ -165,11 +166,25 @@ const FirebaseLogin = ({ handleVerification, ...others }) => {
             )}
 
             <Box sx={{ mt: 2 }}>
-              <AnimateButton>
-                <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="secondary">
-                  Sign in
-                </Button>
-              </AnimateButton>
+              {!load ? (
+                <AnimateButton>
+                  <Button
+                    disableElevation
+                    disabled={isSubmitting}
+                    fullWidth
+                    size="large"
+                    type="submit"
+                    variant="contained"
+                    color="secondary"
+                  >
+                    Sign in
+                  </Button>
+                </AnimateButton>
+              ) : (
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <CircularProgress />
+                </Box>
+              )}
             </Box>
           </form>
         )}

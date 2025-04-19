@@ -13,6 +13,7 @@ import { AppProvider } from './AppContext';
 // style + assets
 import 'assets/scss/style.scss';
 import config from './config';
+import { SnackbarProvider } from 'notistack';
 
 // ==============================|| REACT DOM RENDER  ||============================== //
 
@@ -22,7 +23,9 @@ root.render(
   <Provider store={store}>
     <AppProvider>
       <BrowserRouter basename={config.basename}>
-        <App />
+        <SnackbarProvider>
+          <App />
+        </SnackbarProvider>
       </BrowserRouter>
     </AppProvider>
   </Provider>

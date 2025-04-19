@@ -15,14 +15,14 @@ const pages = {
   children: [
     {
       id: 'authentication',
-      title: 'Transactions',
+      title: 'Modules',
       type: 'collapse',
       icon: icons.IconKey,
 
       children: [
         {
           id: 'Topup',
-          title: 'Dépôt',
+          title: 'Utilisateurs',
           type: 'item',
           url: '/topup/',
           breadcrumbs: false

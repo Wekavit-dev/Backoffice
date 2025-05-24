@@ -10,13 +10,13 @@ import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 
 // assets
-import EarningIcon from 'assets/images/icons/earning.svg';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import GetAppTwoToneIcon from '@mui/icons-material/GetAppOutlined';
 import FileCopyTwoToneIcon from '@mui/icons-material/FileCopyOutlined';
 import PictureAsPdfTwoToneIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import ArchiveTwoToneIcon from '@mui/icons-material/ArchiveOutlined';
+import GroupIcon from '@mui/icons-material/Group';
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
   backgroundColor: theme.palette.secondary.dark,
@@ -56,7 +56,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ===========================|| DASHBOARD DEFAULT - EARNING CARD ||=========================== //
 
-const EarningCard = ({ isLoading, deposits }) => {
+const EarningCard = ({ isLoading, todayUsers }) => {
   const theme = useTheme();
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -89,7 +89,7 @@ const EarningCard = ({ isLoading, deposits }) => {
                         mt: 1
                       }}
                     >
-                      <img src={EarningIcon} alt="Notification" />
+                        <GroupIcon sx={{ color: 'white' }} />
                     </Avatar>
                   </Grid>
                   <Grid item>
@@ -144,7 +144,7 @@ const EarningCard = ({ isLoading, deposits }) => {
                 <Grid container alignItems="center">
                   <Grid item>
                     <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
-                      {deposits?.length || 0}
+                        {todayUsers ? todayUsers : 0}
                     </Typography>
                   </Grid>
                   <Grid item>
@@ -169,7 +169,7 @@ const EarningCard = ({ isLoading, deposits }) => {
                     color: theme.palette.secondary[200]
                   }}
                 >
-                  Dépôts en Attente
+                    Total Users Today
                 </Typography>
               </Grid>
             </Grid>
@@ -182,7 +182,7 @@ const EarningCard = ({ isLoading, deposits }) => {
 
 EarningCard.propTypes = {
   isLoading: PropTypes.bool,
-  deposits: PropTypes.array
+  todayUsers: PropTypes.any
 };
 
 export default EarningCard;

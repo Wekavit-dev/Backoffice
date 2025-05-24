@@ -20,7 +20,7 @@ import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.dark,
+  backgroundColor: theme.palette.info.dark,
   color: '#fff',
   overflow: 'hidden',
   position: 'relative',
@@ -63,7 +63,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ==============================|| DASHBOARD - TOTAL ORDER LINE CHART CARD ||============================== //
 
-const TotalOrderLineChartCard = ({ isLoading, todayDeposits }) => {
+const TodayWithdrawalsCard = ({ isLoading, todayWithdraws }) => {
   const theme = useTheme();
 
   const [timeValue, setTimeValue] = useState(false);
@@ -123,9 +123,13 @@ const TotalOrderLineChartCard = ({ isLoading, todayDeposits }) => {
                     <Grid container alignItems="center">
                       <Grid item>
                         {timeValue ? (
-                            <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>{todayDeposits}</Typography>
+                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
+                            {todayWithdraws}
+                          </Typography>
                         ) : (
-                              <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>{todayDeposits}</Typography>
+                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
+                            {todayWithdraws}
+                          </Typography>
                         )}
                       </Grid>
                       <Grid item>
@@ -148,7 +152,7 @@ const TotalOrderLineChartCard = ({ isLoading, todayDeposits }) => {
                             color: theme.palette.primary[200]
                           }}
                         >
-                            Total Deposits Today
+                          Total Withdrawals Today
                         </Typography>
                       </Grid>
                     </Grid>
@@ -166,9 +170,9 @@ const TotalOrderLineChartCard = ({ isLoading, todayDeposits }) => {
   );
 };
 
-TotalOrderLineChartCard.propTypes = {
+TodayWithdrawalsCard.propTypes = {
   isLoading: PropTypes.bool,
   withdraws: PropTypes.array
 };
 
-export default TotalOrderLineChartCard;
+export default TodayWithdrawalsCard;

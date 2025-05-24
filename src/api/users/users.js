@@ -2,14 +2,14 @@ import { IP_ADD } from 'api/utils/address';
 import { handleError, handleResponse } from 'api/request/request';
 import setupAxiosInterceptors from 'api/utils/instance';
 
-const getAllTodayDeposits = async (token) => {
+const getAllTodayUsers = async (token) => {
   const axiosInstanceWithToken = setupAxiosInterceptors(token);
-  return axiosInstanceWithToken.get(`${IP_ADD}/system/deposits/today`).then(handleResponse).catch(handleError);
+  return axiosInstanceWithToken.get(`${IP_ADD}/system/users/today`).then(handleResponse).catch(handleError);
 };
 //{code : }
 
-const DepositsApi = {
-  getAllTodayDeposits
+const UsersApi = {
+  getAllTodayUsers
 };
 
-export default DepositsApi;
+export default UsersApi;

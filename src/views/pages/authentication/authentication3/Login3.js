@@ -42,14 +42,14 @@ const Login = () => {
     AuthentificationAPI.signIn(data)
       .then((res) => {
         if (res.data) {
-          console.log(res.data);
+          console.log('res.data==>', res);
 
           let status = res.status;
           if (status == (200 || 201)) {
             // Assuming verification is successful
             enqueueSnackbar(res.data.message, { variant: 'info', autoHideDuration: 4000 });
             setLoad(false);
-            setGlobalState({ key: res.data.key, message: res.data.message });
+            setGlobalState({ key: res.data.key });
             // setTimeout(() => {
             //   handleOpenAltert();
             // }, 0);
@@ -95,7 +95,7 @@ const Login = () => {
           if (status == (200 || 201)) {
             // Assuming verification is successful
             setLoad(false);
-            setGlobalState({ ...res.data.data, key: res.data.key });
+            setGlobalState({ ...res.data.credentials, key: res.data.key });
             navigate('/wekavit/Dashboard/Default');
           }
         } else {

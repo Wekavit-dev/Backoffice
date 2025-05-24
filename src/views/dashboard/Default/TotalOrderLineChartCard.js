@@ -63,7 +63,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ==============================|| DASHBOARD - TOTAL ORDER LINE CHART CARD ||============================== //
 
-const TotalOrderLineChartCard = ({ isLoading, withdraws }) => {
+const TotalOrderLineChartCard = ({ isLoading, todayDeposits }) => {
   const theme = useTheme();
 
   const [timeValue, setTimeValue] = useState(false);
@@ -123,13 +123,9 @@ const TotalOrderLineChartCard = ({ isLoading, withdraws }) => {
                     <Grid container alignItems="center">
                       <Grid item>
                         {timeValue ? (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
-                            {withdraws?.length || 0}
-                          </Typography>
+                            <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>{todayDeposits}</Typography>
                         ) : (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
-                            {withdraws?.length || 0}
-                          </Typography>
+                              <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>{todayDeposits}</Typography>
                         )}
                       </Grid>
                       <Grid item>
@@ -152,7 +148,7 @@ const TotalOrderLineChartCard = ({ isLoading, withdraws }) => {
                             color: theme.palette.primary[200]
                           }}
                         >
-                          Retraits en Attente
+                            Total Deposits Today
                         </Typography>
                       </Grid>
                     </Grid>

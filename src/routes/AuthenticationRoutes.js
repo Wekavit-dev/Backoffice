@@ -32,6 +32,10 @@ import React from 'react';
 import { lazy } from 'react';
 import Loadable from 'ui-component/Loadable';
 import MainLayout from 'layout/MainLayout';
+import { createRequire } from 'module';
+
+var require = createRequire(import.meta.url);
+var module = { exports: {} };
 
 const TopupTrans = Loadable(lazy(() => import('views/topup')));
 

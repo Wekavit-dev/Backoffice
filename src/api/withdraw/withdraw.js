@@ -17,11 +17,17 @@ const validWithdraw = async (userId, data, token) => {
   const axiosInstanceWithToken = setupAxiosInterceptors(token);
   return axiosInstanceWithToken.put(`${IP_ADD}/withdraw/valid/?id=${userId}`, data).then(handleResponse).catch(handleError);
 };
+
+const getAllTodayWithdrawls = async (token) => {
+  const axiosInstanceWithToken = setupAxiosInterceptors(token);
+  return axiosInstanceWithToken.get(`${IP_ADD}/system/withdraws/today`).then(handleResponse).catch(handleError);
+};
 // idUser: req.query.id.toString(),
 
 const WithdrawApi = {
   validWithdraw,
-  getWithdrawsByCountry
+  getWithdrawsByCountry,
+  getAllTodayWithdrawls
 };
 
 export default WithdrawApi;

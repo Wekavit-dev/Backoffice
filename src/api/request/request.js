@@ -6,5 +6,5 @@ export const handleResponse = async (response) => {
   }
 };
 export const handleError = async (err) => {
-  throw err.message;
+  throw err;
 };

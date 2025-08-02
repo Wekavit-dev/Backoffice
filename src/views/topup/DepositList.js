@@ -1,3 +1,8 @@
+/* eslint-disable no-unexpected-multiline */
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable no-unused-vars */
+
+
 import React, { useState, useEffect, useContext } from 'react';
 import { styled } from '@mui/material/styles';
 import Table from '@mui/material/Table';
@@ -20,282 +25,474 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import numeral from 'numeral';
+import { CircularProgress } from '@mui/material';
+import CustomDeleteIconChips from './amount';
+import Chip from '@mui/material/Chip';
 
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { AppContext } from 'AppContext';
-import { DepositsAPI } from 'api';
+import { DepositsAPI } from 'api'; // Assuming DepositsAPI still exists and might contain general methods
+import { locekdSavesAPI } from 'api'; // Assuming you'll have a new API file or section for general lists
+import Grid from '@mui/material/Grid'; // Import Grid
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.action.hover
+    backgroundColor: theme.palette.action.hover,
   },
-  // hide last border
   '&:last-child td, &:last-child th': {
-    border: 0
-  }
+    border: 0,
+  },
+}));
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+  '&.pending': {
+    color: 'orange',
+  },
+  '&.rejected': {
+    color: 'red',
+  },
+  '&.validated': {
+    color: 'green',
+  },
 }));
 
 export default function CustomizedTables() {
   const { globalState } = useContext(AppContext);
-  const [deposits, setDeposits] = useState([]);
+  const [savings, setSavings] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [selectedEtat, setSelectedEtat] = useState('pending');
-  const [searchCodeTransaction, setSearchCodeTransaction] = useState('');
+  const [selectedStatus,] = useState('all');
+  const [searchCodeTransaction] = useState('');
   const [editedRow, setEditedRow] = useState(null);
+  const [minDays, setMinDays] = useState('');
+  const [maxDays, setMaxDays] = useState('');
+  const [minAmount, setMinAmount] = useState('');
+  const [maxAmount, setMaxAmount] = useState('');
+  const [withdrawn, setWithdrawn] = useState('all');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [, setTotalRecords] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const handleEtatChange = (event) => {
-    setSelectedEtat(event.target.value);
-  };
+  // New states for lists from API
+  const [countries, setCountries] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
+  const [savingTypes, setSavingTypes] = useState([]);
 
-  const handleSearchChange = (event) => {
-    setSearchCodeTransaction(event.target.value);
-  };
+  // New states for selected filter values
+  const [selectedCountry, setSelectedCountry] = useState('all'); // 'all' or actual country ID
+  const [selectedCurrency, setSelectedCurrency] = useState('all'); // 'all' or actual currency ID
+  const [selectedSavingType, setSelectedSavingType] = useState('all'); // 'all' or actual Type epargnes
+  const [totalData, setTotalData] = useState(null); // 'All' or 'actual total amount fetched
+  const [totalInterests, setTotalInterests] = useState(null); // 'All' or 'actual total interest of amount fetched
 
-  const filteredDeposits = deposits.filter((deposit) => {
-    const etatCondition = selectedEtat === 'all' || deposit.etat === selectedEtat;
-    const searchCondition = deposit.codeTransaction && deposit.codeTransaction.includes(searchCodeTransaction);
-    return etatCondition && searchCondition;
-  });
+  /**
+   * Fetches the list of savings based on current filters.
+   */
+  const fetchSavings = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page,
+        limit,
+        // Only include filter parameters if they are not 'all' or empty
+        ...(selectedCountry !== 'all' && { idCountry: selectedCountry }),
+        ...(selectedSavingType !== 'all' && { typeEpargneId: selectedSavingType }),
+        ...(minDays && { minDays }),
+        ...(maxDays && { maxDays }),
+        ...(minAmount && { minAmount }),
+        ...(maxAmount && { maxAmount }),
+        ...(selectedCurrency !== 'all' && { idDevise: selectedCurrency }),
+        ...(withdrawn !== 'all' && { withdrawn }),
+        // The API controller does not support codeTransaction, so it's filtered client-side.
+      };
 
-  useEffect(() => {
-    const data = { idCountry: globalState?.idPays };
-    DepositsAPI.getAllDepositsByCountry(data, globalState?.key)
-      .then((res) => {
-        if (res.data) {
-          let response = res.data;
-          let status = res.status;
-          if (status === 200 || status === 201) {
-            setDeposits(response.data);
-          }
-        } else {
-          const response = res.response;
-          console.log(response);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
+      await locekdSavesAPI.filterSavingsForInvestment(params, globalState?.key).then((res)=>{
+      console.log('res===>', res);
+      if (res.data) {
+        setSavings(res.data.data);
+        setTotalData(res.data.totalAmount);
+        setTotalInterests(res.data.totalInterest);
+        setTotalRecords(res.total);
+        setLoading(false);
+      }
+      }).catch((err)=>{
+        console.error('Failed to fetch savings data:', err);
+        setLoading(false);
+        // toast.error('Échec de la récupération des données d\'épargne.', { position: toast.POSITION.TOP_RIGHT });
+
       });
-  }, []);
+      
+
+      // if (res.data) {
+      //   setSavings(res.data);
+      //   setTotalRecords(res.total);
+      // } else {
+      //   console.error('Failed to fetch savings data:', res.response);
+      //   toast.error('Échec de la récupération des données d\'épargne.', { position: toast.POSITION.TOP_RIGHT });
+      // }
+    } catch (err) {
+      console.error('Error fetching savings:', err);
+      toast.error('Une erreur est survenue lors de la récupération des épargnes.', { position: toast.POSITION.TOP_RIGHT });
+    }
+  };
+
+  /**
+   * Fetches auxiliary data (countries, currencies, saving types).
+   */
+  const fetchAuxiliaryData = async () => {
+    try {
+      // Fetch Countries
+      const countryRes = await locekdSavesAPI.getCountries
+      (globalState?.key);
+      console.log('countryRes', countryRes);
+      
+      if (countryRes.data && countryRes.status === 200) {
+        setCountries(countryRes.data.data);
+      } else {
+        console.error('Failed to fetch countries:', countryRes.response);
+      }
+
+      // Fetch Currencies
+      const currencyRes = await locekdSavesAPI.getCurriences(globalState?.key);
+      console.log('currencyRes', currencyRes);
+      if (currencyRes.data && currencyRes.status === 200) {
+        setCurrencies(currencyRes.data.data);
+      } else {
+        console.error('Failed to fetch currencies:', currencyRes.response);
+      }
+
+      // Fetch Saving Types
+      const savingTypeRes = await locekdSavesAPI.getSavingTypes(globalState?.key);
+      console.log('savingTypeRes', savingTypeRes);
+      if (savingTypeRes.data && savingTypeRes.status === 200) {
+        setSavingTypes(savingTypeRes.data.data);
+      } else {
+        console.error('Failed to fetch saving types:', savingTypeRes.response);
+      }
+    } catch (error) {
+      console.error('Error fetching auxiliary data:', error);
+      toast.error('Une erreur est survenue lors de la récupération des listes de filtres.', { position: toast.POSITION.TOP_RIGHT });
+    }
+  };
+
+  // Effect to fetch auxiliary data on component mount
+  useEffect(() => {
+    fetchAuxiliaryData();
+  }, [globalState?.key]);
+
+  // Effect to fetch savings whenever filter dependencies change
+  useEffect(() => {
+    fetchSavings();
+  }, [page, limit, selectedCountry, selectedSavingType, selectedCurrency, withdrawn]);
 
   const handleRefresh = () => {
-    // Perform the API call to refetch the list of deposits
-    DepositsAPI.getAllDepositsByCountry({ idCountry: globalState?.idPays }, globalState?.key)
-      .then((res) => {
-        if (res.data) {
-          let response = res.data;
-          let status = res.status;
-          if (status === 200 || status === 201) {
-            setDeposits(response.data);
-          }
-        } else {
-          const response = res.response;
-          console.log(response);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    fetchSavings();
+    fetchAuxiliaryData(); // Also refresh filter options
   };
 
-  const handleValidate = async (id, userId) => {
-    try {
-      const data = {
-        idDepot: id,
-        valid: 'validated'
-      };
-      const response = await DepositsAPI.validDeposit(userId, data, globalState?.key);
-
-      // Check if the response indicates success
-      if (response.status === 200 || response.status === 201) {
-        setDeposits((prevDeposits) => prevDeposits.filter((deposit) => deposit.id !== id));
-        toast.success('Dépôt validé avec succès !', { position: toast.POSITION.TOP_RIGHT });
-      } else {
-        toast.error('Échec de validation. Veuillez réessayer.', { position: toast.POSITION.TOP_RIGHT });
-      }
-    } catch (error) {
-      // Handle errors from the API request
-      console.error('Error validating deposit:', error);
-      toast.error("Une erreur s'est produite lors de la validation du dépôt.", { position: toast.POSITION.TOP_RIGHT });
-    }
+  const handleChangeAndResetPage = (setter) => (event) => {
+    setter(event.target.value);
+    setPage(1); // Reset to first page on filter change
   };
 
-  const handleReject = async (id, userId) => {
-    try {
-      const data = {
-        idDepot: id,
-        valid: 'rejected'
-      };
-      const response = await DepositsAPI.validDeposit(userId, data, globalState?.key);
-
-      // Check if the response indicates success
-      if (response.status === 200 || response.status === 201) {
-        setDeposits((prevDeposits) => prevDeposits.filter((deposit) => deposit.id !== id));
-        toast.success('Dépôt rejeté avec succès !', { position: toast.POSITION.TOP_RIGHT });
-      } else {
-        toast.error('Échec du rejet. Veuillez réessayer.', { position: toast.POSITION.TOP_RIGHT });
-      }
-    } catch (error) {
-      // Handle errors from the API request
-      console.error('Error rejecting deposit:', error);
-      toast.error("Une erreur s'est produite lors du rejet du dépôt.", { position: toast.POSITION.TOP_RIGHT });
-    }
+   const handleMinDaysInputChange = (event) => {
+    setMinDays(event.target.value);
   };
 
-  const handleUpdate = (row) => {
-    setEditedRow(row);
-    setModalOpen(true);
+  const handleMinDaysBlur = () => {
+    setPage(1); // Reset page on blur
+    fetchSavings(); // Trigger API call on blur
   };
+
+  const handleMaxDaysInputChange = (event) => {
+    setMaxDays(event.target.value);
+  };
+
+  const handleMaxDaysBlur = () => {
+    setPage(1); // Reset page on blur
+    fetchSavings(); // Trigger API call on blur
+  };
+
+  const handleMinAmountInputChange = (event) => {
+    setMinAmount(event.target.value);
+  };
+
+  const handleMinAmountBlur = () => {
+    setPage(1); // Reset page on blur
+    fetchSavings(); // Trigger API call on blur
+  };
+
+  const handleMaxAmountInputChange = (event) => {
+    setMaxAmount(event.target.value);
+  };
+
+  const handleMaxAmountBlur = () => {
+    setPage(1); // Reset page on blur
+    fetchSavings(); // Trigger API call on blur
+  };
+
+  const handleCountryChange = handleChangeAndResetPage(setSelectedCountry);
+  const handleSavingTypeChange = handleChangeAndResetPage(setSelectedSavingType);
+  const handleMinDaysChange = handleChangeAndResetPage(setMinDays);
+  const handleMaxDaysChange = handleChangeAndResetPage(setMaxDays);
+  const handleMinAmountChange = handleChangeAndResetPage(setMinAmount);
+  const handleMaxAmountChange = handleChangeAndResetPage(setMaxAmount);
+  const handleCurrencyChange = handleChangeAndResetPage(setSelectedCurrency);
+  const handleWithdrawnChange = handleChangeAndResetPage(setWithdrawn);
+
+  // Client-side filter for codeTransaction (since API doesn't support it directly)
+  // const filteredSavings = savings.filter((saving) => {
+  //   const statusCondition = selectedStatus === 'all' || saving.etat === selectedStatus;
+  //   const searchCondition = saving.codeTransaction && saving.codeTransaction.toLowerCase().includes(searchCodeTransaction.toLowerCase());
+  //   return statusCondition && searchCondition;
+  // });
+ 
 
   const handleCloseModal = () => {
-    // Close the modal and reset the state
     setModalOpen(false);
     setEditedRow(null);
   };
 
   const handleModalSubmit = async () => {
     try {
-      const { id, idUser, updatedValue } = editedRow;
+      const { _id, idUser, montantInitial } = editedRow; // Use _id from MongoDB and montantInitial
       const data = {
-        idDepot: id,
+        idEpargne: _id, // Use idEpargne for the API call
         valid: 'validated',
-        montant: updatedValue
+        montant: parseFloat(montantInitial), // Ensure it's a number
       };
 
-      const response = await DepositsAPI.validDeposit(idUser, data, globalState?.key);
+      // Placeholder: Replace with your actual Savings update API call
+      const response = await DepositsAPI.validDeposit(idUser?._id, data, globalState?.key); // Pass idUser._id
 
       if (response.status === 200 || response.status === 201) {
-        setDeposits((prevDeposits) => prevDeposits.filter((deposit) => deposit.id !== id));
-        setEditedRow(null);
+        toast.success('Épargne modifiée & validée avec succès !', { position: toast.POSITION.TOP_RIGHT });
+        fetchSavings();
         handleCloseModal();
-        toast.success('Dépôt modifié & validé avec succès !', { position: toast.POSITION.TOP_RIGHT });
       } else {
-        handleCloseModal();
-        setEditedRow(null);
         toast.error('Échec de modification. Veuillez réessayer.', { position: toast.POSITION.TOP_RIGHT });
+        handleCloseModal();
       }
     } catch (error) {
+      console.error('Error updating saving:', error);
+      toast.error("Une erreur s'est produite lors de la modification de l'épargne.", { position: toast.POSITION.TOP_RIGHT });
       handleCloseModal();
-      setEditedRow(null);
-      console.error('Error updating deposit:', error);
-      toast.error("Une erreur s'est produite lors de la modification du dépôt.", { position: toast.POSITION.TOP_RIGHT });
     }
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const options = { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric' };
-    const formattedDate = new Date(dateString).toLocaleDateString('fr-FR', options);
-
-    // Extract the time part and format it as HHhmm
-    const timePart = new Date(dateString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const date = new Date(dateString);
+    const formattedDate = date.toLocaleDateString('fr-FR', options);
+    const timePart = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     const formattedTime = timePart.replace(':', 'h');
-
-    // Remove the time and the comma at the end of the date
     const finalFormattedDate = formattedDate.replace(/, \d{2}:\d{2}/, '');
-
     return `${finalFormattedDate} à ${formattedTime}`;
   };
 
-  const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.head}`]: {
-      backgroundColor: theme.palette.common.black,
-      color: theme.palette.common.white
-    },
-    [`&.${tableCellClasses.body}`]: {
-      fontSize: 14
-    },
-    '&.pending': {
-      color: 'orange'
-    },
-    '&.rejected': {
-      color: 'red'
-    }
-  }));
+  const calculateDaysDiff = (startDate, endDate) => {
+    if (!startDate || !endDate) return 'N/A';
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  console.log('data===', savings);
+  
 
   return (
     <div>
-      <Box mb={2} position="fix" top={0} bgcolor="white" zIndex={1}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-          <Box display="flex" justifyContent="center" mr={2} alignItems="center">
-            {/* Select for filtering deposits */}
-            <Box mr={2}>
-              <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-                Filtrer par statut:
-              </Typography>
-              <Select value={selectedEtat} onChange={handleEtatChange} variant="outlined">
-                <MenuItem value="all">Toutes</MenuItem>
-                <MenuItem value="pending">En attente</MenuItem>
-                <MenuItem value="rejected">Rejetée</MenuItem>
-              </Select>
-            </Box>
+      <Box mb={2} sx={{ position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, p: 2, boxShadow: 0 }}>
+        {/* Use Grid Container here */}
+        <Grid container spacing={2} alignItems="flex-end">
 
-            {/* Refresh Button */}
-            <Box mt={4}>
-              <IconButton aria-label="update" mt={10} onClick={handleRefresh}>
-                <RefreshIcon />
-              </IconButton>
-            </Box>
-          </Box>
-
-          {/* Input for searching by codeTransaction */}
-          <Box ml={2}>
+          {/* Filter by Country */}
+          <Grid item xs={12} sm={6} md={3} lg={2}>
             <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-              Recherche par code de transaction:
+              Pays:
             </Typography>
-            <TextField
-              value={searchCodeTransaction}
-              onChange={handleSearchChange}
-              variant="outlined"
-              fullWidth
-              placeholder="Entrer le code de transaction"
-            />
-          </Box>
-        </Box>
+            <Select value={selectedCountry} onChange={handleCountryChange} variant="filled" size="small" fullWidth>
+              <MenuItem value="all">Tous les pays</MenuItem>
+              {countries.map((country) => (
+                <MenuItem key={country._id} value={country._id}>{country.nom}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+
+          {/* Filter by Type d'épargne */}
+          <Grid item xs={12} sm={6} md={3} lg={2}>
+            <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+              Type d'épargne:
+            </Typography>
+            <Select value={selectedSavingType} onChange={handleSavingTypeChange} variant="filled" size="small" fullWidth>
+              <MenuItem value="all">Tous</MenuItem>
+              {savingTypes.map((type) => (
+                <MenuItem key={type._id} value={type._id}>{type.designation}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+
+          {/* Filter by Min/Max Days */}
+          <Grid item xs={12} sm={6} md={3} lg={2}>
+            <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+              Durée (jours):
+            </Typography>
+            <Box display="flex" gap={1}>
+              <TextField
+                label="Min"
+                type="number"
+                value={minDays}
+                onChange={handleMinDaysInputChange} // Update state on every change
+                onBlur={handleMinDaysBlur}       // Trigger API call on blur
+                variant="filled"
+                size="small"
+                sx={{ flexGrow: 1 }}
+              />
+              <TextField
+                label="Max"
+                type="number"
+                value={maxDays}
+                onChange={handleMaxDaysInputChange} // Update state on every change
+                onBlur={handleMaxDaysBlur}       // Trigger API call on blur
+                variant="filled"
+                size="small"
+                sx={{ flexGrow: 1 }}
+              />
+            </Box>
+          </Grid>
+
+          {/* Filter by Min/Max Amount */}
+          <Grid item xs={12} sm={6} md={3} lg={2}>
+            <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+              Montant:
+            </Typography>
+            <Box display="flex" gap={1}>
+              <TextField
+                label="Min"
+                type="number"
+                value={minAmount}
+                onChange={handleMinAmountInputChange} // Update state on every change
+                onBlur={handleMinAmountBlur}       // Trigger API call on blur
+                variant="filled"
+                size="small"
+                sx={{ flexGrow: 1 }}
+              />
+              <TextField
+                label="Max"
+                type="number"
+                value={maxAmount}
+                onChange={handleMaxAmountInputChange} // Update state on every change
+                onBlur={handleMaxAmountBlur}       // Trigger API call on blur
+                variant="filled"
+                size="small"
+                sx={{ flexGrow: 1 }}
+              />
+            </Box>
+          </Grid>
+
+          {/* Filter by Currency */}
+          <Grid item xs={12} sm={6} md={3} lg={2}>
+            <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+              Devise:
+            </Typography>
+            <Select value={selectedCurrency} onChange={handleCurrencyChange} variant="filled" size="small" fullWidth>
+              <MenuItem value="all">Toutes les devises</MenuItem>
+              {currencies.map((curr) => (
+                <MenuItem key={curr._id} value={curr._id}>{`${curr.unite} (${curr.idPays.code})`}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+
+          {/* Filter by Withdrawn Status */}
+          <Grid item xs={12} sm={6} md={3} lg={2}>
+            <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+              Retiré:
+            </Typography>
+            <Select value={withdrawn} onChange={handleWithdrawnChange} variant="filled" size="small" fullWidth>
+              <MenuItem value="all">Tous</MenuItem>
+              <MenuItem value="true">Oui</MenuItem>
+              <MenuItem value="false">Non</MenuItem>
+            </Select>
+          </Grid>
+
+          {/* Refresh Button */}
+          
+        </Grid>
       </Box>
-      <TableContainer component={Paper}>
+
+      {!loading && <Box mb={2} sx={{ position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, p: 2, boxShadow: 0, justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
+        <CustomDeleteIconChips data={totalData} interest={totalInterests} />
+      </Box>}
+
+
+
+      <TableContainer sx={{ mt: 3 }} component={Paper}>
         <Table sx={{ minWidth: 700 }} aria-label="customized table">
           <TableHead>
             <TableRow>
-              <StyledTableCell>Code Transaction</StyledTableCell>
-              <StyledTableCell align="right">Montant</StyledTableCell>
+              <StyledTableCell>Type d'épargne</StyledTableCell>
+              <StyledTableCell align="right">Montant Initial</StyledTableCell>
+              <StyledTableCell align="right">Montant Total</StyledTableCell>
+              <StyledTableCell align="right">Intérêt</StyledTableCell>
               <StyledTableCell align="right">Devise</StyledTableCell>
-              <StyledTableCell align="right">Status</StyledTableCell>
-              <StyledTableCell align="right">Date & heure</StyledTableCell>
-              <StyledTableCell align="right">Actions</StyledTableCell>
+              <StyledTableCell align="right">Durée (jours)</StyledTableCell>
+              <StyledTableCell align="right">Statut</StyledTableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {filteredDeposits.map((row) => (
-              <StyledTableRow key={row.id}>
-                <StyledTableCell component="th" scope="row">
-                  {row.codeTransaction}
+            {loading ? 
+            <TableRow sx={{ height: '300px' }}>
+                <StyledTableCell colSpan={11} align="center">
+                  <CircularProgress size="2.8rem"color="success"/>
                 </StyledTableCell>
-                <StyledTableCell align="right">{numeral(row.montantInitial).format('0,0')}</StyledTableCell>
-                <StyledTableCell align="right">{row.unite}</StyledTableCell>
-                <StyledTableCell align="right" className={row.etat.toLowerCase()}>
-                  <Typography variant="body1">{row.etat}</Typography>
+              </TableRow>
+            : 
+            savings.length === 0 ? (
+              <TableRow>
+                <StyledTableCell colSpan={11} align="center">
+                  Aucune épargne trouvée avec les filtres actuels.
                 </StyledTableCell>
-                <StyledTableCell align="right">{formatDate(row.dateDepot)}</StyledTableCell>
-                <StyledTableCell align="right">
-                  <IconButton aria-label="validate" onClick={() => handleValidate(row.id, row.idUser)}>
-                    <CheckIcon />
-                  </IconButton>
-                  <IconButton aria-label="reject" onClick={() => handleReject(row.id, row.idUser)}>
-                    <CloseIcon />
-                  </IconButton>
-                  <IconButton aria-label="update" onClick={() => handleUpdate(row)}>
-                    <EditIcon />
-                  </IconButton>
-                </StyledTableCell>
-              </StyledTableRow>
-            ))}
+              </TableRow>
+            ) : (
+              savings.map((row) => (
+                <StyledTableRow  key={row._id}>
+                  <StyledTableCell sx={{ paddingY: 2.5, fontSize: '2rem' }} align="left">{row.idTypeEpargne?.designation || 'N/A'}</StyledTableCell>
+                  <StyledTableCell align="right">{numeral(row.montantInitial).format('0,0')}</StyledTableCell>
+                  <StyledTableCell align="right">{numeral(row.montantTotal).format('0,0')}</StyledTableCell>
+                  <StyledTableCell align="right">{numeral(row.interet).format('0,0')}</StyledTableCell>
+                  <StyledTableCell align="right">{row.idDevise?.unite || 'N/A'}</StyledTableCell>
+                  <StyledTableCell align="right">{calculateDaysDiff(row.startDate, row.endDate)}</StyledTableCell>
+                  <StyledTableCell align="right" className={row.etat ? row.etat.toLowerCase() : ''}>
+                    {row.withdrawn === true ? <Chip
+                            label='retiré'
+                            color="default"
+                    /> : <Chip
+                            label='en cours'
+                            color="success"
+                    /> }
+                  </StyledTableCell>
+
+                </StyledTableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Modal */}
+      {/* Modal for editing */}
       <Modal open={isModalOpen} onClose={handleCloseModal} aria-labelledby="modal-title" aria-describedby="modal-description">
         <Box
           sx={{
@@ -307,7 +504,7 @@ export default function CustomizedTables() {
             bgcolor: 'background.paper',
             boxShadow: 24,
             p: 4,
-            borderRadius: 2
+            borderRadius: 2,
           }}
         >
           <IconButton
@@ -320,23 +517,23 @@ export default function CustomizedTables() {
             <CloseIcon />
           </IconButton>
           <Typography id="modal-title" variant="h5" component="div" sx={{ fontSize: '1.5rem', mb: 2 }}>
-            Modifier Balance
+            Modifier Montant Épargne
           </Typography>
           <TextField
             fullWidth
-            label="Balance"
+            label="Montant"
             variant="outlined"
             margin="normal"
             type="number"
             inputProps={{
               inputMode: 'numeric',
-              pattern: '[0-9]*'
+              pattern: '[0-9]*',
             }}
-            value={editedRow?.updatedValue || ''}
-            onChange={(e) => setEditedRow({ ...editedRow, updatedValue: e.target.value })}
+            value={editedRow?.montantInitial || ''}
+            onChange={(e) => setEditedRow({ ...editedRow, montantInitial: e.target.value })}
           />
           <Button variant="contained" color="primary" onClick={handleModalSubmit} sx={{ width: '100%', mt: 2 }}>
-            Modifier
+            Modifier & Valider
           </Button>
         </Box>
       </Modal>

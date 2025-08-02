@@ -33,6 +33,21 @@ const pages = {
           type: 'item',
           url: '/wekavit/withdraw/withdraw',
           breadcrumbs: false
+        },
+        {
+          id: 'fixed-saves',
+          title: 'Plans bloqués',
+          type: 'collapse',
+          icon: icons.IconKey,
+          children : [
+            {
+              id: 'Investir',
+              title: 'Investir',
+              type: 'item',
+              url: '/wekavit/saves/blocked/invest',
+              breadcrumbs: false
+            }
+          ]
         }
       ]
     }

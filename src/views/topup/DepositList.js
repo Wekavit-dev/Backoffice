@@ -301,13 +301,25 @@ export default function CustomizedTables() {
   };
 
   const calculateDaysDiff = (startDate, endDate) => {
-    if (!startDate || !endDate) return 'N/A';
-    const start = new Date();
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
+  if (!startDate || !endDate) return 'N/A';
+
+  const start = new Date();
+  const end = new Date(endDate);
+  
+  // Calculate the total number of full days difference
+  const diffTime = Math.abs(end - start);
+  const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  const months = Math.floor(totalDays / 30.44); // Use average days in a month (365.25 / 12)
+  const days = Math.round(totalDays % 30.44);
+  
+  if (months > 0) {
+    return `${months} mois et ${days} jours`;
+  } else {
+    return `${days} jours`;
+  }
+};
+
 
   console.log('data===', savings);
   

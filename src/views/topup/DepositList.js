@@ -302,7 +302,7 @@ export default function CustomizedTables() {
 
   const calculateDaysDiff = (startDate, endDate) => {
     if (!startDate || !endDate) return 'N/A';
-    const start = new Date(startDate);
+    const start = new Date();
     const end = new Date(endDate);
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

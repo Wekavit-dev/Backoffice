@@ -447,7 +447,7 @@ export default function CustomizedTables() {
               <StyledTableCell align="right">Montant Total</StyledTableCell>
               <StyledTableCell align="right">Intérêt</StyledTableCell>
               <StyledTableCell align="right">Devise</StyledTableCell>
-              <StyledTableCell align="right">Durée (jours)</StyledTableCell>
+              <StyledTableCell align="right">Jours restants</StyledTableCell>
               <StyledTableCell align="right">Statut</StyledTableCell>
             </TableRow>
           </TableHead>

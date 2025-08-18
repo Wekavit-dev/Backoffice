@@ -63,7 +63,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ==============================|| DASHBOARD - TOTAL ORDER LINE CHART CARD ||============================== //
 
-const TotalOrderLineChartCard = ({ isLoading, withdraws }) => {
+const TotalOrderLineChartCard = ({ isLoading, savings }) => {
   const theme = useTheme();
 
   const [timeValue, setTimeValue] = useState(false);
@@ -124,11 +124,11 @@ const TotalOrderLineChartCard = ({ isLoading, withdraws }) => {
                       <Grid item>
                         {timeValue ? (
                           <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
-                            {withdraws?.length || 0}
+                            {savings?.length || 0}
                           </Typography>
                         ) : (
                           <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
-                            {withdraws?.length || 0}
+                            {savings?.length || 0}
                           </Typography>
                         )}
                       </Grid>
@@ -152,7 +152,7 @@ const TotalOrderLineChartCard = ({ isLoading, withdraws }) => {
                             color: theme.palette.primary[200]
                           }}
                         >
-                          Retraits en Attente
+                          Plans Epargnés
                         </Typography>
                       </Grid>
                     </Grid>
@@ -172,7 +172,7 @@ const TotalOrderLineChartCard = ({ isLoading, withdraws }) => {
 
 TotalOrderLineChartCard.propTypes = {
   isLoading: PropTypes.bool,
-  withdraws: PropTypes.array
+  savings: PropTypes.array
 };
 
 export default TotalOrderLineChartCard;

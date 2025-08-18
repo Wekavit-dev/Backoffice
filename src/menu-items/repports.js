@@ -8,27 +8,21 @@ const icons = {
 
 // ==============================|| EXTRA PAGES MENU ITEMS ||============================== //
 
-const saves = {
+const repports = {
   id: 'Epargnes',
-  title: 'Epargnes',
+  title: 'Rapports',
   type: 'group',
+
   children: [
     {
       id: 'Blocked',
-      title: 'Bloqués',
-      type: 'collapse',
+      title: 'Epargnes',
+      type: 'item',
+      url: '/topup/',
       icon: icons.IconKey,
-      children: [
-        {
-          id: 'Investir',
-          title: 'Investir',
-          type: 'item',
-          url: '/topup/',
-          breadcrumbs: false
-        }
-      ]
+      breadcrumbs: false
     }
   ]
 };
 
-export default saves;
+export default repports;

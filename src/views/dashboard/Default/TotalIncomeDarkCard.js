@@ -9,7 +9,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
 
 // assets
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
+import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 
 // styles
 const CardWrapper = styled(MainCard)(({ theme }) => ({
@@ -39,10 +39,18 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
   }
 }));
 
-// ==============================|| DASHBOARD - TOTAL INCOME DARK CARD ||============================== //
-
-const TotalIncomeDarkCard = ({ isLoading, userData }) => {
+const TotalIncomeDarkCard = ({ isLoading, todayUsers }) => {
   const theme = useTheme();
+  const total = todayUsers?.total ?? 0;
+
+  let secondaryText = '';
+  if (total === 0) {
+    secondaryText = 'Compte créé aujourd’hui';
+  } else if (total === 1) {
+    secondaryText = 'Compte créé aujourd’hui';
+  } else {
+    secondaryText = `Comptes créés aujourd’hui`;
+  }
 
   return (
     <>
@@ -63,7 +71,7 @@ const TotalIncomeDarkCard = ({ isLoading, userData }) => {
                       color: '#fff'
                     }}
                   >
-                    <TableChartOutlinedIcon fontSize="inherit" />
+                    <PersonAddRoundedIcon fontSize="inherit" />
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
@@ -74,12 +82,12 @@ const TotalIncomeDarkCard = ({ isLoading, userData }) => {
                   }}
                   primary={
                     <Typography variant="h4" sx={{ color: '#fff' }}>
-                      {userData?.nom}
+                      {total}
                     </Typography>
                   }
                   secondary={
                     <Typography variant="subtitle2" sx={{ color: 'primary.light', mt: 0.25 }}>
-                      {userData?.email}
+                      {secondaryText}
                     </Typography>
                   }
                 />
@@ -94,7 +102,7 @@ const TotalIncomeDarkCard = ({ isLoading, userData }) => {
 
 TotalIncomeDarkCard.propTypes = {
   isLoading: PropTypes.bool,
-  userData: PropTypes.any
+  todayUsers: PropTypes.any
 };
 
 export default TotalIncomeDarkCard;

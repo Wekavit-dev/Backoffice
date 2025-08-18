@@ -39,7 +39,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ==============================|| DASHBOARD - TOTAL INCOME LIGHT CARD ||============================== //
 
-const TotalIncomeLightCard = ({ isLoading, userData }) => {
+const TotalIncomeLightCard = ({ isLoading, todaDeposits }) => {
   const theme = useTheme();
 
   return (
@@ -70,7 +70,7 @@ const TotalIncomeLightCard = ({ isLoading, userData }) => {
                     mt: 0.45,
                     mb: 0.45
                   }}
-                  primary={<Typography variant="h4">{userData?.operation}</Typography>}
+                  primary={<Typography variant="h4">{todaDeposits?.todayDepositsCount}</Typography>}
                   secondary={
                     <Typography
                       variant="subtitle2"
@@ -79,7 +79,7 @@ const TotalIncomeLightCard = ({ isLoading, userData }) => {
                         mt: 0.5
                       }}
                     >
-                      Responsabilité de l&#39;agent
+                      {todaDeposits?.todayDepositsCount > 1 ? "Dépôts aujourd'hui" : "Dépôt aujourd'hui"}
                     </Typography>
                   }
                 />
@@ -94,7 +94,7 @@ const TotalIncomeLightCard = ({ isLoading, userData }) => {
 
 TotalIncomeLightCard.propTypes = {
   isLoading: PropTypes.bool,
-  userData: PropTypes.any
+  todaDeposits: PropTypes.any
 };
 
 export default TotalIncomeLightCard;

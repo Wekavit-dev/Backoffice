@@ -8,6 +8,12 @@ import Loadable from 'ui-component/Loadable';
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
 const TransTopup = Loadable(lazy(() => import('views/topup')));
+const Savings = Loadable(lazy(() => import('views/saves')));
+const Deposits = Loadable(lazy(() => import('views/deposits')));
+const Users = Loadable(lazy(() => import('views/users')));
+const Agents = Loadable(lazy(() => import('views/agents')));
+const Admin = Loadable(lazy(() => import('views/admin')));
+const AddOns = Loadable(lazy(() => import('views/addOn')));
 const TransWithdraw = Loadable(lazy(() => import('views/withdraw')));
 
 // utilities routing
@@ -36,6 +42,30 @@ const MainRoutes = {
           element: <DashboardDefault />
         }
       ]
+    },
+    {
+      path: 'savings',
+      element: <Savings />
+    },
+    {
+      path: 'deposits',
+      element: <Deposits />
+    },
+    {
+      path: 'users',
+      element: <Users />
+    },
+    {
+      path: 'agents',
+      element: <Agents />
+    },
+    {
+      path: 'admins',
+      element: <Admin />
+    },
+    {
+      path: 'addons',
+      element: <AddOns />
     },
     {
       path: 'topup',

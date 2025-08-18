@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -27,9 +28,10 @@ const NavCollapse = ({ menu, level }) => {
   const handleClick = () => {
     setOpen(!open);
     setSelected(!selected ? menu.id : null);
-    if (menu?.id !== 'authentication') {
-      navigate(menu.children[0]?.url);
-    }
+    // Remove this navigation:
+    // if (menu?.id !== 'authentication') {
+    //   navigate(menu.children[0]?.url);
+    // }
   };
 
   const { pathname } = useLocation();

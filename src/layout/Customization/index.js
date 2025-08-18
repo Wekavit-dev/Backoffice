@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import '@fontsource/dm-sans';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -64,8 +65,11 @@ const Customization = () => {
       initialFont = 'Poppins';
       break;
     case `'Roboto', sans-serif`:
-    default:
       initialFont = 'Roboto';
+      break;
+    case `'DM Sans', sans-serif`:
+    default:
+      initialFont = 'DM Sans';
       break;
   }
 
@@ -79,6 +83,9 @@ const Customization = () => {
         break;
       case 'Poppins':
         newFont = `'Poppins', sans-serif`;
+        break;
+      case 'DM Sans':
+        newFont = `'DM Sans', sans-serif`;
         break;
       case 'Roboto':
       default:
@@ -140,6 +147,15 @@ const Customization = () => {
                     onChange={(e) => setFontFamily(e.target.value)}
                     name="row-radio-buttons-group"
                   >
+                    <FormControlLabel
+                      value="DM Sans"
+                      control={<Radio />}
+                      label="DM Sans"
+                      sx={{
+                        '& .MuiSvgIcon-root': { fontSize: 28 },
+                        '& .MuiFormControlLabel-label': { color: theme.palette.grey[900] }
+                      }}
+                    />
                     <FormControlLabel
                       value="Roboto"
                       control={<Radio />}

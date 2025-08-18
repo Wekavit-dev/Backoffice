@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
-import { Avatar, Button, CardActions, CardContent, Divider, Grid, Menu, MenuItem, Typography } from '@mui/material';
+import { Avatar, Button, CardActions, CardContent, Divider, Grid, Menu, MenuItem, Typography, Chip, Box } from '@mui/material';
 
 // project imports
 // import BajajAreaChartCard from './BajajAreaChartCard';
@@ -15,15 +15,14 @@ import { gridSpacing } from 'store/constant';
 // assets
 import ChevronRightOutlinedIcon from '@mui/icons-material/ChevronRightOutlined';
 import MoreHorizOutlinedIcon from '@mui/icons-material/MoreHorizOutlined';
-import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined';
-// import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import PersonIcon from '@mui/icons-material/Person';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 // ==============================|| DASHBOARD DEFAULT - POPULAR CARD ||============================== //
 
 // eslint-disable-next-line no-unused-vars
-const PopularCard = ({ isLoading, userData, history }) => {
+const PopularCard = ({ isLoading, userData, history, agents }) => {
   const theme = useTheme();
-
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -33,6 +32,76 @@ const PopularCard = ({ isLoading, userData, history }) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  // Limit agents to max 3
+  const displayedAgents = agents?.slice(0, 3) || [];
+
+  // Get operation color based on type
+  const getOperationColor = (operation) => {
+    switch (operation) {
+      case 'Deposit Validation':
+        return {
+          background: theme.palette.success.light,
+          color: theme.palette.success.dark
+        };
+      case 'Withdraw Validation':
+        return {
+          background: theme.palette.warning.light,
+          color: theme.palette.warning.dark
+        };
+      default:
+        return {
+          background: theme.palette.primary.light,
+          color: theme.palette.primary.dark
+        };
+    }
+  };
+
+  // Get display text for operation
+  const getOperationDisplayText = (operation) => {
+    switch (operation) {
+      case 'Deposit Validation':
+        return 'Deposit';
+      case 'Withdraw Validation':
+        return 'Withdraw';
+      default:
+        return operation;
+    }
+  };
+
+  // Get country emoji based on country name
+  const getCountryEmoji = (countryName) => {
+    switch (countryName) {
+      case 'Congo DRC':
+        return '🇨🇩';
+      case 'Burundi':
+        return '🇧🇮';
+      case 'Rwanda':
+        return '🇷🇼';
+      default:
+        return '🌍';
+    }
+  };
+
+  // Get country flag or default avatar
+  const getAgentAvatar = (agent) => {
+    const firstLetter = agent.nom?.charAt(0)?.toUpperCase() || 'A';
+    return (
+      <Avatar
+        sx={{
+          width: 40,
+          height: 40,
+          backgroundColor: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
+          fontSize: '1rem',
+          fontWeight: 'bold'
+        }}
+      >
+        {firstLetter}
+      </Avatar>
+    );
+  };
+
   return (
     <>
       {isLoading ? (
@@ -44,7 +113,7 @@ const PopularCard = ({ isLoading, userData, history }) => {
               <Grid item xs={12}>
                 <Grid container alignContent="center" justifyContent="space-between">
                   <Grid item>
-                    <Typography variant="h4">Activités récentes de {userData?.nom}</Typography>
+                    <Typography variant="h4">Liste des Agents ({agents.length})</Typography>
                   </Grid>
                   <Grid item>
                     <MoreHorizOutlinedIcon
@@ -73,69 +142,94 @@ const PopularCard = ({ isLoading, userData, history }) => {
                         horizontal: 'right'
                       }}
                     >
-                      <MenuItem onClick={handleClose}> Today</MenuItem>
-                      <MenuItem onClick={handleClose}> This Month</MenuItem>
-                      <MenuItem onClick={handleClose}> This Year </MenuItem>
+                      <MenuItem onClick={handleClose}>Tous les agents</MenuItem>
+                      <MenuItem onClick={handleClose}>Agents actifs</MenuItem>
+                      <MenuItem onClick={handleClose}>Agents connectés</MenuItem>
                     </Menu>
                   </Grid>
                 </Grid>
               </Grid>
-              {/* <Grid item xs={12} sx={{ pt: '16px !important' }}>
-                <BajajAreaChartCard />
-              </Grid> */}
+
               <Grid item xs={12}>
-                {history?.length !== undefined ? (
-                  history?.map((item) => {
-                    return (
-                      <Grid container direction="column" key={item?._id}>
-                        <Grid item>
-                          <Grid container alignItems="center" justifyContent="space-between">
-                            <Grid item>
-                              <Typography variant="subtitle1" color="inherit">
-                                {item?.operation}
-                              </Typography>
-                            </Grid>
-                            <Grid item>
-                              <Grid container alignItems="center" justifyContent="space-between">
+                {displayedAgents.length > 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.6 }}>
+                    {displayedAgents.map((agent, index) => {
+                      const operationStyle = getOperationColor(agent.operation);
+                      return (
+                        <Box key={agent._id}>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid item>{getAgentAvatar(agent)}</Grid>
+                            <Grid item xs>
+                              <Grid container direction="column">
                                 <Grid item>
-                                  <Typography variant="subtitle1" color="inherit">
-                                    {item?.action}
+                                  <Typography variant="subtitle1" fontWeight="medium">
+                                    {agent.nom}
                                   </Typography>
                                 </Grid>
                                 <Grid item>
-                                  <Avatar
-                                    variant="rounded"
-                                    sx={{
-                                      width: 16,
-                                      height: 16,
-                                      borderRadius: '5px',
-                                      backgroundColor: theme.palette.success.light,
-                                      color: theme.palette.success.dark,
-                                      ml: 2
-                                    }}
-                                  >
-                                    <KeyboardArrowUpOutlinedIcon fontSize="small" color="inherit" />
-                                  </Avatar>
+                                  <Typography variant="body2" color="textSecondary">
+                                    {agent.email}
+                                  </Typography>
                                 </Grid>
+                                {agent.idPays && (
+                                  <Grid item sx={{ mt: 0.5 }}>
+                                    <Typography variant="caption" color="textSecondary">
+                                      {getCountryEmoji(agent.idPays.nom)} {agent.idPays.nom} ({agent.idPays.code})
+                                    </Typography>
+                                  </Grid>
+                                )}
                               </Grid>
                             </Grid>
+                            <Grid item>
+                              <Box
+                                xs={12}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  justifyContent: 'space-between'
+                                }}
+                              >
+                                <Chip
+                                  label={getOperationDisplayText(agent.operation)}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: operationStyle.background,
+                                    color: operationStyle.color,
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'medium'
+                                  }}
+                                />
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <FiberManualRecordIcon
+                                    sx={{
+                                      fontSize: 8,
+                                      color: agent.connected
+                                        ? theme.palette.success.main
+                                        : agent.actif
+                                        ? theme.palette.warning.main
+                                        : theme.palette.error.main
+                                    }}
+                                  />
+                                  <Typography variant="caption" color="textSecondary">
+                                    {agent.connected ? 'Connecté' : agent.actif ? 'Actif' : 'Inactif'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Grid>
                           </Grid>
-                        </Grid>
-                        <Grid item>
-                          <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
-                            {item?.daysAgo}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    );
-                  })
+                          {index < displayedAgents.length - 1 && <Divider sx={{ mt: 2 }} />}
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 ) : (
                   <Grid container direction="column">
                     <Grid item>
                       <Grid container alignItems="center" justifyContent="center">
                         <Grid item>
                           <Typography variant="subtitle1" color="inherit" align="center">
-                            Aucune activité récente
+                            Aucun agent disponible
                           </Typography>
                         </Grid>
                       </Grid>
@@ -147,7 +241,7 @@ const PopularCard = ({ isLoading, userData, history }) => {
           </CardContent>
           <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
             <Button size="small" disableElevation>
-              Tout voir
+              Voir plus
               <ChevronRightOutlinedIcon />
             </Button>
           </CardActions>
@@ -160,7 +254,8 @@ const PopularCard = ({ isLoading, userData, history }) => {
 PopularCard.propTypes = {
   isLoading: PropTypes.bool,
   userData: PropTypes.any,
-  history: PropTypes.any
+  history: PropTypes.any,
+  agents: PropTypes.array
 };
 
 export default PopularCard;

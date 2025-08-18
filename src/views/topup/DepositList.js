@@ -2,7 +2,6 @@
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable no-unused-vars */
 
-
 import React, { useState, useEffect, useContext } from 'react';
 import { styled } from '@mui/material/styles';
 import Table from '@mui/material/Table';
@@ -39,37 +38,37 @@ import Grid from '@mui/material/Grid'; // Import Grid
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: theme.palette.action.hover
   },
   '&:last-child td, &:last-child th': {
-    border: 0,
-  },
+    border: 0
+  }
 }));
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.common.black,
-    color: theme.palette.common.white,
+    color: theme.palette.common.white
   },
   [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
+    fontSize: 14
   },
   '&.pending': {
-    color: 'orange',
+    color: 'orange'
   },
   '&.rejected': {
-    color: 'red',
+    color: 'red'
   },
   '&.validated': {
-    color: 'green',
-  },
+    color: 'green'
+  }
 }));
 
 export default function CustomizedTables() {
   const { globalState } = useContext(AppContext);
   const [savings, setSavings] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [selectedStatus,] = useState('all');
+  const [selectedStatus] = useState('all');
   const [searchCodeTransaction] = useState('');
   const [editedRow, setEditedRow] = useState(null);
   const [minDays, setMinDays] = useState('');
@@ -111,26 +110,27 @@ export default function CustomizedTables() {
         ...(minAmount && { minAmount }),
         ...(maxAmount && { maxAmount }),
         ...(selectedCurrency !== 'all' && { idDevise: selectedCurrency }),
-        ...(withdrawn !== 'all' && { withdrawn }),
+        ...(withdrawn !== 'all' && { withdrawn })
         // The API controller does not support codeTransaction, so it's filtered client-side.
       };
 
-      await locekdSavesAPI.filterSavingsForInvestment(params, globalState?.key).then((res)=>{
-      console.log('res===>', res);
-      if (res.data) {
-        setSavings(res.data.data);
-        setTotalData(res.data.totalAmount);
-        setTotalInterests(res.data.totalInterest);
-        setTotalRecords(res.total);
-        setLoading(false);
-      }
-      }).catch((err)=>{
-        console.error('Failed to fetch savings data:', err);
-        setLoading(false);
-        // toast.error('Échec de la récupération des données d\'épargne.', { position: toast.POSITION.TOP_RIGHT });
-
-      });
-      
+      await locekdSavesAPI
+        .filterSavingsForInvestment(params, globalState?.key)
+        .then((res) => {
+          console.log('res===>', res);
+          if (res.data) {
+            setSavings(res.data.data);
+            setTotalData(res.data.totalAmount);
+            setTotalInterests(res.data.totalInterest);
+            setTotalRecords(res.total);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch savings data:', err);
+          setLoading(false);
+          // toast.error('Échec de la récupération des données d\'épargne.', { position: toast.POSITION.TOP_RIGHT });
+        });
 
       // if (res.data) {
       //   setSavings(res.data);
@@ -151,10 +151,9 @@ export default function CustomizedTables() {
   const fetchAuxiliaryData = async () => {
     try {
       // Fetch Countries
-      const countryRes = await locekdSavesAPI.getCountries
-      (globalState?.key);
+      const countryRes = await locekdSavesAPI.getCountries(globalState?.key);
       console.log('countryRes', countryRes);
-      
+
       if (countryRes.data && countryRes.status === 200) {
         setCountries(countryRes.data.data);
       } else {
@@ -204,7 +203,7 @@ export default function CustomizedTables() {
     setPage(1); // Reset to first page on filter change
   };
 
-   const handleMinDaysInputChange = (event) => {
+  const handleMinDaysInputChange = (event) => {
     setMinDays(event.target.value);
   };
 
@@ -255,7 +254,6 @@ export default function CustomizedTables() {
   //   const searchCondition = saving.codeTransaction && saving.codeTransaction.toLowerCase().includes(searchCodeTransaction.toLowerCase());
   //   return statusCondition && searchCondition;
   // });
- 
 
   const handleCloseModal = () => {
     setModalOpen(false);
@@ -268,7 +266,7 @@ export default function CustomizedTables() {
       const data = {
         idEpargne: _id, // Use idEpargne for the API call
         valid: 'validated',
-        montant: parseFloat(montantInitial), // Ensure it's a number
+        montant: parseFloat(montantInitial) // Ensure it's a number
       };
 
       // Placeholder: Replace with your actual Savings update API call
@@ -301,35 +299,32 @@ export default function CustomizedTables() {
   };
 
   const calculateDaysDiff = (startDate, endDate) => {
-  if (!startDate || !endDate) return 'N/A';
+    if (!startDate || !endDate) return 'N/A';
 
-  const start = new Date();
-  const end = new Date(endDate);
-  
-  // Calculate the total number of full days difference
-  const diffTime = Math.abs(end - start);
-  const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  const months = Math.floor(totalDays / 30.44); // Use average days in a month (365.25 / 12)
-  const days = Math.round(totalDays % 30.44);
-  
-  if (months > 0) {
-    return `${months} mois et ${days} jours`;
-  } else {
-    return `${days} jours`;
-  }
-};
+    const start = new Date();
+    const end = new Date(endDate);
 
+    // Calculate the total number of full days difference
+    const diffTime = Math.abs(end - start);
+    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const months = Math.floor(totalDays / 30.44); // Use average days in a month (365.25 / 12)
+    const days = Math.round(totalDays % 30.44);
+
+    if (months > 0) {
+      return `${months} mois et ${days} jours`;
+    } else {
+      return `${days} jours`;
+    }
+  };
 
   console.log('data===', savings);
-  
 
   return (
     <div>
       <Box mb={2} sx={{ position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, p: 2, boxShadow: 0 }}>
         {/* Use Grid Container here */}
         <Grid container spacing={2} alignItems="flex-end">
-
           {/* Filter by Country */}
           <Grid item xs={12} sm={6} md={3} lg={2}>
             <Typography variant="subtitle1" fontWeight="bold" mb={1}>
@@ -338,7 +333,9 @@ export default function CustomizedTables() {
             <Select value={selectedCountry} onChange={handleCountryChange} variant="filled" size="small" fullWidth>
               <MenuItem value="all">Tous les pays</MenuItem>
               {countries.map((country) => (
-                <MenuItem key={country._id} value={country._id}>{country.nom}</MenuItem>
+                <MenuItem key={country._id} value={country._id}>
+                  {country.nom}
+                </MenuItem>
               ))}
             </Select>
           </Grid>
@@ -351,7 +348,9 @@ export default function CustomizedTables() {
             <Select value={selectedSavingType} onChange={handleSavingTypeChange} variant="filled" size="small" fullWidth>
               <MenuItem value="all">Tous</MenuItem>
               {savingTypes.map((type) => (
-                <MenuItem key={type._id} value={type._id}>{type.designation}</MenuItem>
+                <MenuItem key={type._id} value={type._id}>
+                  {type.designation}
+                </MenuItem>
               ))}
             </Select>
           </Grid>
@@ -367,7 +366,7 @@ export default function CustomizedTables() {
                 type="number"
                 value={minDays}
                 onChange={handleMinDaysInputChange} // Update state on every change
-                onBlur={handleMinDaysBlur}       // Trigger API call on blur
+                onBlur={handleMinDaysBlur} // Trigger API call on blur
                 variant="filled"
                 size="small"
                 sx={{ flexGrow: 1 }}
@@ -377,7 +376,7 @@ export default function CustomizedTables() {
                 type="number"
                 value={maxDays}
                 onChange={handleMaxDaysInputChange} // Update state on every change
-                onBlur={handleMaxDaysBlur}       // Trigger API call on blur
+                onBlur={handleMaxDaysBlur} // Trigger API call on blur
                 variant="filled"
                 size="small"
                 sx={{ flexGrow: 1 }}
@@ -396,7 +395,7 @@ export default function CustomizedTables() {
                 type="number"
                 value={minAmount}
                 onChange={handleMinAmountInputChange} // Update state on every change
-                onBlur={handleMinAmountBlur}       // Trigger API call on blur
+                onBlur={handleMinAmountBlur} // Trigger API call on blur
                 variant="filled"
                 size="small"
                 sx={{ flexGrow: 1 }}
@@ -406,7 +405,7 @@ export default function CustomizedTables() {
                 type="number"
                 value={maxAmount}
                 onChange={handleMaxAmountInputChange} // Update state on every change
-                onBlur={handleMaxAmountBlur}       // Trigger API call on blur
+                onBlur={handleMaxAmountBlur} // Trigger API call on blur
                 variant="filled"
                 size="small"
                 sx={{ flexGrow: 1 }}
@@ -440,15 +439,27 @@ export default function CustomizedTables() {
           </Grid>
 
           {/* Refresh Button */}
-          
         </Grid>
       </Box>
 
-      {!loading && <Box mb={2} sx={{ position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, p: 2, boxShadow: 0, justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
-        <CustomDeleteIconChips data={totalData} interest={totalInterests} />
-      </Box>}
-
-
+      {!loading && (
+        <Box
+          mb={2}
+          sx={{
+            position: 'sticky',
+            top: 0,
+            bgcolor: 'background.paper',
+            zIndex: 1,
+            p: 2,
+            boxShadow: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            display: 'flex'
+          }}
+        >
+          <CustomDeleteIconChips data={totalData} interest={totalInterests} />
+        </Box>
+      )}
 
       <TableContainer sx={{ mt: 3 }} component={Paper}>
         <Table sx={{ minWidth: 700 }} aria-label="customized table">
@@ -465,14 +476,13 @@ export default function CustomizedTables() {
           </TableHead>
 
           <TableBody>
-            {loading ? 
-            <TableRow sx={{ height: '300px' }}>
+            {loading ? (
+              <TableRow sx={{ height: '300px' }}>
                 <StyledTableCell colSpan={11} align="center">
-                  <CircularProgress size="2.8rem"color="success"/>
+                  <CircularProgress size="2.8rem" color="success" />
                 </StyledTableCell>
               </TableRow>
-            : 
-            savings.length === 0 ? (
+            ) : savings.length === 0 ? (
               <TableRow>
                 <StyledTableCell colSpan={11} align="center">
                   Aucune épargne trouvée avec les filtres actuels.
@@ -480,23 +490,18 @@ export default function CustomizedTables() {
               </TableRow>
             ) : (
               savings.map((row) => (
-                <StyledTableRow  key={row._id}>
-                  <StyledTableCell sx={{ paddingY: 2.5, fontSize: '2rem' }} align="left">{row.idTypeEpargne?.designation || 'N/A'}</StyledTableCell>
+                <StyledTableRow key={row._id}>
+                  <StyledTableCell sx={{ paddingY: 2.5, fontSize: '2rem' }} align="left">
+                    {row.idTypeEpargne?.designation || 'N/A'}
+                  </StyledTableCell>
                   <StyledTableCell align="right">{numeral(row.montantInitial).format('0,0')}</StyledTableCell>
                   <StyledTableCell align="right">{numeral(row.montantTotal).format('0,0')}</StyledTableCell>
                   <StyledTableCell align="right">{numeral(row.interet).format('0,0')}</StyledTableCell>
                   <StyledTableCell align="right">{row.idDevise?.unite || 'N/A'}</StyledTableCell>
                   <StyledTableCell align="right">{calculateDaysDiff(row.startDate, row.endDate)}</StyledTableCell>
                   <StyledTableCell align="right" className={row.etat ? row.etat.toLowerCase() : ''}>
-                    {row.withdrawn === true ? <Chip
-                            label='retiré'
-                            color="default"
-                    /> : <Chip
-                            label='en cours'
-                            color="success"
-                    /> }
+                    {row.withdrawn === true ? <Chip label="retiré" color="default" /> : <Chip label="en cours" color="success" />}
                   </StyledTableCell>
-
                 </StyledTableRow>
               ))
             )}
@@ -516,7 +521,7 @@ export default function CustomizedTables() {
             bgcolor: 'background.paper',
             boxShadow: 24,
             p: 4,
-            borderRadius: 2,
+            borderRadius: 2
           }}
         >
           <IconButton
@@ -539,7 +544,7 @@ export default function CustomizedTables() {
             type="number"
             inputProps={{
               inputMode: 'numeric',
-              pattern: '[0-9]*',
+              pattern: '[0-9]*'
             }}
             value={editedRow?.montantInitial || ''}
             onChange={(e) => setEditedRow({ ...editedRow, montantInitial: e.target.value })}

@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types';
-
-// material-ui
 import { useTheme } from '@mui/material/styles';
-import { Avatar, Box, ButtonBase } from '@mui/material';
+import { Avatar, Box, ButtonBase, IconButton, Tooltip } from '@mui/material';
+import { useState } from 'react';
 
 // project imports
 import LogoSection from '../LogoSection';
@@ -11,12 +10,28 @@ import ProfileSection from './ProfileSection';
 import NotificationSection from './NotificationSection';
 
 // assets
-import { IconMenu2 } from '@tabler/icons';
-
-// ==============================|| MAIN NAVBAR / HEADER ||============================== //
+import { IconMenu2, IconMaximize, IconMinimize } from '@tabler/icons';
 
 const Header = ({ handleLeftDrawerToggle }) => {
   const theme = useTheme();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement
+        .requestFullscreen()
+        .then(() => {
+          setIsFullscreen(true);
+        })
+        .catch((err) => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      });
+    }
+  };
 
   return (
     <>
@@ -58,7 +73,24 @@ const Header = ({ handleLeftDrawerToggle }) => {
       {/* header search */}
       <SearchSection />
       <Box sx={{ flexGrow: 1 }} />
-      <Box sx={{ flexGrow: 1 }} />
+
+      {/* fullscreen toggle */}
+      <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
+        <IconButton
+          onClick={toggleFullscreen}
+          sx={{
+            borderRadius: '12px',
+            background: theme.palette.secondary.light,
+            color: theme.palette.secondary.dark,
+            '&:hover': {
+              background: theme.palette.secondary.dark,
+              color: theme.palette.secondary.light
+            }
+          }}
+        >
+          {isFullscreen ? <IconMinimize stroke={1.5} size="1.3rem" /> : <IconMaximize stroke={1.5} size="1.3rem" />}
+        </IconButton>
+      </Tooltip>
 
       {/* notification & profile */}
       <NotificationSection />

@@ -15,6 +15,8 @@ const Agents = Loadable(lazy(() => import('views/agents')));
 const Admin = Loadable(lazy(() => import('views/admin')));
 const AddOns = Loadable(lazy(() => import('views/addOn')));
 const TransWithdraw = Loadable(lazy(() => import('views/withdraw')));
+const NoDeposits = Loadable(lazy(() => import('views/growth/noDepositUsers')));
+const NoPlans = Loadable(lazy(() => import('views/growth/noPlans')));
 
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
@@ -66,6 +68,14 @@ const MainRoutes = {
     {
       path: 'addons',
       element: <AddOns />
+    },
+    {
+      path: 'noDeposits',
+      element: <NoDeposits />
+    },
+    {
+      path: 'noSavePlans',
+      element: <NoPlans />
     },
     {
       path: 'topup',

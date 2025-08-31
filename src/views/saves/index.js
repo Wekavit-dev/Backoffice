@@ -23,7 +23,11 @@ import {
   Fade,
   Backdrop,
   Divider,
-  Skeleton
+  Skeleton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { Search as SearchIcon, Visibility as VisibilityIcon, Close as CloseIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
@@ -42,6 +46,7 @@ const SavePage = () => {
   const [isLoading, setLoading] = useState(true);
   const [selectedSaving, setSelectedSaving] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('active');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,7 +93,9 @@ const SavePage = () => {
       type: epargne.frequency ? 'Fixed' : 'Flexible',
       country: 'Burundi', // Default country, you might want to add logic based on idPays
       userName: `${userSaving.idUser.prenom} ${userSaving.idUser.nom}`,
-      frequency: epargne.frequency || 'One-time'
+      frequency: epargne.frequency || 'One-time',
+      status: epargne.withdrawn ? 'Déjà retiré' : 'En cours', // New status field
+      isWithdrawn: epargne.withdrawn // Keep boolean for filtering
     }))
   );
 
@@ -98,10 +105,18 @@ const SavePage = () => {
   const totalPlans = transformedSavingsData.length;
   const totalWithdrawn = savings.reduce((sum, userSaving) => sum + userSaving.totalWithdrawnAmount, 0);
 
-  // Filter data based on search
-  const filteredData = transformedSavingsData.filter(
-    (item) => item.plan.toLowerCase().includes(searchTerm.toLowerCase()) || item.country.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter data based on search and status
+  const filteredData = transformedSavingsData.filter((item) => {
+    const matchesSearch =
+      item.plan.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.userName.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' || (statusFilter === 'withdrawn' && item.isWithdrawn) || (statusFilter === 'active' && !item.isWithdrawn);
+
+    return matchesSearch && matchesStatus;
+  });
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -110,7 +125,6 @@ const SavePage = () => {
   };
 
   const handleViewDetails = (saving) => {
-    console.log('Selected saving:', saving); // Check if saving object is correct
     setSelectedSaving(saving);
     setModalOpen(true);
   };
@@ -339,7 +353,7 @@ const SavePage = () => {
         </Grid>
 
         {/* Search */}
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             size="small"
             placeholder="Rechercher des épargnes..."
@@ -354,6 +368,20 @@ const SavePage = () => {
             }}
             sx={{ minWidth: 300 }}
           />
+
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel id="status-filter-label">Filtrer par statut</InputLabel>
+            <Select
+              labelId="status-filter-label"
+              value={statusFilter}
+              label="Filtrer par statut"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="all">Tous les statuts</MenuItem>
+              <MenuItem value="active">En cours</MenuItem>
+              <MenuItem value="withdrawn">Déjà retiré</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
 
         {/* Savings Table */}
@@ -368,6 +396,7 @@ const SavePage = () => {
                 <TableCell sx={{ fontWeight: 'bold' }}>Date de Début</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Date de Fin</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Jours Restants</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Statut</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -412,6 +441,14 @@ const SavePage = () => {
                         label={`${Math.max(0, row.restDays)} jours`}
                         size="small"
                         color={row.restDays <= 30 ? 'error' : row.restDays <= 60 ? 'warning' : 'default'}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={row.status}
+                        size="small"
+                        color={row.isWithdrawn ? 'error' : 'success'}
+                        variant={row.isWithdrawn ? 'filled' : 'outlined'}
                       />
                     </TableCell>
                     <TableCell>
@@ -473,6 +510,16 @@ const SavePage = () => {
                           <Chip
                             label={selectedSaving.type === 'Fixed' ? 'Plan Fixe' : 'Plan Flexible'}
                             color={selectedSaving.type === 'Fixed' ? 'primary' : 'secondary'}
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: '0.85rem',
+                              height: 32
+                            }}
+                          />
+                          <Chip
+                            label={selectedSaving.status}
+                            color={selectedSaving.isWithdrawn ? 'error' : 'success'}
+                            variant={selectedSaving.isWithdrawn ? 'filled' : 'outlined'}
                             sx={{
                               fontWeight: 600,
                               fontSize: '0.85rem',
@@ -596,7 +643,7 @@ const SavePage = () => {
                                   textAlign: 'center',
                                   p: 3,
                                   bgcolor: '#ffffff',
-                                  border: '2px solid #fff3e0',
+                                  border: '2px solid #fff8e1',
                                   borderRadius: 3,
                                   transition: 'all 0.2s ease',
                                   '&:hover': {
@@ -608,7 +655,7 @@ const SavePage = () => {
                                 <Typography variant="body2" sx={{ color: '#6c757d', mb: 1, fontWeight: 500 }}>
                                   MONTANT TOTAL
                                 </Typography>
-                                <Typography variant="h4" fontWeight="700" sx={{ color: '#ff9800', mb: 1 }}>
+                                <Typography variant="h4" fontWeight="700" sx={{ color: '#ffb74d', mb: 1 }}>
                                   {formatCurrency(selectedSaving.totAmount)}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#6c757d' }}>
@@ -634,7 +681,7 @@ const SavePage = () => {
                                 <Typography variant="body2" sx={{ color: '#6c757d', mb: 1, fontWeight: 500 }}>
                                   MONTANT RETIRÉ
                                 </Typography>
-                                <Typography variant="h4" fontWeight="700" sx={{ color: '#f44336', mb: 1 }}>
+                                <Typography variant="h4" fontWeight="700" sx={{ color: '#e57373', mb: 1 }}>
                                   {formatCurrency(selectedSaving.withdrawn)}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#6c757d' }}>
@@ -742,7 +789,7 @@ const SavePage = () => {
                                   width: 40,
                                   height: 40,
                                   borderRadius: '50%',
-                                  bgcolor: selectedSaving.restDays <= 0 ? '#4caf50' : '#ff9800',
+                                  bgcolor: selectedSaving.restDays <= 0 ? '#4caf50' : '#e57373',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -784,7 +831,7 @@ const SavePage = () => {
                               variant="h2"
                               fontWeight="700"
                               sx={{
-                                color: selectedSaving.restDays <= 30 ? '#f44336' : selectedSaving.restDays <= 60 ? '#ff9800' : '#4caf50',
+                                color: selectedSaving.restDays <= 30 ? '#e57373' : selectedSaving.restDays <= 60 ? '#fff8e1' : '#4caf50',
                                 mb: 2
                               }}
                             >
@@ -795,13 +842,23 @@ const SavePage = () => {
                             </Typography>
                             <Chip
                               label={
-                                selectedSaving.restDays <= 30
+                                selectedSaving.isWithdrawn
+                                  ? 'RETIRÉ - Plan Terminé'
+                                  : selectedSaving.restDays <= 30
                                   ? 'URGENT - Échéance Proche'
                                   : selectedSaving.restDays <= 60
                                   ? 'ATTENTION - Bientôt Terminé'
                                   : 'EN COURS - Tout va bien'
                               }
-                              color={selectedSaving.restDays <= 30 ? 'error' : selectedSaving.restDays <= 60 ? 'warning' : 'success'}
+                              color={
+                                selectedSaving.isWithdrawn
+                                  ? 'error'
+                                  : selectedSaving.restDays <= 30
+                                  ? 'error'
+                                  : selectedSaving.restDays <= 60
+                                  ? 'warning'
+                                  : 'success'
+                              }
                               sx={{
                                 fontWeight: 600,
                                 fontSize: '0.9rem',
@@ -814,10 +871,12 @@ const SavePage = () => {
                             {/* Additional Status Info */}
                             <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #dee2e6' }}>
                               <Typography variant="body2" sx={{ color: '#6c757d', mb: 1 }}>
-                                Durée Totale du Plan
+                                {selectedSaving.isWithdrawn ? 'Montant Retiré' : 'Durée Totale du Plan'}
                               </Typography>
                               <Typography variant="h6" fontWeight="600" sx={{ color: '#212529' }}>
-                                {selectedSaving.startDate && selectedSaving.endDate
+                                {selectedSaving.isWithdrawn
+                                  ? `${formatCurrency(selectedSaving.withdrawn)} BIF`
+                                  : selectedSaving.startDate && selectedSaving.endDate
                                   ? Math.ceil(
                                       (new Date(selectedSaving.endDate) - new Date(selectedSaving.startDate)) / (1000 * 60 * 60 * 24)
                                     ) + ' jours'

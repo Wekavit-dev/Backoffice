@@ -1,5 +1,5 @@
 // assets
-import { IconKey, IconEye, IconBrandLastfm } from '@tabler/icons';
+import { IconKey, IconEye, IconBrandLastfm, IconTrendingUp } from '@tabler/icons';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 
 // constant
@@ -7,7 +7,8 @@ const icons = {
   IconKey,
   IconEye,
   RemoveRedEyeOutlinedIcon,
-  IconBrandLastfm
+  IconBrandLastfm,
+  IconTrendingUp
 };
 
 // ==============================|| EXTRA PAGES MENU ITEMS ||============================== //
@@ -78,6 +79,31 @@ const savingsRepports = {
           title: 'WekaFund',
           type: 'item',
           url: '/wekavit/addons/',
+          breadcrumbs: false
+        }
+      ]
+    },
+    {
+      id: 'Gestion-growth',
+      title: 'Gestion growth',
+      type: 'collapse',
+      icon: icons.IconTrendingUp,
+      breadcrumbs: false,
+      url: null,
+
+      children: [
+        {
+          id: 'no-deposits-overview',
+          title: 'No Deposits',
+          type: 'item',
+          url: '/wekavit/noDeposits/',
+          breadcrumbs: false
+        },
+        {
+          id: 'no-saves-plan-overview',
+          title: 'No Plans',
+          type: 'item',
+          url: '/wekavit/noSavePlans/',
           breadcrumbs: false
         }
       ]

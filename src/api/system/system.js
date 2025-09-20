@@ -1,4 +1,3 @@
-// import { instance } from '../utils/utils';
 import { IP_ADD } from 'api/utils/address';
 import { handleError, handleResponse } from 'api/request/request';
 import setupAxiosInterceptors from 'api/utils/instance';
@@ -50,6 +49,23 @@ const getUsersWithDepositNoPlans = async (token, countryId, topSecretkey) => {
     .catch(handleError);
 };
 
+// 🔥 Nouveau : Meilleurs épargnants du système
+const getBestSavers = async (token, params) => {
+  const axiosInstanceWithToken = setupAxiosInterceptors(token);
+
+  // Filter out undefined/null values to avoid sending empty params
+  const filteredParams = Object.fromEntries(
+    Object.entries(params).filter(([value]) => value !== undefined && value !== null && value !== '')
+  );
+
+  return await axiosInstanceWithToken
+    .get(`${IP_ADD}/system/saves/best`, {
+      params: filteredParams
+    })
+    .then(handleResponse)
+    .catch(handleError);
+};
+
 const systemApi = {
   getAllTodayUsers,
   getAllTodayDeposits,
@@ -57,7 +73,8 @@ const systemApi = {
   getAllTodayAddsOn,
   getAdminHistory,
   getUsersWithFewDeposits,
-  getUsersWithDepositNoPlans // 👈 ajouté ici
+  getUsersWithDepositNoPlans,
+  getBestSavers // 👈 nouveau endpoint ajouté
 };
 
 export default systemApi;

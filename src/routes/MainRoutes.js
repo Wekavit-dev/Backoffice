@@ -17,6 +17,7 @@ const AddOns = Loadable(lazy(() => import('views/addOn')));
 const TransWithdraw = Loadable(lazy(() => import('views/withdraw')));
 const NoDeposits = Loadable(lazy(() => import('views/growth/noDepositUsers')));
 const NoPlans = Loadable(lazy(() => import('views/growth/noPlans')));
+const BestSaver = Loadable(lazy(() => import('views/growth/bestSaver')));
 
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
@@ -76,6 +77,10 @@ const MainRoutes = {
     {
       path: 'noSavePlans',
       element: <NoPlans />
+    },
+    {
+      path: 'bestSavers',
+      element: <BestSaver />
     },
     {
       path: 'topup',

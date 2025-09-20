@@ -105,6 +105,13 @@ const savingsRepports = {
           type: 'item',
           url: '/wekavit/noSavePlans/',
           breadcrumbs: false
+        },
+        {
+          id: 'best-saver-overview',
+          title: 'Best Savers',
+          type: 'item',
+          url: '/wekavit/bestSavers/',
+          breadcrumbs: false
         }
       ]
     }

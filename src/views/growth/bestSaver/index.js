@@ -29,7 +29,8 @@ import {
   Paper,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  ButtonGroup
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -43,7 +44,11 @@ import {
   DateRange as DateRangeIcon,
   MonetizationOn as MoneyIcon,
   ExpandMore as ExpandMoreIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Today as TodayIcon,
+  CalendarToday as CalendarTodayIcon,
+  DateRange as DateRangePresetIcon,
+  Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { AppContext } from 'AppContext';
 import { IconTrophy, IconMedal, IconAward, IconUsers, IconChartBar } from '@tabler/icons';
@@ -60,22 +65,61 @@ import locekdSavesApi from 'api/saves/locked';
 const BestSaver = () => {
   const { globalState, setGlobalState } = useContext(AppContext);
 
-  // State for filters
-  const [filters, setFilters] = useState({
-    numberOfBest: 10,
-    country: '',
-    idTypeEpargne: '',
-    startDate: '2024-01-01',
-    endDate: '2024-12-31',
-    minAmount: 1000,
-    maxAmount: 50000,
-    greatestAmount: true,
-    morePlans: false,
-    greatestInterest: true,
-    mostResilient: false,
-    mostFrequent: true,
-    mostEducated: false
+  // Helper function to format date to YYYY-MM-DD
+  const formatDateToInput = (date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  // Helper function to get date presets
+  const getDatePresets = () => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const last7Days = new Date(today);
+    last7Days.setDate(last7Days.getDate() - 7);
+
+    const last30Days = new Date(today);
+    last30Days.setDate(last30Days.getDate() - 30);
+
+    return {
+      today: {
+        startDate: formatDateToInput(today),
+        endDate: formatDateToInput(today)
+      },
+      last7Days: {
+        startDate: formatDateToInput(last7Days),
+        endDate: formatDateToInput(today)
+      },
+      last30Days: {
+        startDate: formatDateToInput(last30Days),
+        endDate: formatDateToInput(today)
+      }
+    };
+  };
+
+  // State for filters with smart default (Last 7 days)
+  const [filters, setFilters] = useState(() => {
+    const presets = getDatePresets();
+    return {
+      numberOfBest: 10,
+      country: '',
+      idTypeEpargne: '',
+      startDate: presets.last7Days.startDate,
+      endDate: presets.last7Days.endDate,
+      minAmount: 1000,
+      maxAmount: 200000,
+      greatestAmount: true,
+      morePlans: false,
+      greatestInterest: true,
+      mostResilient: false,
+      mostFrequent: true,
+      mostEducated: false
+    };
   });
+
+  // State for active date preset
+  const [activeDatePreset, setActiveDatePreset] = useState('last7Days');
 
   // State for data
   const [countries, setCountries] = useState([]);
@@ -92,6 +136,51 @@ const BestSaver = () => {
     topSaver: null,
     totalSavers: 0
   });
+
+  // Date preset handler
+  const handleDatePreset = (preset) => {
+    const presets = getDatePresets();
+    let newDates = {};
+
+    switch (preset) {
+      case 'today':
+        newDates = presets.today;
+        break;
+      case 'last7Days':
+        newDates = presets.last7Days;
+        break;
+      case 'last30Days':
+        newDates = presets.last30Days;
+        break;
+      case 'custom':
+        // Don't change dates for custom, just update the active preset
+        setActiveDatePreset('custom');
+        return;
+      default:
+        newDates = presets.last7Days;
+    }
+
+    setFilters((prev) => ({
+      ...prev,
+      startDate: newDates.startDate,
+      endDate: newDates.endDate
+    }));
+    setActiveDatePreset(preset);
+  };
+
+  // Handle manual date changes (sets to custom)
+  const handleDateChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+    setActiveDatePreset('custom');
+  };
+
+  // Date preset buttons configuration
+  const datePresets = [
+    { key: 'today', label: "Aujourd'hui", icon: <TodayIcon sx={{ fontSize: '1rem' }} /> },
+    { key: 'last7Days', label: '7 derniers jours', icon: <ScheduleIcon sx={{ fontSize: '1rem' }} /> },
+    { key: 'last30Days', label: '30 derniers jours', icon: <CalendarTodayIcon sx={{ fontSize: '1rem' }} /> },
+    { key: 'custom', label: 'Personnalisé', icon: <DateRangePresetIcon sx={{ fontSize: '1rem' }} /> }
+  ];
 
   // Fetch countries
   const fetchCountries = async () => {
@@ -167,13 +256,13 @@ const BestSaver = () => {
         }
       } else {
         setBestSavers([]);
-        setStats({ totalAmount: 0, averageAmount: 0, topSaver: null, totalSavers: 0 });
+        setStats({ totalAmount: 0, topSaver: null, totalSavers: 0 });
       }
     } catch (error) {
       console.log('Error fetching best savers:', error);
       toast.error('Erreur lors du chargement des meilleurs épargnants', { position: 'top-right' });
       setBestSavers([]);
-      setStats({ totalAmount: 0, averageAmount: 0, topSaver: null, totalSavers: 0 });
+      setStats({ totalAmount: 0, topSaver: null, totalSavers: 0 });
     } finally {
       setLoadingSavers(false);
     }
@@ -196,12 +285,13 @@ const BestSaver = () => {
 
   // Reset filters
   const resetFilters = () => {
+    const presets = getDatePresets();
     setFilters({
       numberOfBest: 10,
       country: countries.length > 0 ? countries[0]._id : '',
       idTypeEpargne: savingTypes.length > 0 ? savingTypes[0]._id : '',
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
+      startDate: presets.last7Days.startDate,
+      endDate: presets.last7Days.endDate,
       minAmount: 1000,
       maxAmount: 50000,
       greatestAmount: true,
@@ -211,6 +301,7 @@ const BestSaver = () => {
       mostFrequent: true,
       mostEducated: false
     });
+    setActiveDatePreset('last7Days');
   };
 
   // Get country flag
@@ -444,7 +535,7 @@ const BestSaver = () => {
   return (
     <MainCard title="Meilleurs épargnants">
       <Box>
-        {/* Summary Cards - Replace the Grid container with these 3 cards */}
+        {/* Summary Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} md={4}>
             <SummaryCard title="Total Épargné" amount={formatCurrency(stats.totalAmount)} icon={<IconChartBar />} color="#2e7d32" />
@@ -468,6 +559,13 @@ const BestSaver = () => {
             <Box display="flex" alignItems="center" gap={1}>
               <FilterIcon />
               <Typography variant="h6">Filtres avancés</Typography>
+              <Chip
+                label={datePresets.find((p) => p.key === activeDatePreset)?.label || 'Période'}
+                size="small"
+                variant="outlined"
+                color="primary"
+                sx={{ ml: 'auto' }}
+              />
             </Box>
           </AccordionSummary>
           <AccordionDetails>
@@ -515,7 +613,38 @@ const BestSaver = () => {
                 />
               </Grid>
 
-              {/* Date Filters */}
+              {/* Date Preset Buttons */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+                  Période d&lsquo;analyse
+                </Typography>
+                <Box sx={{ mb: 2 }}>
+                  <ButtonGroup variant="outlined" size="small" sx={{ mb: 2 }}>
+                    {datePresets.map((preset) => (
+                      <Button
+                        key={preset.key}
+                        variant={activeDatePreset === preset.key ? 'contained' : 'outlined'}
+                        onClick={() => handleDatePreset(preset.key)}
+                        startIcon={preset.icon}
+                        sx={{
+                          minWidth: '140px',
+                          ...(activeDatePreset === preset.key && {
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                              bgcolor: 'primary.dark'
+                            }
+                          })
+                        }}
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                  </ButtonGroup>
+                </Box>
+              </Grid>
+
+              {/* Date Range Fields - Always visible but highlight when custom is selected */}
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
@@ -523,8 +652,18 @@ const BestSaver = () => {
                   label="Date de début"
                   type="date"
                   value={filters.startDate}
-                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                  onChange={(e) => handleDateChange('startDate', e.target.value)}
                   InputLabelProps={{ shrink: true }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      ...(activeDatePreset === 'custom' && {
+                        '& fieldset': {
+                          borderColor: 'primary.main',
+                          borderWidth: 2
+                        }
+                      })
+                    }
+                  }}
                 />
               </Grid>
 
@@ -535,8 +674,18 @@ const BestSaver = () => {
                   label="Date de fin"
                   type="date"
                   value={filters.endDate}
-                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                  onChange={(e) => handleDateChange('endDate', e.target.value)}
                   InputLabelProps={{ shrink: true }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      ...(activeDatePreset === 'custom' && {
+                        '& fieldset': {
+                          borderColor: 'primary.main',
+                          borderWidth: 2
+                        }
+                      })
+                    }
+                  }}
                 />
               </Grid>
 

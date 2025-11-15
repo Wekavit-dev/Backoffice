@@ -1,5 +1,5 @@
 {
-  "name": "wekavit-agent-dashboard",
+  "name": "wekavit-system-management",
   "version": "3.3.2",
   "private": true,
   "homepage": "https://berrydashboard.io",
@@ -13,9 +13,11 @@
     "@mui/material": "^5.8.6",
     "@mui/system": "^5.8.6",
     "@mui/utils": "^5.8.6",
+    "@mui/x-date-pickers": "^8.18.0",
     "@tabler/icons": "^1.72.0",
     "apexcharts": "^3.35.3",
     "axios": "^1.6.2",
+    "date-fns": "^4.1.0",
     "formik": "^2.2.9",
     "framer-motion": "^6.3.16",
     "iconv-lite": "^0.6.3",

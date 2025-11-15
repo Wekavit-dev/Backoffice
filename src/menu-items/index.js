@@ -1,6 +1,7 @@
 import dashboard from './dashboard';
 import repports from './repports';
 import savingsRepports from './savingsRepports';
+import investment from './investment';
 // import other from './other';
 // import utilities from './utilities';
 // import config from './configuration';
@@ -9,7 +10,7 @@ import savingsRepports from './savingsRepports';
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, savingsRepports, repports]
+  items: [dashboard, savingsRepports, repports, investment]
 };
 
 export default menuItems;

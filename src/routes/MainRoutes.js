@@ -18,6 +18,10 @@ const TransWithdraw = Loadable(lazy(() => import('views/withdraw')));
 const NoDeposits = Loadable(lazy(() => import('views/growth/noDepositUsers')));
 const NoPlans = Loadable(lazy(() => import('views/growth/noPlans')));
 const BestSaver = Loadable(lazy(() => import('views/growth/bestSaver')));
+const InvestStats = Loadable(lazy(() => import('views/dashboardInvest/stats')));
+const Funds = Loadable(lazy(() => import('views/funds')));
+const Expenses = Loadable(lazy(() => import('views/ExpensesManagement')));
+const Loans = Loadable(lazy(() => import('views/LoansManagement')));
 
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
@@ -81,6 +85,27 @@ const MainRoutes = {
     {
       path: 'bestSavers',
       element: <BestSaver />
+    },
+    {
+      path: 'funds',
+      children: [
+        {
+          path: 'dash',
+          element: <InvestStats />
+        },
+        {
+          path: 'entries',
+          element: <Funds />
+        },
+        {
+          path: 'expenses',
+          element: <Expenses />
+        },
+        {
+          path: 'loans',
+          element: <Loans />
+        }
+      ]
     },
     {
       path: 'topup',

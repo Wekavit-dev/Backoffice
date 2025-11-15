@@ -135,7 +135,6 @@ const LoanForm = ({ funds, onSubmit, onCancel, initialData }) => {
       return;
     }
 
-    // Soumission finale
     const result = await onSubmit({
       ...formData,
       amount: parseFloat(formData.amount),

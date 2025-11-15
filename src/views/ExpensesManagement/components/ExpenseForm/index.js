@@ -15,7 +15,6 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
-import { showError } from 'utils/notifications';
 
 const ExpenseForm = ({ funds, expenseTypes, onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState(initialData || {

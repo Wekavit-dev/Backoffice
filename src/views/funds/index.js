@@ -80,6 +80,7 @@ const FundsManagement = () => {
     console.log("fundEditData", fundEditData);
     if(fundEditData._id){
         const { _id, __v, name, description, currency, ...updateData } = fundEditData;
+        console.log(__v, name, description, currency);
     try {
       const response = await FundsAPI.updateFund(_id, {name: fundData.name, currency: fundData.currency, description: fundData.description, ...updateData}, globalState?.key);
       if (response.data.message) {

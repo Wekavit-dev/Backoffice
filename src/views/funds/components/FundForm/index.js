@@ -11,14 +11,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormHelperText,
   Switch,
   FormControlLabel,
   Typography,
   Alert
 } from '@mui/material';
 
-const FundForm = ({ onSubmit, onCancel, initialData, fundEditData }) => {
+const FundForm = ({ onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState(initialData || {
     name: '',
     description: '',

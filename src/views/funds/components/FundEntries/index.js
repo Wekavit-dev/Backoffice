@@ -7,7 +7,6 @@ import {
   Grid,
   Card,
   CardContent,
-  Chip,
   IconButton,
   Dialog,
   Alert,
@@ -19,7 +18,7 @@ import {
   TableRow,
   Paper
 } from '@mui/material';
-import { Add, TrendingUp, CalendarToday, Source } from '@mui/icons-material';
+import { Add, TrendingUp } from '@mui/icons-material';
 import { FundsAPI } from 'api';
 import EntryForm from './EntryForm';
 import { toast } from 'react-toastify';
@@ -27,7 +26,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const FundEntries = ({ fund, onRefresh, token }) => {
   const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [openForm, setOpenForm] = useState(false);
 
@@ -66,14 +65,7 @@ const FundEntries = ({ fund, onRefresh, token }) => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'returned': return 'default';
-      case 'cancelled': return 'error';
-      default: return 'default';
-    }
-  };
+  
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR');

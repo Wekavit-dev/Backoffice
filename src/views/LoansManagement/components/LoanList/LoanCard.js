@@ -11,7 +11,6 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
   LinearProgress,
   Avatar
 } from '@mui/material';
@@ -20,12 +19,11 @@ import {
   CheckCircle,
   Cancel,
   Description,
-  Person,
   Schedule,
   Warning,
   TrendingUp
 } from '@mui/icons-material';
-import { showSuccess, showError, showWarning, showInfo } from 'utils/notifications';
+import { showError, showWarning, showInfo } from 'utils/notifications';
 
 const LoanCard = ({ 
   loan, 

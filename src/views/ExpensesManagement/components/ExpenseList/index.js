@@ -3,7 +3,6 @@ import React from 'react';
 import {
   Box,
   List,
-  Typography,
   CircularProgress,
   Alert
 } from '@mui/material';

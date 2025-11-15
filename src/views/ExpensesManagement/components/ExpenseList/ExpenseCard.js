@@ -10,8 +10,7 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText,
-  Tooltip
+  ListItemText
 } from '@mui/material';
 import {
   MoreVert,
@@ -19,7 +18,7 @@ import {
   Receipt,
   Info
 } from '@mui/icons-material';
-import { showSuccess, showError, showWarning } from 'utils/notifications';
+import { showError, showWarning } from 'utils/notifications';
 
 const ExpenseCard = ({ expense, onCancelExpense, showDivider }) => {
   const [anchorEl, setAnchorEl] = useState(null);

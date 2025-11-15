@@ -8,7 +8,6 @@ import {
   Alert
 } from '@mui/material';
 import FundCard from './FundCard';
-import { create } from 'yup/lib/Reference';
 
 const FundList = ({ funds, selectedFund, onSelectFund, onDeleteFund, loading, setOpenForm, setFundEditData }) => {
   if (loading) {

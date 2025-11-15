@@ -18,10 +18,8 @@ import {
   Select,
   MenuItem,
   Alert,
-  IconButton
 } from '@mui/material';
 import { Add, Category, Delete } from '@mui/icons-material';
-import { showSuccess, showError } from 'utils/notifications';
 
 const ExpenseTypes = ({ expenseTypes, onCreateExpenseType }) => {
   const [openForm, setOpenForm] = useState(false);

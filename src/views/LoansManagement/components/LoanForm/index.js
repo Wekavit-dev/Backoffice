@@ -15,13 +15,11 @@ import {
   Select,
   MenuItem,
   Card,
-  CardContent,
   Divider,
   Stepper,
   Step,
   StepLabel
 } from '@mui/material';
-import { showError, showInfo } from 'utils/notifications';
 
 const LoanForm = ({ funds, onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState(initialData || {

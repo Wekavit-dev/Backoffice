@@ -6,10 +6,8 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  Chip,
-  Button
-} from '@mui/material';
-import { TrendingUp, Warning } from '@mui/icons-material';
+  Chip,} from '@mui/material';
+import { Warning } from '@mui/icons-material';
 import LoanCard from './LoanCard';
 
 const LoanList = ({ 

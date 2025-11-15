@@ -302,7 +302,7 @@ const Statistics = ({ funds, selectedFund, loading }) => {
             Répartition par Devise
           </Typography>
           <Grid container spacing={2}>
-            {Object.values(statsByCurrency).map((currencyStats, index) => (
+            {Object.values(statsByCurrency).map((currencyStats) => (
               <Grid item xs={12} md={6} key={currencyStats.currency}>
                 <Card>
                   <CardContent>

@@ -6,7 +6,6 @@ import {
   CardContent,
   Typography,
   IconButton,
-  Chip,
   Menu,
   MenuItem,
   ListItemIcon,
@@ -20,7 +19,7 @@ import {
   Visibility
 } from '@mui/icons-material';
 
-const FundCard = ({ fund, isSelected, onSelect, onDelete, showDivider, setOpenForm, setFundEditData, selectedFund }) => {
+const FundCard = ({ fund, isSelected, onSelect, onDelete, showDivider, setOpenForm, setFundEditData }) => {
   const [anchorEl, setAnchorEl] = useState(null);
 
   console.log("selectedFund01", fund);
@@ -39,15 +38,6 @@ const FundCard = ({ fund, isSelected, onSelect, onDelete, showDivider, setOpenFo
     const result = await onDelete(fund._id);
     if (result && !result.success) {
       alert(result.message); // Vous pouvez remplacer par un snackbar
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'inactive': return 'default';
-      case 'suspended': return 'error';
-      default: return 'default';
     }
   };
 

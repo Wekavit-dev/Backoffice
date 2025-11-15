@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Add, ReceiptLong, Description, Analytics } from '@mui/icons-material';
 import { LoansAPI, FundsAPI } from 'api';
-import { showSuccess, showError, showWarning, showInfo } from 'utils/notifications';
+import { showSuccess, showError, showInfo } from 'utils/notifications';
 import { AppContext } from 'AppContext';
 
 // Import des composants

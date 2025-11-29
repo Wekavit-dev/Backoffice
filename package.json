@@ -72,11 +72,12 @@
   },
   "devDependencies": {
     "@babel/core": "^7.21.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "immutable": "^4.3.0",
     "sass": "^1.53.0"
   },
   "engines": {
-  "node": "22.x"
-}
-
+    "node": "22.x"
+  }
 }

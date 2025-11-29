@@ -4,14 +4,15 @@
     "browser": true,
     "es2021": true
   },
-  "extends": [
-    "prettier",
-    "plugin:react/jsx-runtime",
-    "plugin:jsx-a11y/recommended",
-    "plugin:react-hooks/recommended",
-    "eslint:recommended",
-    "plugin:react/recommended"
-  ],
+ "extends": [
+  "plugin:react/jsx-runtime",
+  "plugin:jsx-a11y/recommended",
+  "plugin:react-hooks/recommended",
+  "eslint:recommended",
+  "plugin:react/recommended",
+  "plugin:prettier/recommended"
+]
+,
   "settings": {
     "react": {
       "createClass": "createReactClass", // Regex for Component Factory to use,

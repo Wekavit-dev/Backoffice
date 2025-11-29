@@ -341,7 +341,7 @@ const LoanForm = ({ funds, onSubmit, onCancel, initialData }) => {
                     </Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Taux d'intérêt:</Typography>
+                    <Typography variant="body2">Taux d&apos;intérêt:</Typography>
                     <Typography variant="body2" fontWeight="600">{formData.interestRate}%</Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between" mb={1}>

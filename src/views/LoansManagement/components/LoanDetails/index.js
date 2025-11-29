@@ -25,7 +25,7 @@ import {
   Receipt
 } from '@mui/icons-material';
 
-const LoanDetails = ({ loan, onRefresh }) => {
+const LoanDetails = ({ loan }) => {
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',

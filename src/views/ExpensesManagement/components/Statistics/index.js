@@ -11,9 +11,7 @@ import {
 } from '@mui/material';
 import {
   Receipt,
-  TrendingUp,
-  AccountBalance,
-  Category
+  TrendingUp
 } from '@mui/icons-material';
 
 const Statistics = ({ expenses, loading }) => {

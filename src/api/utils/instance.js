@@ -8,6 +8,8 @@ const setupAxiosInterceptors = (token) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+      // config.headers.Authorization = `Bearer `;
+
 
     return config;
   });

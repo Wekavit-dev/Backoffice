@@ -13,8 +13,7 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
-  CircularProgress
+  ListItemText
 } from '@mui/material';
 import {
   Description,
@@ -200,7 +199,7 @@ const Documents = ({ loan, onGenerateDocument, onMarkAsSigned, onDownloadDocumen
 
           {hasDocument && !isSigned && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              Le document a été généré mais n'est pas encore signé. Marquez-le comme signé une fois la signature effectuée.
+              Le document a été généré mais n&apos;est pas encore signé. Marquez-le comme signé une fois la signature effectuée.
             </Alert>
           )}
 

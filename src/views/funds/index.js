@@ -39,7 +39,7 @@ const FundsManagement = () => {
 
   const { globalState, setGlobalState } = useContext(AppContext);
 
-  console.log("globalState12", globalState);
+  console.log("globalState12", setGlobalState);
 
 
   // Charger les fonds

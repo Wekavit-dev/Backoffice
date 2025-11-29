@@ -171,15 +171,14 @@ const Filters = ({ filters, onFiltersChange, funds, loans }) => {
           </Grid>
         </Grid>
 
-        <Grid item xs={12} md={12} jusCtifyContent="flex-end">
+        <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
-            fullWidth
             variant="outlined"
             startIcon={<Clear />}
             onClick={clearFilters}
             disabled={!hasActiveFilters}
             size="small"
-            sx={{ height: 40 }}
+            sx={{ height: 40, px: 4.8}}
           >
             Effacer
           </Button>

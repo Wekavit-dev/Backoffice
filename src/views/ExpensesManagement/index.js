@@ -13,7 +13,7 @@ import {
   Alert,
   Dialog
 } from '@mui/material';
-import { Add, Receipt, Category, Analytics } from '@mui/icons-material';
+import { Add, Category, Analytics } from '@mui/icons-material';
 import { ExpensesAPI, FundsAPI } from 'api';
 import { showSuccess, showError } from 'utils/notifications';
 import { AppContext } from 'AppContext';
@@ -36,6 +36,8 @@ const ExpensesManagement = () => {
   const [filters, setFilters] = useState({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { globalState, setGlobalState } = useContext(AppContext);
+
+  console.log(setGlobalState)
 
   // Charger les données
   const loadData = async () => {

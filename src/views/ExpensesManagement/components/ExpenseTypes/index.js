@@ -19,7 +19,7 @@ import {
   MenuItem,
   Alert,
 } from '@mui/material';
-import { Add, Category, Delete } from '@mui/icons-material';
+import { Add, Category } from '@mui/icons-material';
 
 const ExpenseTypes = ({ expenseTypes, onCreateExpenseType }) => {
   const [openForm, setOpenForm] = useState(false);

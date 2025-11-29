@@ -70,6 +70,7 @@ const LoansManagement = () => {
   const refreshData = () => {
     setRefreshTrigger(prev => prev + 1);
   };
+    console.log("globalState12", setGlobalState);
 
   useEffect(() => {
     loadData();
@@ -140,31 +141,38 @@ const LoansManagement = () => {
   };
 
   // Gérer la génération de document
-  const handleGenerateDocument = async (loanId) => {
-    try {
-      showInfo('Génération du document en cours...');
-      const response = await LoansAPI.generateLoanAgreement(loanId, globalState?.key);
-      
-      // Créer un blob et déclencher le téléchargement
-      const blob = new Blob([response], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `contrat-pret-${loanId}.docx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      showSuccess('Document généré et téléchargé avec succès');
-      refreshData(); // Rafraîchir pour mettre à jour les infos du document
-      
-    } catch (error) {
-      showError(`Erreur lors de la génération: ${error.data.message}`);
-    }
-  };
+ // Dans votre composant React
+const handleGenerateDocument = async (loanId) => {
+  try {
+    showInfo('Génération du contrat PDF en cours...');
+    
+    const response = await LoansAPI.generateLoanAgreement(loanId, globalState?.key);
+    
+    // Créer un blob pour le PDF
+    const blob = new Blob([response], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Créer un lien pour le téléchargement
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `contrat-pret-${loanId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    showSuccess('Contrat PDF généré et téléchargé avec succès');
+    
+    // Rafraîchir les données pour mettre à jour les infos du document
+    setTimeout(() => {
+      refreshData();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Erreur génération PDF:', error);
+    showError(`Erreur lors de la génération: ${error.message}`);
+  }
+};
 
   // Gérer le marquage comme signé
   const handleMarkAsSigned = async (loanId) => {

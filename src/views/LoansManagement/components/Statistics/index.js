@@ -186,7 +186,7 @@ const Statistics = ({ loan }) => {
                 }}
               >
                 <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Taux d'intérêt effectif
+                  Taux d&apos;intérêt effectif
                 </Typography>
                 <Typography variant="h5" fontWeight="700" color="#2e7d32">
                   {loan.interestRate}%

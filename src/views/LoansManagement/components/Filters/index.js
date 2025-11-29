@@ -189,42 +189,44 @@ const Filters = ({ filters, onFiltersChange, funds, loans }) => {
       {hasActiveFilters && (
         <Box mt={2} display="flex" gap={1} flexWrap="wrap">
           {Object.entries(filters).map(([key, value]) => {
-            if (!value) return null;
-            
-            let label = '';
-            switch (key) {
-              case 'status':
-                label = `Statut: ${value}`;
-                break;
-              case 'fundId':
-                const fund = funds.find(f => f._id === value);
-                label = `Fonds: ${fund?.name}`;
-                break;
-              case 'currency':
-                label = `Devise: ${value}`;
-                break;
-              case 'search':
-                label = `Recherche: "${value}"`;
-                break;
-              case 'startDate':
-                label = `À partir du: ${new Date(value).toLocaleDateString('fr-FR')}`;
-                break;
-              case 'endDate':
-                label = `Jusqu'au: ${new Date(value).toLocaleDateString('fr-FR')}`;
-                break;
-              default:
-                label = `${key}: ${value}`;
-            }
+  if (!value) return null;
+  
+  let label = '';
+  switch (key) {
+    case 'status':
+      label = `Statut: ${value}`;
+      break;
+    case 'fundId': {
+      const fund = funds.find(f => f._id === value);
+      label = `Fonds: ${fund?.name}`;
+      break;
+    }
+    case 'currency':
+      label = `Devise: ${value}`;
+      break;
+    case 'search':
+      label = `Recherche: "${value}"`;
+      break;
+    case 'startDate':
+      label = `À partir du: ${new Date(value).toLocaleDateString('fr-FR')}`;
+      break;
+    case 'endDate':
+      label = `Jusqu'au: ${new Date(value).toLocaleDateString('fr-FR')}`;
+      break;
+    default:
+      label = `${key}: ${value}`;
+  }
 
-            return (
-              <Chip
-                key={key}
-                label={label}
-                size="small"
-                onDelete={() => handleFilterChange(key, '')}
-              />
-            );
-          })}
+  return (
+    <Chip
+      key={key}
+      label={label}
+      size="small"
+      onDelete={() => handleFilterChange(key, '')}
+    />
+  );
+})}
+
         </Box>
       )}
     </Box>

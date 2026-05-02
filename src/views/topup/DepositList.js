@@ -1,6 +1,4 @@
-/* eslint-disable no-unexpected-multiline */
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable no-unused-vars */
+
 
 import React, { useState, useEffect, useContext } from 'react';
 import { styled } from '@mui/material/styles';

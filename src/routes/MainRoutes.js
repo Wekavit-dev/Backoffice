@@ -23,6 +23,12 @@ const Funds = Loadable(lazy(() => import('views/funds')));
 const Expenses = Loadable(lazy(() => import('views/ExpensesManagement')));
 const Loans = Loadable(lazy(() => import('views/LoansManagement')));
 
+const FeesDashboard = Loadable(lazy(() => import('views/fees/index')));
+const EvolutionFrais = Loadable(lazy(() => import('views/fees/evolution')));
+const TopPayeurs = Loadable(lazy(() => import('views/fees/top-payers')));
+const TransactionsFrais = Loadable(lazy(() => import('views/fees/transactions')));
+const StatsParDevise = Loadable(lazy(() => import('views/fees/by-devise')));
+
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
 const UtilsColor = Loadable(lazy(() => import('views/utilities/Color')));
@@ -49,6 +55,32 @@ const MainRoutes = {
           element: <DashboardDefault />
         }
       ]
+    },
+
+    {
+      path: 'fees',
+      element: <FeesDashboard />,
+      title: 'Tableau de bord des frais'
+    },
+    {
+      path: 'fees/evolution',
+      element: <EvolutionFrais />,
+      title: 'Analyse temporelle des frais'
+    },
+    {
+      path: 'fees/top-payers',
+      element: <TopPayeurs />,
+      title: 'Top contributeurs des frais'
+    },
+    {
+      path: 'fees/transactions',
+      element: <TransactionsFrais />,
+      title: 'Transactions de frais'
+    },
+    {
+      path: 'fees/by-devise',
+      element: <StatsParDevise />,
+      title: 'Statistiques des frais par devise'
     },
     {
       path: 'savings',

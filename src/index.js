@@ -11,9 +11,10 @@ import { store } from 'store';
 import { AppProvider } from './AppContext';
 
 // style + assets
+import './index.css';
 import 'assets/scss/style.scss';
 import config from './config';
-import { SnackbarProvider } from 'notistack';
+import { SnackbarProvider } from 'notistack'
 
 // ==============================|| REACT DOM RENDER  ||============================== //
 

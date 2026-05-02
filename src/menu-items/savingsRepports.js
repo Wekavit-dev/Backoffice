@@ -1,5 +1,16 @@
 // assets
-import { IconKey, IconEye, IconBrandLastfm, IconTrendingUp } from '@tabler/icons';
+import {
+  IconKey,
+  IconEye,
+  IconBrandLastfm,
+  IconTrendingUp,
+  IconChartBar,
+  IconChartLine,
+  IconUsers,
+  IconReceipt2,
+  IconCurrencyDollar,
+  IconFileExport
+} from '@tabler/icons';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 
 // constant
@@ -8,7 +19,13 @@ const icons = {
   IconEye,
   RemoveRedEyeOutlinedIcon,
   IconBrandLastfm,
-  IconTrendingUp
+  IconTrendingUp,
+  IconChartBar,
+  IconChartLine,
+  IconUsers,
+  IconReceipt2,
+  IconCurrencyDollar,
+  IconFileExport
 };
 
 // ==============================|| EXTRA PAGES MENU ITEMS ||============================== //
@@ -112,6 +129,57 @@ const savingsRepports = {
           type: 'item',
           url: '/wekavit/bestSavers/',
           breadcrumbs: false
+        }
+      ]
+    },
+    {
+      id: 'fees-statistics',
+      title: 'Statistiques des frais',
+      type: 'collapse',
+      icon: icons.IconChartBar,
+      breadcrumbs: false,
+      url: null,
+
+      children: [
+        {
+          id: 'fees-dashboard',
+          title: 'Tableau de bord',
+          type: 'item',
+          url: '/wekavit/fees/',
+          breadcrumbs: false,
+          icon: icons.IconChartBar
+        },
+        {
+          id: 'fees-evolution',
+          title: 'Analyse temporelle',
+          type: 'item',
+          url: '/wekavit/fees/evolution',
+          breadcrumbs: false,
+          icon: icons.IconChartLine
+        },
+        {
+          id: 'fees-top-payers',
+          title: 'Top contributeurs',
+          type: 'item',
+          url: '/wekavit/fees/top-payers',
+          breadcrumbs: false,
+          icon: icons.IconUsers
+        },
+        {
+          id: 'fees-transactions',
+          title: 'Transactions',
+          type: 'item',
+          url: '/wekavit/fees/transactions',
+          breadcrumbs: false,
+          icon: icons.IconReceipt2
+        },
+        {
+          id: 'fees-by-devise',
+          title: 'Par devise',
+          type: 'item',
+          url: '/wekavit/fees/by-devise',
+          breadcrumbs: false,
+          icon: icons.IconCurrencyDollar
         }
       ]
     }

@@ -1,0 +1,268 @@
+STRUCTURE DES REPONSES - feesStatsController.js
+==============================================
+
+Format global (succes)
+----------------------
+{
+  "success": true,
+  "data": "..."
+}
+
+Format global (erreur)
+----------------------
+{
+  "success": false,
+  "message": "Message metier",
+  "error": "Detail technique"
+}
+
+Objet devise de reference
+-------------------------
+{
+  "_id": "ObjectId",
+  "nom": "Franc Congolais",
+  "unite": "CDF",
+  "taux": 1,
+  "local": true,
+  "active": true
+}
+
+Note:
+- Certaines reponses exposent a la fois "idDevise" et "devise" avec le meme contenu.
+- Le front peut utiliser "idDevise" comme source principale.
+
+
+1) getFeesDashboard
+-------------------
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalFees": 0,
+      "totalTransactions": 0,
+      "averageFee": 0,
+      "averagePercentage": 0,
+      "totalOriginalAmount": 0,
+      "totalNetAmount": 0
+    },
+    "selectedDevise": { "...objet devise..." } | null,
+    "byDevise": [
+      {
+        "idDevise": { "...objet devise..." },
+        "devise": { "...objet devise..." },
+        "totalFees": 0,
+        "transactionCount": 0,
+        "averageFee": 0
+      }
+    ],
+    "byTransactionType": [
+      {
+        "transactionType": "Withdrawal | Penalty | Deposit | Contribution | Tontine",
+        "idDevise": { "...objet devise..." },
+        "totalFees": 0,
+        "transactionCount": 0,
+        "averageFee": 0
+      }
+    ],
+    "last7Days": [
+      {
+        "date": "YYYY-MM-DD",
+        "idDevise": { "...objet devise..." },
+        "totalFees": 0,
+        "transactionCount": 0
+      }
+    ]
+  }
+}
+
+
+2) getFeesTimeline
+------------------
+{
+  "success": true,
+  "data": [
+    {
+      "period": "YYYY-MM-DD | YYYY-MM | YYYY-W## | YYYY-MM-DD HH:00",
+      "idDevise": { "...objet devise..." },
+      "devise": { "...objet devise..." },
+      "totalFees": 0,
+      "transactionCount": 0,
+      "averageFee": 0
+    }
+  ]
+}
+
+
+3) getTopFeePayers
+------------------
+{
+  "success": true,
+  "data": {
+    "topPayers": [
+      {
+        "user": {
+          "_id": "ObjectId",
+          "nom": "Nom",
+          "prenom": "Prenom",
+          "email": "mail@x.com",
+          "phone": "..."
+        },
+        "idDevise": { "...objet devise..." },
+        "totalFeesPaid": 0,
+        "totalTransactions": 0,
+        "averageFeePerTransaction": 0,
+        "lastTransaction": "ISODate"
+      }
+    ],
+    "summary": {
+      "totalFeesCollected": 0,
+      "totalPayers": 0,
+      "byDevise": [
+        {
+          "idDevise": { "...objet devise..." } | null,
+          "totalFeesCollected": 0
+        }
+      ]
+    }
+  }
+}
+
+
+4) getFeesTransactions
+----------------------
+{
+  "success": true,
+  "data": {
+    "transactions": [
+      {
+        "_id": "ObjectId",
+        "idDevise": { "...objet devise..." },
+        "idUser": {
+          "_id": "ObjectId",
+          "nom": "...",
+          "prenom": "...",
+          "email": "...",
+          "phone": "..."
+        },
+        "idTarification": {
+          "_id": "ObjectId",
+          "percentage": 0,
+          "details": "..."
+        },
+        "idTransaction": "ObjectId",
+        "transactionType": "Withdrawal | Penalty | Deposit | Contribution | Tontine",
+        "originalAmount": 0,
+        "feePercentage": 0,
+        "feeAmount": 0,
+        "netAmount": 0,
+        "metadata": {},
+        "collectedAt": "ISODate",
+        "createdAt": "ISODate",
+        "updatedAt": "ISODate"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 0,
+      "pages": 0
+    },
+    "summary": {
+      "totalFees": 0,
+      "totalOriginalAmount": 0,
+      "totalNetAmount": 0,
+      "averageFee": 0,
+      "byDevise": [
+        {
+          "idDevise": { "...objet devise..." },
+          "totalFees": 0,
+          "totalOriginalAmount": 0,
+          "totalNetAmount": 0,
+          "averageFee": 0
+        }
+      ]
+    }
+  }
+}
+
+
+5) exportFeesData
+-----------------
+Si format=csv:
+- Retourne un fichier CSV (pas un JSON).
+
+Sinon (format != csv), JSON:
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "ObjectId",
+      "idDevise": { "...objet devise..." },
+      "idUser": {
+        "_id": "ObjectId",
+        "nom": "...",
+        "prenom": "...",
+        "email": "..."
+      },
+      "idTarification": {
+        "_id": "ObjectId",
+        "percentage": 0
+      },
+      "transactionType": "...",
+      "idTransaction": "ObjectId",
+      "originalAmount": 0,
+      "feePercentage": 0,
+      "feeAmount": 0,
+      "netAmount": 0,
+      "collectedAt": "ISODate"
+    }
+  ],
+  "count": 0
+}
+
+
+6) getFeesByDevise
+------------------
+{
+  "success": true,
+  "data": {
+    "stats": [
+      {
+        "idDevise": { "...objet devise..." },
+        "devise": { "...objet devise..." },
+        "totalFees": 0,
+        "transactionCount": 0,
+        "totalOriginalAmount": 0,
+        "averagePercentage": 0
+      }
+    ],
+    "availableDevises": [
+      { "...objet devise..." }
+    ]
+  }
+}
+
+
+7) getTransactionTypes
+----------------------
+{
+  "success": true,
+  "data": [
+    {
+      "value": "Withdrawal",
+      "label": "Retrait"
+    },
+    {
+      "value": "Deposit",
+      "label": "Deposit"
+    }
+  ]
+}
+
+
+Recommandations front
+---------------------
+- Utiliser "idDevise" comme champ standard devise pour afficher les montants.
+- Afficher "idDevise.unite" (fallback "idDevise.nom") a cote des montants.
+- Utiliser "selectedDevise" comme contexte de filtre dans le dashboard.
+- Prevoir que certaines agregations peuvent avoir "idDevise" null (cas limite de donnees).

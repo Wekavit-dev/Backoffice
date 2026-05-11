@@ -33,7 +33,7 @@ const generateLoanAgreement = async (loanId, token) => {
 // Télécharger le document existant
 const downloadLoanAgreement = async (loanId, token) => {
   const axiosInstanceWithToken = setupAxiosInterceptors(token);
-  return axiosInstanceWithToken.get(`${IP_ADD}/loans/${loanId}/download-agreement`, {
+  return axiosInstanceWithToken.get(`${IP_ADD_INVESTMENT}/loans/${loanId}/download-agreement`, {
     responseType: 'blob',
     timeout: 15000
   })

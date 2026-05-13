@@ -182,6 +182,14 @@ const savingsRepports = {
           icon: icons.IconCurrencyDollar
         }
       ]
+    },
+    {
+      id: 'accounting-light',
+      title: 'Comptabilité light',
+      type: 'item',
+      url: '/wekavit/accounting/light',
+      breadcrumbs: false,
+      icon: icons.IconCurrencyDollar
     }
   ]
 };

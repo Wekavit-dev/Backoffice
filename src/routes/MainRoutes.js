@@ -28,6 +28,7 @@ const EvolutionFrais = Loadable(lazy(() => import('views/fees/evolution')));
 const TopPayeurs = Loadable(lazy(() => import('views/fees/top-payers')));
 const TransactionsFrais = Loadable(lazy(() => import('views/fees/transactions')));
 const StatsParDevise = Loadable(lazy(() => import('views/fees/by-devise')));
+const AccountingLight = Loadable(lazy(() => import('views/accounting/light')));
 
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
@@ -81,6 +82,11 @@ const MainRoutes = {
       path: 'fees/by-devise',
       element: <StatsParDevise />,
       title: 'Statistiques des frais par devise'
+    },
+    {
+      path: 'accounting/light',
+      element: <AccountingLight />,
+      title: 'Comptabilité light'
     },
     {
       path: 'savings',

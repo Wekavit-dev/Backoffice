@@ -8,6 +8,7 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TablePagination from '@mui/material/TablePagination';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import CheckIcon from '@mui/icons-material/Check';
@@ -75,8 +76,8 @@ export default function CustomizedTables() {
   const [maxAmount, setMaxAmount] = useState('');
   const [withdrawn, setWithdrawn] = useState('all');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [, setTotalRecords] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
 
   // New states for lists from API
@@ -112,23 +113,16 @@ export default function CustomizedTables() {
         // The API controller does not support codeTransaction, so it's filtered client-side.
       };
 
-      await locekdSavesAPI
-        .filterSavingsForInvestment(params, globalState?.key)
-        .then((res) => {
-          console.log('res===>', res);
-          if (res.data) {
-            setSavings(res.data.data);
-            setTotalData(res.data.totalAmount);
-            setTotalInterests(res.data.totalInterest);
-            setTotalRecords(res.total);
-            setLoading(false);
-          }
-        })
-        .catch((err) => {
-          console.error('Failed to fetch savings data:', err);
-          setLoading(false);
-          // toast.error('Échec de la récupération des données d\'épargne.', { position: toast.POSITION.TOP_RIGHT });
-        });
+      const res = await locekdSavesAPI.filterSavingsForInvestment(params, globalState?.key);
+      if (res.data) {
+        setSavings(res.data.data || []);
+        setTotalData(res.data.totalAmount);
+        setTotalInterests(res.data.totalInterest);
+        setTotalRecords(Number(res.data.total || 0));
+      } else {
+        setSavings([]);
+        setTotalRecords(0);
+      }
 
       // if (res.data) {
       //   setSavings(res.data);
@@ -140,6 +134,8 @@ export default function CustomizedTables() {
     } catch (err) {
       console.error('Error fetching savings:', err);
       toast.error('Une erreur est survenue lors de la récupération des épargnes.', { position: toast.POSITION.TOP_RIGHT });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -245,6 +241,14 @@ export default function CustomizedTables() {
   const handleMaxAmountChange = handleChangeAndResetPage(setMaxAmount);
   const handleCurrencyChange = handleChangeAndResetPage(setSelectedCurrency);
   const handleWithdrawnChange = handleChangeAndResetPage(setWithdrawn);
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage + 1);
+  };
+
+  const handleRowsPerPageChange = (event) => {
+    setLimit(parseInt(event.target.value, 10));
+    setPage(1);
+  };
 
   // Client-side filter for codeTransaction (since API doesn't support it directly)
   // const filteredSavings = savings.filter((saving) => {
@@ -476,13 +480,13 @@ export default function CustomizedTables() {
           <TableBody>
             {loading ? (
               <TableRow sx={{ height: '300px' }}>
-                <StyledTableCell colSpan={11} align="center">
+                <StyledTableCell colSpan={7} align="center">
                   <CircularProgress size="2.8rem" color="success" />
                 </StyledTableCell>
               </TableRow>
             ) : savings.length === 0 ? (
               <TableRow>
-                <StyledTableCell colSpan={11} align="center">
+                <StyledTableCell colSpan={7} align="center">
                   Aucune épargne trouvée avec les filtres actuels.
                 </StyledTableCell>
               </TableRow>
@@ -506,6 +510,17 @@ export default function CustomizedTables() {
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        component="div"
+        rowsPerPageOptions={[10, 20, 50]}
+        count={totalRecords}
+        rowsPerPage={limit}
+        page={Math.max(page - 1, 0)}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        labelRowsPerPage="Lignes par page"
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count !== -1 ? count : to}`}
+      />
 
       {/* Modal for editing */}
       <Modal open={isModalOpen} onClose={handleCloseModal} aria-labelledby="modal-title" aria-describedby="modal-description">

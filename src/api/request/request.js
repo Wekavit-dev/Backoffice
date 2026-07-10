@@ -1,5 +1,5 @@
 export const handleResponse = async (response) => {
-  const validStatuses = [200, 201, 400, 401, 404];
+  const validStatuses = [200, 201, 202, 400, 401, 404];
   if (validStatuses.includes(response.status)) {
     return response;
   }

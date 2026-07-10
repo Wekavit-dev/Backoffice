@@ -6,6 +6,7 @@ import locekdSavesApi from './saves/locked';
 import LoansApi from './funds/loans';
 import ExpensesApi from './funds/expenses';
 import FundsApi from './funds/funds';
+import SssApi from './sss/sss';
 
 export const AuthentificationAPI = AuthentificationApi;
 export const DepositsAPI = DepositsApi;
@@ -15,3 +16,4 @@ export const locekdSavesAPI = locekdSavesApi;
 export const LoansAPI = LoansApi;
 export const ExpensesAPI = ExpensesApi;
 export const FundsAPI = FundsApi;
+export const SssAPI = SssApi;

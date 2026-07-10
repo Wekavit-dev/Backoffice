@@ -30,6 +30,14 @@ const TransactionsFrais = Loadable(lazy(() => import('views/fees/transactions'))
 const StatsParDevise = Loadable(lazy(() => import('views/fees/by-devise')));
 const AccountingLight = Loadable(lazy(() => import('views/accounting/light')));
 
+// Accompagnement (SSS)
+const SssDashboard = Loadable(lazy(() => import('views/sss')));
+const SssToday = Loadable(lazy(() => import('views/sss/TodayTasks')));
+const SssOverdue = Loadable(lazy(() => import('views/sss/OverdueTasks')));
+const SssPeople = Loadable(lazy(() => import('views/sss/People')));
+const SssPersonFiche = Loadable(lazy(() => import('views/sss/PersonFiche')));
+const SssSettings = Loadable(lazy(() => import('views/sss/Settings')));
+
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
 const UtilsColor = Loadable(lazy(() => import('views/utilities/Color')));
@@ -87,6 +95,36 @@ const MainRoutes = {
       path: 'accounting/light',
       element: <AccountingLight />,
       title: 'Comptabilité light'
+    },
+    {
+      path: 'sss',
+      element: <SssDashboard />,
+      title: 'Accompagnement — Vue du jour'
+    },
+    {
+      path: 'sss/today',
+      element: <SssToday />,
+      title: 'À faire aujourd’hui'
+    },
+    {
+      path: 'sss/overdue',
+      element: <SssOverdue />,
+      title: 'Actions en retard'
+    },
+    {
+      path: 'sss/people',
+      element: <SssPeople />,
+      title: 'Personnes à accompagner'
+    },
+    {
+      path: 'sss/people/:id',
+      element: <SssPersonFiche />,
+      title: 'Fiche personne'
+    },
+    {
+      path: 'sss/settings',
+      element: <SssSettings />,
+      title: 'Réglages d’accompagnement'
     },
     {
       path: 'savings',

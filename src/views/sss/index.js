@@ -28,7 +28,7 @@ import {
   AssignmentLate as AssignmentLateIcon,
   PriorityHigh as PriorityHighIcon,
   Campaign as CampaignIcon,
-  WavingHand as WavingHandIcon,
+  EmojiPeople as WavingHandIcon,
   NightsStay as NightsStayIcon,
   Star as StarIcon,
   RecordVoiceOver as RecordVoiceOverIcon

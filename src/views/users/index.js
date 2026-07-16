@@ -44,6 +44,8 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import { IconUsers, IconInbox } from '@tabler/icons';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AppContext } from 'AppContext';
 
 // project imports
@@ -87,6 +89,19 @@ const UsersPage = () => {
   const [tabValue, setTabValue] = useState(0);
   const [activitySearchTerm, setActivitySearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    prenom: '',
+    nom: '',
+    email: '',
+    phone: '',
+    profession: '',
+    genre: 'none',
+    birthDay: ''
+  });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const [generalActivities, setGeneralActivities] = useState([]);
   const [balanceActivities, setBalanceActivities] = useState([]);
@@ -224,8 +239,61 @@ const UsersPage = () => {
     setSelectedUserId(null);
   };
 
+  const handleOpenEditModal = (user) => {
+    setEditUser(user);
+    setEditForm({
+      prenom: user.prenom || '',
+      nom: user.nom || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      profession: user.profession || '',
+      genre: user.genre || 'none',
+      birthDay: user.birthDay || ''
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setEditUser(null);
+  };
+
+  const handleEditFieldChange = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editUser) return;
+    setIsSavingEdit(true);
+    try {
+      const response = await UsersApi.UpdateUser(editUser._id, editForm, globalState?.key);
+
+      const isSuccess =
+        response.status === 200 ||
+        response.status === 201 ||
+        (response.data && (response.data.status === 200 || response.data.status === 201)) ||
+        (response.data && response.data.code === 200);
+
+      if (isSuccess) {
+        setUsers((prev) => prev.map((u) => (u._id === editUser._id ? { ...u, ...editForm } : u)));
+        toast.success('Profil modifié avec succès !', { position: 'top-right' });
+        handleCloseEditModal();
+      } else {
+        toast.error(response?.data?.message || "Erreur lors de la modification du profil", { position: 'top-right' });
+      }
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      toast.error(error?.data?.message || error?.message || "Erreur lors de la modification du profil", {
+        position: 'top-right'
+      });
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   const handleEdit = () => {
-    console.log('Edit user:', selectedUserId);
+    const user = users.find((u) => u._id === selectedUserId);
+    if (user) handleOpenEditModal(user);
     handleMenuClose();
   };
 
@@ -561,6 +629,9 @@ const UsersPage = () => {
                       <IconButton onClick={() => handleViewDetails(user)} sx={{ color: 'primary.main' }}>
                         <VisibilityIcon />
                       </IconButton>
+                      <IconButton onClick={() => handleOpenEditModal(user)} sx={{ color: 'warning.main' }}>
+                        <EditIcon />
+                      </IconButton>
                       <IconButton onClick={(event) => handleMenuClick(event, user._id)} sx={{ color: 'text.secondary' }}>
                         <MoreVertIcon />
                       </IconButton>
@@ -594,6 +665,150 @@ const UsersPage = () => {
             Supprimer
           </MenuItem>
         </Menu>
+
+        {/* Edit User Modal */}
+        <Modal
+          open={editModalOpen}
+          onClose={handleCloseEditModal}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+          BackdropProps={{
+            timeout: 500,
+            sx: { bgcolor: 'rgba(0, 0, 0, 0.6)' }
+          }}
+        >
+          <Fade in={editModalOpen}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: { xs: '95%', sm: '500px' },
+                maxHeight: '95vh',
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+                overflow: 'hidden',
+                border: '1px solid rgba(0, 0, 0, 0.05)'
+              }}
+            >
+              <Box>
+                {/* Header */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
+                    borderBottom: '2px solid #e9ecef',
+                    p: 3
+                  }}
+                >
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography variant="h5" fontWeight="600" sx={{ color: '#1a1a1a' }}>
+                        Modifier le profil
+                      </Typography>
+                      {editUser && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {editUser.prenom} {editUser.nom}
+                        </Typography>
+                      )}
+                    </Box>
+                    <IconButton
+                      onClick={handleCloseEditModal}
+                      sx={{
+                        bgcolor: 'rgba(0, 0, 0, 0.04)',
+                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.08)' }
+                      }}
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+
+                {/* Form Content */}
+                <Box sx={{ p: 3, maxHeight: 'calc(95vh - 140px)', overflow: 'auto' }}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Prénom"
+                        value={editForm.prenom}
+                        onChange={(e) => handleEditFieldChange('prenom', e.target.value)}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField fullWidth label="Nom" value={editForm.nom} onChange={(e) => handleEditFieldChange('nom', e.target.value)} />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => handleEditFieldChange('email', e.target.value)}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Téléphone"
+                        value={editForm.phone}
+                        onChange={(e) => handleEditFieldChange('phone', e.target.value)}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        select
+                        fullWidth
+                        label="Genre"
+                        value={editForm.genre}
+                        onChange={(e) => handleEditFieldChange('genre', e.target.value)}
+                      >
+                        <MenuItem value="none">Non précisé</MenuItem>
+                        <MenuItem value="male">Homme</MenuItem>
+                        <MenuItem value="female">Femme</MenuItem>
+                      </TextField>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Profession"
+                        value={editForm.profession}
+                        onChange={(e) => handleEditFieldChange('profession', e.target.value)}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Date de naissance"
+                        type="date"
+                        InputLabelProps={{ shrink: true }}
+                        value={editForm.birthDay}
+                        onChange={(e) => handleEditFieldChange('birthDay', e.target.value)}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                    <Button variant="outlined" onClick={handleCloseEditModal} disabled={isSavingEdit}>
+                      Annuler
+                    </Button>
+                    <Button variant="contained" onClick={handleSaveEdit} disabled={isSavingEdit}>
+                      {isSavingEdit ? 'Enregistrement...' : 'Enregistrer'}
+                    </Button>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          </Fade>
+        </Modal>
 
         {/* Activity History Modal */}
         <Modal

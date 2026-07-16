@@ -37,7 +37,8 @@ import {
   SpeedDial,
   SpeedDialAction,
   SpeedDialIcon,
-  Fab
+  Fab,
+  Skeleton
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -71,7 +72,9 @@ import {
   Settings as SettingsIcon,
   Print as PrintIcon,
   Download as DownloadIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Flag as FlagIcon,
+  PersonAdd as PersonAddIcon
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
@@ -85,11 +88,19 @@ import {
   displayName,
   formatDateFr,
   formatMoney,
-  OUTCOME_LABELS
+  OUTCOME_LABELS,
+  telHref,
+  whatsappHref
 } from './labels';
 import { AlertChips, EmptyState, PersonAvatar, StageChip, StatusChip, UrgencyChip } from './components/Chips';
 import HealthMeter from './components/HealthMeter';
 import PhoneAction from './components/PhoneAction';
+
+const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
+const tealGradient = {
+  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
+};
 
 // Composant Row amélioré
 const Row = ({ label, value, color, icon, onClick }) => {
@@ -108,7 +119,7 @@ const Row = ({ label, value, color, icon, onClick }) => {
         transition: 'all 0.2s ease',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick ? {
-          bgcolor: alpha(theme.palette.primary.main, 0.04),
+          bgcolor: alpha(TEAL.main, 0.04),
         } : {}
       }}
       onClick={onClick}
@@ -159,11 +170,12 @@ const InfoCard = ({ title, icon, children, color, action, loading }) => {
       variant="outlined"
       sx={{
         p: 2.5,
-        borderRadius: 2.5,
-        borderColor: alpha(theme.palette.divider, 0.1),
+        borderRadius: 3,
+        borderColor: alpha(color || TEAL.main, 0.12),
+        bgcolor: alpha(color || TEAL.main, 0.02),
         transition: 'all 0.3s ease',
         '&:hover': {
-          borderColor: alpha(color || theme.palette.primary.main, 0.3),
+          borderColor: alpha(color || TEAL.main, 0.25),
           boxShadow: theme.shadows[2]
         }
       }}
@@ -505,7 +517,24 @@ const PersonFichePage = () => {
     <MainCard
       title={
         <Stack direction="row" spacing={2} alignItems="center">
-          <PersonAvatar user={identity} size={40} />
+          <Box
+            sx={{
+              p: 0.5,
+              borderRadius: '50%',
+              background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+              boxShadow: `0 4px 14px ${alpha(TEAL.main, 0.25)}`
+            }}
+          >
+            <Box
+              sx={{
+                borderRadius: '50%',
+                border: `2px solid ${theme.palette.background.paper}`,
+                overflow: 'hidden'
+              }}
+            >
+              <PersonAvatar user={identity} size={44} />
+            </Box>
+          </Box>
           <Box>
             <Typography variant="h3" sx={{ fontSize: { xs: '1.15rem', sm: '1.5rem' } }}>
               {displayName(identity)}
@@ -569,19 +598,22 @@ const PersonFichePage = () => {
           p: { xs: 2, sm: 3 },
           mb: 3,
           borderRadius: 3,
-          borderColor: isUrgent ? alpha(theme.palette.error.main, 0.3) : alpha(theme.palette.divider, 0.1),
-          bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.02) : 'background.paper',
+          borderColor: isUrgent ? alpha(theme.palette.error.main, 0.25) : alpha(TEAL.main, 0.12),
+          bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.02) : alpha(TEAL.main, 0.015),
           position: 'relative',
           overflow: 'hidden',
-          '&::before': isUrgent ? {
+          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.04)}`,
+          '&::before': {
             content: '""',
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
             height: 3,
-            background: `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`,
-          } : {}
+            background: isUrgent
+              ? `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`
+              : `linear-gradient(90deg, ${TEAL.main}, ${TEAL.dark})`,
+          }
         }}
       >
         <Grid container spacing={3}>
@@ -674,8 +706,13 @@ const PersonFichePage = () => {
             fontWeight: 600,
             minHeight: 48,
             '&.Mui-selected': {
-              color: theme.palette.primary.main,
+              color: TEAL.dark,
             }
+          },
+          '& .MuiTabs-indicator': {
+            backgroundColor: TEAL.main,
+            height: 3,
+            borderRadius: '3px 3px 0 0'
           }
         }}
       >
@@ -904,7 +941,7 @@ const PersonFichePage = () => {
                 startIcon={<SaveIcon />}
                 onClick={handleAddNote}
                 disabled={saving || !noteBody.trim()}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: 2, ...tealGradient }}
               >
                 {saving ? <CircularProgress size={20} /> : 'Enregistrer la note'}
               </Button>
@@ -1036,7 +1073,7 @@ const PersonFichePage = () => {
                 variant="contained"
                 onClick={handleSaveStage}
                 disabled={saving || !stageDraft}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: 2, ...tealGradient }}
               >
                 {saving ? <CircularProgress size={20} /> : 'Enregistrer l’étape'}
               </Button>
@@ -1069,7 +1106,7 @@ const PersonFichePage = () => {
                 variant="contained"
                 onClick={handleSaveNba}
                 disabled={saving}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: 2, ...tealGradient }}
               >
                 {saving ? <CircularProgress size={20} /> : 'Enregistrer l’action'}
               </Button>

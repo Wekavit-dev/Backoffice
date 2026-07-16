@@ -376,19 +376,27 @@ const PageHeader = ({
         <Paper
           elevation={elevation}
           sx={{
-            p: variant === 'compact' ? 2 : variant === 'minimal' ? 1.5 : 3,
+            p: variant === 'compact' ? 2 : variant === 'minimal' ? 1.5 : { xs: 2, sm: 3 },
             borderRadius: variant === 'hero' ? 4 : 3,
             bgcolor: variant === 'hero'
               ? `linear-gradient(135deg, ${alpha(mainColor, 0.05)}, ${alpha(mainColor, 0.01)})`
               : 'background.paper',
             border: variant === 'hero'
               ? `1px solid ${alpha(mainColor, 0.1)}`
-              : 'none',
+              : variant === 'default'
+                ? `1px solid ${alpha(theme.palette.divider, 0.12)}`
+                : 'none',
+            borderLeft: variant === 'default'
+              ? `4px solid ${mainColor}`
+              : undefined,
             transition: 'all 0.3s ease',
-            '&:hover': variant === 'hero' && {
+            '&:hover': variant === 'hero' ? {
               borderColor: alpha(mainColor, 0.2),
               boxShadow: theme.shadows[4]
-            }
+            } : variant === 'default' ? {
+              borderColor: alpha(mainColor, 0.15),
+              boxShadow: theme.shadows[1]
+            } : {}
           }}
         >
           {/* Breadcrumbs */}
@@ -397,8 +405,8 @@ const PageHeader = ({
           {/* En-tête principal */}
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
-            spacing={{ xs: 1.5, sm: 2 }}
-            alignItems={align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'}
+            spacing={{ xs: 2, sm: 2 }}
+            alignItems={{ xs: 'stretch', sm: align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start' }}
             justifyContent={align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'}
             sx={{
               width: '100%',
@@ -410,22 +418,25 @@ const PageHeader = ({
               <Zoom in={isLoaded || !animated} timeout={300}>
                 <Box
                   sx={{
-                    width: { xs: 40, sm: variant === 'compact' ? 36 : 48 },
-                    height: { xs: 40, sm: variant === 'compact' ? 36 : 48 },
-                    borderRadius: 2.5,
+                    width: { xs: 44, sm: variant === 'compact' ? 36 : 48 },
+                    height: { xs: 44, sm: variant === 'compact' ? 36 : 48 },
+                    borderRadius: variant === 'default' ? 2 : 2.5,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: alpha(mainColor, 0.1),
+                    bgcolor: alpha(mainColor, variant === 'default' ? 0.06 : 0.1),
                     color: mainColor,
                     flexShrink: 0,
+                    border: variant === 'default'
+                      ? `1px solid ${alpha(mainColor, 0.1)}`
+                      : 'none',
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      transform: 'scale(1.05) rotate(-5deg)',
-                      bgcolor: alpha(mainColor, 0.15)
+                      transform: 'scale(1.03)',
+                      bgcolor: alpha(mainColor, 0.1)
                     },
                     '& svg': {
-                      fontSize: { xs: 20, sm: variant === 'compact' ? 18 : 24 }
+                      fontSize: { xs: 22, sm: variant === 'compact' ? 18 : 24 }
                     }
                   }}
                 >
@@ -444,16 +455,22 @@ const PageHeader = ({
             >
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
-                spacing={1}
-                alignItems={align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'}
+                spacing={{ xs: 1.5, sm: 1 }}
+                alignItems={{ xs: 'stretch', sm: align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start' }}
                 justifyContent={align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'}
               >
-                <Box sx={{ flex: 1, width: '100%' }}>
+                <Box sx={{ flex: 1, width: '100%', minWidth: 0 }}>
                   {renderContent()}
                 </Box>
 
                 {/* Actions */}
-                {renderActions()}
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: { xs: 'flex-start', sm: align === 'center' ? 'center' : 'flex-end' },
+                  flexShrink: 0
+                }}>
+                  {renderActions()}
+                </Box>
               </Stack>
             </Box>
           </Stack>

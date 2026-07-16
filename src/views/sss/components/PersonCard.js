@@ -57,7 +57,7 @@ import {
 } from '@mui/icons-material';
 import { styled, useTheme as useMuiTheme } from '@mui/material/styles';
 
-import { displayName, maskPhone, telHref, whatsappHref, formatDateFr } from '../labels';
+import { displayName, maskPhone, telHref, whatsappHref, formatDateFr, URGENCY_COLORS } from '../labels';
 import { AlertChips, PersonAvatar, StageChip, UrgencyChip } from './Chips';
 import HealthMeter from './HealthMeter';
 
@@ -65,29 +65,15 @@ import HealthMeter from './HealthMeter';
 const CardWrapper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2.5),
   borderRadius: theme.spacing(2),
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  backgroundColor: alpha(theme.palette.background.paper, 0.95),
-  backdropFilter: 'blur(10px)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+  backgroundColor: theme.palette.background.paper,
+  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    background: 'transparent',
-    transition: 'all 0.3s ease',
-  },
   '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[8],
-    borderColor: alpha(theme.palette.primary.main, 0.2),
-    '&::before': {
-      background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-    },
+    transform: 'translateY(-3px)',
+    boxShadow: `0 8px 24px ${alpha('#0D9488', 0.1)}`,
+    borderColor: alpha('#0D9488', 0.25),
     '& .action-buttons': {
       opacity: 1,
       transform: 'translateX(0)',
@@ -152,6 +138,11 @@ const PersonCard = ({
   const phone = user.phone;
   const daysSince = profile.ledgerSnapshot?.daysSinceLastActivity;
   const hasUrgency = profile.urgency === 'critical' || profile.urgency === 'high';
+  const urgencyStripe = (() => {
+    const colorKey = URGENCY_COLORS[profile.urgency];
+    if (!colorKey || colorKey === 'default') return theme.palette.grey[400];
+    return theme.palette[colorKey]?.main || theme.palette.grey[400];
+  })();
 
   // Animation au montage
   useEffect(() => {
@@ -318,8 +309,10 @@ const PersonCard = ({
       sx={{
         p: 1.5,
         cursor: 'pointer',
+        borderLeft: `4px solid ${urgencyStripe}`,
         '&:hover': {
           transform: 'translateY(-2px)',
+          borderLeftColor: urgencyStripe,
         }
       }}
     >
@@ -353,12 +346,14 @@ const PersonCard = ({
       sx={{
         p: 1,
         borderRadius: 2,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+        borderLeft: `4px solid ${urgencyStripe}`,
         cursor: 'pointer',
-        transition: 'all 0.3s ease',
+        transition: 'all 0.25s ease',
         '&:hover': {
-          borderColor: theme.palette.primary.main,
-          bgcolor: alpha(theme.palette.primary.main, 0.02)
+          borderColor: alpha(urgencyStripe, 0.35),
+          borderLeftColor: urgencyStripe,
+          bgcolor: alpha(urgencyStripe, 0.03)
         }
       }}
       onClick={onOpen}
@@ -385,8 +380,15 @@ const PersonCard = ({
         onMouseLeave={() => setIsHovered(false)}
         sx={{
           cursor: interactions ? 'pointer' : 'default',
+          borderLeft: `4px solid ${urgencyStripe}`,
           borderColor: selected ? theme.palette.primary.main : undefined,
           bgcolor: selected ? alpha(theme.palette.primary.main, 0.04) : undefined,
+          '&:hover': {
+            borderLeftColor: urgencyStripe,
+            boxShadow: hasUrgency
+              ? `0 8px 24px ${alpha(urgencyStripe, 0.14)}`
+              : undefined,
+          },
           ...(isPinned && {
             borderColor: alpha(theme.palette.warning.main, 0.3),
             bgcolor: alpha(theme.palette.warning.main, 0.02),

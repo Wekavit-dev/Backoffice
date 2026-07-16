@@ -44,7 +44,8 @@ import {
   Collapse,
   ToggleButton,
   ToggleButtonGroup,
-  Divider
+  Divider,
+  Skeleton
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -98,6 +99,12 @@ import {
 import PageHeader from './components/PageHeader';
 import TaskCard from './components/TaskCard';
 import TaskActionDialog from './components/TaskActionDialog';
+
+const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
+const tealGradient = {
+  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
+};
 
 // Composant de statistiques
 const StatsCard = ({ title, value, subtitle, icon, color, onClick, loading }) => {
@@ -178,11 +185,11 @@ const QuickFilterChips = ({ filters, onFilterChange, onClear }) => {
           onDelete={() => onFilterChange(filter.id)}
           size="small"
           sx={{
-            bgcolor: alpha(theme.palette.primary.main, 0.08),
-            color: theme.palette.primary.main,
-            borderColor: alpha(theme.palette.primary.main, 0.2),
+            bgcolor: alpha(TEAL.main, 0.08),
+            color: TEAL.dark,
+            borderColor: alpha(TEAL.main, 0.2),
             '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.12)
+              bgcolor: alpha(TEAL.main, 0.12)
             }
           }}
         />
@@ -421,10 +428,18 @@ const TodayTasksPage = () => {
 
   // Rendu du tableau
   const renderTable = () => (
-    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+    <TableContainer
+      component={Paper}
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
+        overflow: 'hidden',
+        borderColor: alpha(TEAL.main, 0.12)
+      }}
+    >
       <Table size="small">
         <TableHead>
-          <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+          <TableRow sx={{ bgcolor: alpha(TEAL.main, 0.04) }}>
             <TableCell width={44}>#</TableCell>
             <TableCell>Personne</TableCell>
             <TableCell>Action</TableCell>
@@ -446,14 +461,17 @@ const TodayTasksPage = () => {
                 <TableRow
                   hover
                   sx={{
-                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) },
+                    '&:hover': { bgcolor: alpha(TEAL.main, 0.03) },
                     bgcolor: isCarried
                       ? alpha(theme.palette.warning.main, 0.04)
                       : isUrgent
                         ? alpha(theme.palette.error.main, 0.02)
                         : 'inherit',
-                    borderLeft: isUrgent ? `3px solid ${theme.palette.error.main}` : 'none',
-                    borderLeft: isCarried ? `3px solid ${theme.palette.warning.main}` : undefined,
+                    borderLeft: isCarried
+                      ? `3px solid ${theme.palette.warning.main}`
+                      : isUrgent
+                        ? `3px solid ${theme.palette.error.main}`
+                        : 'none',
                     position: 'relative',
                     '&::after': isCarried ? {
                       content: '""',
@@ -561,12 +579,12 @@ const TodayTasksPage = () => {
                         onClick={() => openTask(task)}
                         sx={{
                           borderRadius: 2,
-                          background: isUrgent
-                            ? `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`
-                            : undefined,
-                          '&:hover': isUrgent ? {
-                            background: `linear-gradient(135deg, ${theme.palette.error.dark}, ${theme.palette.warning.dark})`,
-                          } : undefined
+                          ...(isUrgent ? {
+                            background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`,
+                            '&:hover': {
+                              background: `linear-gradient(135deg, ${theme.palette.error.dark}, ${theme.palette.warning.dark})`,
+                            }
+                          } : tealGradient)
                         }}
                       >
                         Traiter
@@ -771,7 +789,23 @@ const TodayTasksPage = () => {
       )}
 
       {/* Filtres */}
-      <Box sx={{ mt: 2, mb: 3 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          mt: 2,
+          mb: 3,
+          p: { xs: 1.5, sm: 2 },
+          borderRadius: 3,
+          borderColor: alpha(TEAL.main, 0.12),
+          bgcolor: alpha(TEAL.main, 0.02)
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+          <FilterIcon sx={{ fontSize: 18, color: TEAL.dark }} />
+          <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+            Filtres
+          </Typography>
+        </Stack>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
             <TextField
@@ -789,7 +823,7 @@ const TodayTasksPage = () => {
                     <ClearIcon fontSize="small" />
                   </IconButton>
                 ),
-                sx: { borderRadius: 2 }
+                sx: { borderRadius: 2, bgcolor: 'background.paper' }
               }}
             />
           </Grid>
@@ -801,6 +835,7 @@ const TodayTasksPage = () => {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               fullWidth
+              sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
               SelectProps={{ sx: { borderRadius: 2 } }}
             >
               <MenuItem value="open">À traiter</MenuItem>
@@ -821,6 +856,7 @@ const TodayTasksPage = () => {
               value={filterUrgency}
               onChange={(e) => setFilterUrgency(e.target.value)}
               fullWidth
+              sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
               SelectProps={{ sx: { borderRadius: 2 } }}
             >
               <MenuItem value="">Toutes</MenuItem>
@@ -840,7 +876,14 @@ const TodayTasksPage = () => {
                 height: '100%',
                 '& .MuiToggleButton-root': {
                   borderRadius: 2,
-                  px: 2
+                  px: 2,
+                  bgcolor: 'background.paper'
+                },
+                '& .MuiToggleButton-root.Mui-selected': {
+                  bgcolor: alpha(TEAL.main, 0.12),
+                  color: TEAL.dark,
+                  borderColor: alpha(TEAL.main, 0.3),
+                  '&:hover': { bgcolor: alpha(TEAL.main, 0.18) }
                 }
               }}
             >
@@ -853,7 +896,7 @@ const TodayTasksPage = () => {
             </ToggleButtonGroup>
           </Grid>
         </Grid>
-      </Box>
+      </Paper>
 
       {/* Filtres actifs */}
       {getActiveFilters().length > 0 && (
@@ -877,7 +920,7 @@ const TodayTasksPage = () => {
             : "Bravo, vous avez terminé toutes les tâches du jour. Profitez du reste de votre journée !"}
           action={
             (search || filterStatus !== 'open' || filterUrgency) && (
-              <Button variant="contained" onClick={clearAllFilters}>
+              <Button variant="contained" onClick={clearAllFilters} sx={{ borderRadius: 2, ...tealGradient }}>
                 Réinitialiser les filtres
               </Button>
             )

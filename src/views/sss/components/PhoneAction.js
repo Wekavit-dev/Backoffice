@@ -21,6 +21,7 @@ import {
   ClickAwayListener,
   Popper,
   Button,
+  Divider,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -46,7 +47,7 @@ import {
   Info as InfoIcon,
   PhoneEnabled as PhoneEnabledIcon,
   PhoneDisabled as PhoneDisabledIcon,
-  WifiCall as WifiCallIcon,
+  WifiCalling as WifiCallIcon,
   Videocam as VideoCallIcon,
   QrCode as QrCodeIcon,
   PersonAdd as PersonAddIcon,
@@ -58,15 +59,17 @@ import {
 import { styled } from '@mui/material/styles';
 import { maskPhone, telHref, whatsappHref } from '../labels';
 
+const TEAL = { main: '#0D9488', dark: '#0F766E' };
+
 // Styles personnalisés
 const PhoneContainer = styled(Paper)(({ theme, isHovered }) => ({
   padding: theme.spacing(0.5, 1),
   borderRadius: theme.spacing(2),
   backgroundColor: isHovered
-    ? alpha(theme.palette.primary.main, 0.04)
+    ? alpha(TEAL.main, 0.04)
     : 'transparent',
   border: `1px solid ${isHovered
-    ? alpha(theme.palette.primary.main, 0.1)
+    ? alpha(TEAL.main, 0.15)
     : 'transparent'}`,
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   display: 'inline-flex',
@@ -74,8 +77,11 @@ const PhoneContainer = styled(Paper)(({ theme, isHovered }) => ({
   gap: theme.spacing(0.5),
   cursor: 'default',
   '&:hover': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.04),
-    borderColor: alpha(theme.palette.primary.main, 0.1),
+    backgroundColor: alpha(TEAL.main, 0.05),
+    borderColor: alpha(TEAL.main, 0.18),
+  },
+  '&:hover .phone-action-btn': {
+    opacity: 1
   }
 }));
 
@@ -95,20 +101,22 @@ const PhoneNumber = styled(Typography)(({ theme, isRevealed, isHovered }) => ({
     left: 0,
     right: 0,
     height: 1,
-    background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-    opacity: isHovered ? 0.5 : 0,
-    transition: 'opacity 0.3s ease'
+    background: `linear-gradient(90deg, ${TEAL.main}, ${TEAL.dark})`,
+    opacity: isHovered ? 0.6 : 0,
+    transition: 'opacity 0.25s ease'
   } : {}
 }));
 
 const ActionButton = styled(IconButton)(({ theme, color }) => ({
-  transition: 'all 0.3s ease',
+  transition: 'all 0.25s ease',
   padding: 4,
+  opacity: 0.5,
   '&:hover': {
-    transform: 'scale(1.1) rotate(-5deg)',
+    transform: 'scale(1.12)',
+    opacity: 1,
     backgroundColor: color
-      ? alpha(theme.palette[color].main, 0.1)
-      : alpha(theme.palette.primary.main, 0.1),
+      ? alpha(theme.palette[color].main, 0.12)
+      : alpha(TEAL.main, 0.1),
   },
   '&:active': {
     transform: 'scale(0.95)',
@@ -341,8 +349,9 @@ const PhoneAction = ({
           <PhoneEnabledIcon
             sx={{
               fontSize: isSmall ? 16 : isLarge ? 24 : 20,
-              color: error ? theme.palette.error.main : theme.palette.primary.main,
-              opacity: disabled ? 0.5 : 1
+              color: error ? theme.palette.error.main : TEAL.main,
+              opacity: disabled ? 0.5 : 1,
+              transition: 'color 0.2s ease'
             }}
           />
         )}
@@ -370,16 +379,13 @@ const PhoneAction = ({
         {renderQuality()}
 
         {!disabled && !loading && !error && (
-          <Stack direction="row" spacing={0.25} alignItems="center">
+          <Stack direction="row" spacing={0.25} alignItems="center" sx={{ opacity: revealed ? 1 : undefined }}>
             {allowReveal && (
               <Tooltip title={revealed ? 'Cacher le numéro' : 'Afficher le numéro'} placement={tooltipPlacement}>
                 <ActionButton
                   size="small"
+                  className="phone-action-btn"
                   onClick={handleToggleReveal}
-                  sx={{
-                    opacity: isHovered ? 1 : 0.6,
-                    transition: 'opacity 0.3s ease'
-                  }}
                 >
                   {revealed ? <HideIcon fontSize="small" /> : <ShowIcon fontSize="small" />}
                 </ActionButton>
@@ -391,12 +397,9 @@ const PhoneAction = ({
                 <Tooltip title="Appeler" placement={tooltipPlacement}>
                   <ActionButton
                     size="small"
+                    className="phone-action-btn"
                     color="primary"
                     onClick={handleCall}
-                    sx={{
-                      opacity: isHovered ? 1 : 0.6,
-                      transition: 'opacity 0.3s ease'
-                    }}
                   >
                     <CallIcon fontSize="small" />
                   </ActionButton>
@@ -405,12 +408,9 @@ const PhoneAction = ({
                 <Tooltip title="WhatsApp" placement={tooltipPlacement}>
                   <ActionButton
                     size="small"
+                    className="phone-action-btn"
                     color="success"
                     onClick={handleWhatsApp}
-                    sx={{
-                      opacity: isHovered ? 1 : 0.6,
-                      transition: 'opacity 0.3s ease'
-                    }}
                   >
                     <WhatsAppIcon fontSize="small" />
                   </ActionButton>
@@ -419,14 +419,11 @@ const PhoneAction = ({
                 <Tooltip title="Plus d'actions" placement={tooltipPlacement}>
                   <ActionButton
                     size="small"
+                    className="phone-action-btn"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowPopper(!showPopper);
                       setAnchorEl(buttonRef.current);
-                    }}
-                    sx={{
-                      opacity: isHovered ? 1 : 0.6,
-                      transition: 'opacity 0.3s ease'
                     }}
                     ref={buttonRef}
                   >
@@ -465,7 +462,7 @@ const PhoneAction = ({
           >
             <ClickAwayListener onClickAway={() => setShowPopper(false)}>
               <Box>
-                <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+                <Box sx={{ p: 2, bgcolor: alpha(TEAL.main, 0.05) }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600}>
                     Actions disponibles
                   </Typography>
@@ -589,7 +586,11 @@ const PhoneAction = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleDialogClose}>Annuler</Button>
-        <Button onClick={handleDialogConfirm} variant="contained">
+        <Button onClick={handleDialogConfirm} variant="contained" sx={{
+          borderRadius: 2,
+          background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+          '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, #115E59)` }
+        }}>
           Confirmer
         </Button>
       </DialogActions>

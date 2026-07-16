@@ -39,7 +39,9 @@ import {
   Stepper,
   Step,
   StepLabel,
-  StepContent
+  StepContent,
+  Skeleton,
+  MenuItem
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -54,6 +56,7 @@ import {
   Schedule as ScheduleIcon,
   PeopleAlt as PeopleAltIcon,
   Settings as SettingsIcon,
+  NotificationsActive as NotificationsActiveIcon,
   NotificationsActive as NotificationIcon,
   Security as SecurityIcon,
   Speed as SpeedIcon,
@@ -66,13 +69,21 @@ import {
   Backup as BackupIcon,
   History as HistoryIcon,
   DoneAll as DoneAllIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  PowerSettingsNew as PowerSettingsNewIcon,
+  ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
 import MainCard from 'ui-component/cards/MainCard';
 import SssApi from 'api/sss/sss';
 import PageHeader from './components/PageHeader';
+
+const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
+const tealGradient = {
+  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
+};
 
 // Composant de carte de configuration
 const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, saving }) => {
@@ -98,12 +109,12 @@ const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, savi
       sx={{
         borderRadius: 3,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        bgcolor: alpha(color || theme.palette.primary.main, 0.02),
+        bgcolor: alpha(color || TEAL.main, 0.02),
         transition: 'all 0.3s ease',
         position: 'relative',
         overflow: 'hidden',
         '&:hover': {
-          borderColor: alpha(color || theme.palette.primary.main, 0.3),
+          borderColor: alpha(color || TEAL.main, 0.3),
           boxShadow: theme.shadows[4],
           transform: 'translateY(-2px)'
         },
@@ -114,7 +125,7 @@ const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, savi
           left: 0,
           right: 0,
           height: 3,
-          background: `linear-gradient(90deg, ${color || theme.palette.primary.main}, ${alpha(color || theme.palette.primary.main, 0.3)})`,
+          background: `linear-gradient(90deg, ${color || TEAL.main}, ${alpha(color || TEAL.main, 0.3)})`,
           opacity: 0.3,
           transition: 'opacity 0.3s ease'
         },
@@ -145,7 +156,7 @@ const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, savi
           <Stack direction="row" spacing={1.5} alignItems="center">
             {icon && (
               <Box sx={{
-                color: color || theme.palette.primary.main,
+                color: color || TEAL.main,
                 display: 'flex',
                 '& svg': { fontSize: 24 }
               }}>
@@ -291,8 +302,8 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
       sx={{
         p: 3,
         borderRadius: 3,
-        bgcolor: alpha(theme.palette.primary.main, 0.02),
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+        bgcolor: alpha(TEAL.main, 0.02),
+        border: `1px solid ${alpha(TEAL.main, 0.12)}`,
         mb: 3
       }}
     >
@@ -300,8 +311,8 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
         <Box sx={{
           p: 1,
           borderRadius: 2,
-          bgcolor: alpha(theme.palette.primary.main, 0.1),
-          color: theme.palette.primary.main
+          bgcolor: alpha(TEAL.main, 0.1),
+          color: TEAL.dark
         }}>
           <PlayArrowIcon />
         </Box>
@@ -316,8 +327,8 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
         <Chip
           label="3 étapes"
           size="small"
-          color="primary"
           variant="outlined"
+          sx={{ borderColor: alpha(TEAL.main, 0.3), color: TEAL.dark }}
         />
       </Stack>
 
@@ -334,7 +345,7 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
               StepIconProps={{
                 sx: {
                   '& .MuiStepIcon-root': {
-                    color: index === activeStep ? theme.palette.primary.main : theme.palette.grey[400],
+                    color: index === activeStep ? TEAL.dark : theme.palette.grey[400],
                     fontSize: 28
                   }
                 }
@@ -362,6 +373,13 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
                 }}
                 disabled={index === 0 && backfilling}
                 startIcon={index === 0 ? <BackfillIcon /> : <ArrowForwardIcon />}
+                sx={{
+                  borderRadius: 2,
+                  ...(index === 0 ? tealGradient : {
+                    borderColor: alpha(TEAL.main, 0.3),
+                    color: TEAL.dark
+                  })
+                }}
               >
                 {index === 0 && backfilling ? 'Initialisation...' : step.action}
               </Button>
@@ -563,12 +581,7 @@ const SettingsPage = () => {
                 size="small"
                 sx={{
                   borderRadius: 2,
-                  background: hasUnsavedChanges
-                    ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-                    : undefined,
-                  '&:hover': hasUnsavedChanges ? {
-                    background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`
-                  } : undefined
+                  ...(hasUnsavedChanges ? tealGradient : {})
                 }}
               >
                 {saving ? <CircularProgress size={20} /> : 'Enregistrer'}
@@ -666,7 +679,7 @@ const SettingsPage = () => {
             <ConfigCard
               title="Activation"
               icon={<PowerSettingsNewIcon />}
-              color={theme.palette.primary.main}
+              color={TEAL.main}
             >
               <ConfigOption
                 label="Module activé"
@@ -770,9 +783,10 @@ const SettingsPage = () => {
             borderRadius: 2,
             px: 2,
             py: 1,
-            bgcolor: alpha(theme.palette.primary.main, 0.04),
+            bgcolor: alpha(TEAL.main, 0.04),
+            color: TEAL.dark,
             '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
+              bgcolor: alpha(TEAL.main, 0.08),
             }
           }}
         >
@@ -792,7 +806,7 @@ const SettingsPage = () => {
               <ConfigCard
                 title="Limites de la liste"
                 icon={<SpeedIcon />}
-                color={theme.palette.primary.main}
+                color={TEAL.main}
               >
                 <ConfigOption
                   label="Actions max par jour"
@@ -906,7 +920,7 @@ const SettingsPage = () => {
                 size="small"
                 variant="contained"
                 onClick={() => setSaveDialogOpen(true)}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: 2, ...tealGradient }}
               >
                 Enregistrer maintenant
               </Button>
@@ -958,6 +972,7 @@ const SettingsPage = () => {
             onClick={handleSave}
             disabled={saving}
             startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+            sx={{ borderRadius: 2, ...tealGradient }}
           >
             {saving ? 'Enregistrement...' : 'Confirmer'}
           </Button>

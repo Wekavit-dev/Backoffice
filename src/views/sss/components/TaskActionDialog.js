@@ -67,6 +67,12 @@ import { ACTION_LABELS, OUTCOME_OPTIONS, TASK_STATUS_LABELS, displayName } from 
 import { ActionLabel, PersonAvatar, UrgencyChip, StageChip } from './Chips';
 import PhoneAction from './PhoneAction';
 
+const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
+const tealGradient = {
+  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
+};
+
 // Options de statut enrichies
 const STATUS_CHOICES = [
   {
@@ -119,7 +125,7 @@ const StepProgress = ({ currentStep, steps }) => {
               StepIconProps={{
                 sx: {
                   '& .MuiStepIcon-root': {
-                    color: index <= currentStep ? theme.palette.primary.main : theme.palette.grey[400],
+                    color: index <= currentStep ? TEAL.main : theme.palette.grey[400],
                   }
                 }
               }}
@@ -270,25 +276,36 @@ const TaskActionDialog = ({
 
   const renderStatusChips = () => (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-      {STATUS_CHOICES.map((option) => (
-        <Chip
-          key={option.value}
-          label={option.label}
-          icon={option.icon}
-          onClick={() => setStatus(option.value)}
-          color={status === option.value ? option.color : 'default'}
-          variant={status === option.value ? 'filled' : 'outlined'}
-          sx={{
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'scale(1.02)',
-            },
-            '& .MuiChip-icon': {
-              fontSize: 16
-            }
-          }}
-        />
-      ))}
+      {STATUS_CHOICES.map((option) => {
+        const isSelected = status === option.value;
+        const paletteColor = theme.palette[option.color]?.main || theme.palette.grey[500];
+        return (
+          <Chip
+            key={option.value}
+            label={option.label}
+            icon={option.icon}
+            onClick={() => setStatus(option.value)}
+            color={isSelected ? option.color : 'default'}
+            variant={isSelected ? 'filled' : 'outlined'}
+            sx={{
+              transition: 'all 0.2s ease',
+              fontWeight: isSelected ? 600 : 400,
+              transform: isSelected ? 'scale(1.03)' : 'scale(1)',
+              boxShadow: isSelected ? `0 2px 8px ${alpha(paletteColor, 0.25)}` : 'none',
+              borderWidth: isSelected ? 0 : 1,
+              borderColor: isSelected ? 'transparent' : alpha(paletteColor, 0.3),
+              '&:hover': {
+                transform: 'scale(1.02)',
+                borderColor: alpha(paletteColor, 0.5),
+                bgcolor: isSelected ? undefined : alpha(paletteColor, 0.06)
+              },
+              '& .MuiChip-icon': {
+                fontSize: 16
+              }
+            }}
+          />
+        );
+      })}
     </Box>
   );
 
@@ -454,11 +471,21 @@ const TaskActionDialog = ({
         <DialogTitle
           sx={{
             p: 3,
-            bgcolor: alpha(theme.palette.primary.main, 0.02),
-            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            bgcolor: alpha(TEAL.main, 0.03),
+            borderBottom: `1px solid ${alpha(TEAL.main, 0.1)}`,
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              background: `linear-gradient(90deg, ${TEAL.main}, ${TEAL.dark})`
+            }
           }}
         >
           <Stack spacing={0.5}>
@@ -495,7 +522,7 @@ const TaskActionDialog = ({
               width: 6,
             },
             '&::-webkit-scrollbar-thumb': {
-              backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              backgroundColor: alpha(TEAL.main, 0.2),
               borderRadius: 3,
             }
           }}
@@ -655,6 +682,7 @@ const TaskActionDialog = ({
             sx={{
               borderRadius: 2,
               minWidth: 120,
+              ...tealGradient,
               '&:disabled': {
                 opacity: 0.7
               }

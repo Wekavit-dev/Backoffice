@@ -59,10 +59,18 @@ import {
   Print as PrintIcon,
   PushPin as PushPinIcon,
   PushPinOutlined as PushPinOutlinedIcon,
-  DoneAll as DoneAllIcon
+  DoneAll as DoneAllIcon,
+  Warning as WarningIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
-import { displayName, maskPhone, telHref, whatsappHref, URGENCY_BG } from '../labels';
+import { displayName, maskPhone, telHref, whatsappHref, URGENCY_COLORS } from '../labels';
 import { ActionLabel, AlertChips, PersonAvatar, RankBadge, StageChip, StatusChip } from './Chips';
+
+const getUrgencyStripeColor = (theme, urgency) => {
+  const colorKey = URGENCY_COLORS[urgency];
+  if (!colorKey || colorKey === 'default') return theme.palette.grey[400];
+  return theme.palette[colorKey]?.main || theme.palette.grey[400];
+};
 
 // Composant d'indicateur de temps
 const TimeIndicator = ({ date, originDate }) => {
@@ -266,6 +274,7 @@ const TaskCard = ({
   const phone = task.idUser?.phone;
   const isUrgent = task.urgency === 'critical' || task.urgency === 'high';
   const isOverdue = showDate && new Date(task.date) < new Date();
+  const urgencyStripe = getUrgencyStripeColor(theme, task.urgency);
 
   // Animation au montage
   useEffect(() => {
@@ -383,13 +392,14 @@ const TaskCard = ({
       sx={{
         p: 1.5,
         borderRadius: 2,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        borderLeft: `4px solid ${URGENCY_BG[task.urgency] || 'grey.400'}`,
+        border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+        borderLeft: `4px solid ${urgencyStripe}`,
         cursor: 'pointer',
-        transition: 'all 0.3s ease',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          borderColor: theme.palette.primary.main,
-          boxShadow: theme.shadows[4],
+          borderColor: alpha(urgencyStripe, 0.5),
+          borderLeftColor: urgencyStripe,
+          boxShadow: `0 6px 20px ${alpha(urgencyStripe, 0.12)}`,
           transform: 'translateY(-2px)'
         }
       }}
@@ -462,31 +472,24 @@ const TaskCard = ({
           sx={{
             p: 2.5,
             borderRadius: 3,
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            borderLeft: `4px solid ${URGENCY_BG[task.urgency] || 'grey.400'}`,
+            border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+            borderLeft: `4px solid ${urgencyStripe}`,
             bgcolor: task.status === 'carried_over'
               ? alpha(theme.palette.warning.main, 0.04)
               : isOverdue
                 ? alpha(theme.palette.error.main, 0.02)
                 : 'background.paper',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: isHovered ? 'translateY(-4px)' : 'none',
-            boxShadow: isHovered ? theme.shadows[8] : theme.shadows[1],
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: isHovered ? 'translateY(-3px)' : 'none',
+            boxShadow: isHovered
+              ? `0 8px 24px ${alpha(urgencyStripe, 0.14)}`
+              : theme.shadows[1],
             position: 'relative',
             overflow: 'hidden',
             cursor: selectable ? 'pointer' : 'default',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 2,
-              background: isUrgent
-                ? `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`
-                : 'transparent',
-              opacity: isUrgent ? 1 : 0,
-              transition: 'opacity 0.3s ease'
+            '&:hover': {
+              borderColor: alpha(urgencyStripe, 0.35),
+              borderLeftColor: urgencyStripe,
             },
             ...(selected && {
               borderColor: theme.palette.primary.main,

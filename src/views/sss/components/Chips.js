@@ -351,37 +351,58 @@ export const EmptyState = ({ title, subtitle, action, icon, loading = false }) =
     <Fade in>
       <Box
         sx={{
-          py: 8,
-          px: 3,
+          py: { xs: 6, sm: 8 },
+          px: { xs: 2.5, sm: 4 },
           textAlign: 'center',
-          bgcolor: alpha(theme.palette.grey[50], 0.5),
+          bgcolor: alpha(theme.palette.grey[50], 0.6),
           borderRadius: 3,
           border: '2px dashed',
-          borderColor: alpha(theme.palette.divider, 0.3),
+          borderColor: alpha(theme.palette.divider, 0.35),
           transition: 'all 0.3s ease',
           '&:hover': {
-            borderColor: alpha(theme.palette.primary.main, 0.3),
-            bgcolor: alpha(theme.palette.primary.main, 0.02),
+            borderColor: alpha('#0D9488', 0.35),
+            bgcolor: alpha('#0D9488', 0.02),
           }
         }}
       >
         {icon && (
           <Box sx={{
-            mb: 2,
+            mb: 3,
             display: 'inline-flex',
-            p: 2,
-            borderRadius: '50%',
-            bgcolor: alpha(theme.palette.primary.main, 0.08),
-            color: 'primary.main'
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              inset: -8,
+              borderRadius: '50%',
+              border: `2px dashed ${alpha('#0D9488', 0.2)}`,
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: -4,
+              borderRadius: '50%',
+              bgcolor: alpha('#14B8A6', 0.06),
+            }
           }}>
-            {icon}
+            <Box sx={{
+              position: 'relative',
+              p: 2.5,
+              borderRadius: '50%',
+              bgcolor: alpha('#0D9488', 0.1),
+              color: '#0D9488',
+              boxShadow: `0 4px 20px ${alpha('#0D9488', 0.15)}`,
+              '& svg': { fontSize: 40 }
+            }}>
+              {icon}
+            </Box>
           </Box>
         )}
-        <Typography variant="h5" fontWeight={700} gutterBottom>
+        <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mb: 1 }}>
           {title}
         </Typography>
         {subtitle && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 480, mx: 'auto' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 440, mx: 'auto', lineHeight: 1.6 }}>
             {subtitle}
           </Typography>
         )}
@@ -414,6 +435,10 @@ export const StatCard = ({
   const theme = useTheme();
   const [hovered, setHovered] = useState(false);
 
+  const resolvedColor = typeof color === 'string' && color.includes('.')
+    ? theme.palette[color.split('.')[0]]?.[color.split('.')[1]] || theme.palette.primary.main
+    : color;
+
   if (loading) {
     return (
       <Card elevation={0} sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
@@ -443,33 +468,24 @@ export const StatCard = ({
       sx={{
         borderRadius: 3,
         border: '1px solid',
-        borderColor: hovered ? color : alpha(theme.palette.divider, 0.5),
-        bgcolor: hovered ? alpha(color, 0.02) : 'background.paper',
+        borderColor: hovered ? alpha(resolvedColor, 0.4) : alpha(theme.palette.divider, 0.5),
+        bgcolor: hovered ? alpha(resolvedColor, 0.03) : 'background.paper',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: hovered && onClick ? 'translateY(-4px)' : 'none',
-        boxShadow: hovered && onClick ? theme.shadows[4] : 'none',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: hovered && onClick ? 'translateY(-3px)' : 'none',
+        boxShadow: hovered && onClick ? `0 8px 24px ${alpha(resolvedColor, 0.12)}` : 'none',
         position: 'relative',
         overflow: 'hidden',
-        '&::before': hovered ? {
+        '&::before': {
           content: '""',
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           height: 3,
-          bgcolor: color,
-          transition: 'all 0.3s ease'
-        } : {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          bgcolor: color,
-          opacity: 0.3,
-          transition: 'all 0.3s ease'
+          bgcolor: resolvedColor,
+          opacity: hovered ? 1 : 0.45,
+          transition: 'opacity 0.25s ease'
         }
       }}
     >
@@ -494,20 +510,24 @@ export const StatCard = ({
         <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="caption" sx={{
-              color: alpha(theme.palette.text.primary, 0.6),
+              color: alpha(theme.palette.text.primary, 0.55),
               fontWeight: 600,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase'
+              letterSpacing: '0.6px',
+              textTransform: 'uppercase',
+              fontSize: '0.65rem'
             }}>
               {title}
             </Typography>
             {icon && (
               <Box sx={{
-                color: color,
-                opacity: 0.85,
+                color: resolvedColor,
+                opacity: hovered ? 1 : 0.7,
                 display: 'flex',
-                transition: 'transform 0.3s ease',
-                transform: hovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1)'
+                p: 0.75,
+                borderRadius: 1.5,
+                bgcolor: alpha(resolvedColor, 0.08),
+                transition: 'all 0.25s ease',
+                transform: hovered ? 'scale(1.05)' : 'scale(1)'
               }}>
                 {icon}
               </Box>
@@ -516,9 +536,10 @@ export const StatCard = ({
 
           <Box>
             <Typography variant="h2" sx={{
-              color,
-              fontWeight: 700,
-              fontSize: { xs: '2rem', sm: '2.5rem' }
+              color: resolvedColor,
+              fontWeight: 800,
+              fontSize: { xs: '1.75rem', sm: '2.25rem' },
+              lineHeight: 1.1
             }}>
               {value}
             </Typography>

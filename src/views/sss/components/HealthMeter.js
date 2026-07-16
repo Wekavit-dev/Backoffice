@@ -95,9 +95,14 @@ const HealthMeter = ({
   const idx = Math.max(0, LEVEL_ORDER.indexOf(level));
   const color = HEALTH_COLORS[level] || 'default';
   const label = HEALTH_LABELS[level] || 'Inconnu';
-  const barColor = color === 'default' ? 'grey.400' : `${color}.main`;
   const config = LEVEL_CONFIG[level] || LEVEL_CONFIG.good;
   const LevelIcon = config.icon;
+
+  // Couleur du thème via HEALTH_COLORS
+  const themeColor = useMemo(() => {
+    if (color === 'default') return theme.palette.grey[500];
+    return theme.palette[color]?.main || theme.palette.primary.main;
+  }, [color, theme]);
 
   // Animation au montage
   useEffect(() => {
@@ -113,12 +118,6 @@ const HealthMeter = ({
     return (idx / (LEVEL_ORDER.length - 1)) * 100;
   }, [score, idx]);
 
-  // Couleur du thème
-  const themeColor = useMemo(() => {
-    if (color === 'default') return theme.palette.grey[500];
-    return theme.palette[color]?.main || theme.palette.primary.main;
-  }, [color, theme]);
-
   // Icône de batterie basée sur le score
   const BatteryIcon = useMemo(() => {
     if (normalizedScore >= 80) return BatteryFullIcon;
@@ -130,16 +129,18 @@ const HealthMeter = ({
 
   // Variante "bars" - Version originale améliorée
   const renderBars = () => (
-    <Stack spacing={0.5} sx={{ minWidth: dense ? 72 : 92 }}>
+    <Stack spacing={dense ? 0.25 : 0.5} sx={{ minWidth: dense ? 64 : 92 }}>
       <Stack direction="row" spacing={1} alignItems="center">
         {showLabel && (
           <Typography
-            variant={size === 'small' ? 'caption' : 'body2'}
+            variant={dense || size === 'small' ? 'caption' : 'body2'}
             fontWeight={700}
-            color={color === 'default' ? 'text.secondary' : `${color}.main`}
             sx={{
+              color: themeColor,
               transition: 'color 0.3s ease',
-              flex: 1
+              flex: 1,
+              fontSize: dense ? '0.65rem' : undefined,
+              lineHeight: dense ? 1.2 : undefined
             }}
           >
             {label}
@@ -147,7 +148,7 @@ const HealthMeter = ({
           </Typography>
         )}
         {!showLabel && score != null && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: dense ? '0.65rem' : undefined }}>
             {score}%
           </Typography>
         )}
@@ -155,7 +156,7 @@ const HealthMeter = ({
 
       <Stack
         direction="row"
-        spacing={0.5}
+        spacing={dense ? 0.35 : 0.5}
         sx={{
           opacity: animate ? 1 : 0,
           transform: animate ? 'translateX(0)' : 'translateX(-10px)',
@@ -171,10 +172,10 @@ const HealthMeter = ({
           >
             <Box
               sx={{
-                height: size === 'small' ? 4 : size === 'large' ? 8 : 6,
+                height: dense ? 4 : size === 'small' ? 4 : size === 'large' ? 8 : 6,
                 flex: 1,
                 borderRadius: 3,
-                bgcolor: i <= idx ? barColor : alpha(theme.palette.grey[200], 0.5),
+                bgcolor: i <= idx ? themeColor : alpha(theme.palette.grey[300], 0.45),
                 transition: 'all 0.4s ease',
                 position: 'relative',
                 overflow: 'hidden',
@@ -225,7 +226,7 @@ const HealthMeter = ({
                 width: size === 'small' ? 3 : size === 'large' ? 6 : 4,
                 height: `${((i + 1) / 4) * 100}%`,
                 borderRadius: 1,
-                bgcolor: i <= idx ? barColor : alpha(theme.palette.grey[200], 0.5),
+                bgcolor: i <= idx ? themeColor : alpha(theme.palette.grey[300], 0.45),
                 transition: 'all 0.3s ease',
                 transform: hovered ? `scaleY(${1 + (i / 10)})` : 'scaleY(1)',
                 transformOrigin: 'bottom'
@@ -240,7 +241,7 @@ const HealthMeter = ({
           <Typography
             variant={size === 'small' ? 'caption' : 'body2'}
             fontWeight={700}
-            color={color === 'default' ? 'text.secondary' : `${color}.main`}
+            sx={{ color: themeColor }}
           >
             {label}
           </Typography>
@@ -298,7 +299,7 @@ const HealthMeter = ({
             }}
           >
             {score != null ? (
-              <Typography variant={size === 'small' ? 'caption' : 'h6'} fontWeight={700} color={themeColor}>
+              <Typography variant={size === 'small' ? 'caption' : 'h6'} fontWeight={700} sx={{ color: themeColor }}>
                 {Math.round(normalizedScore)}%
               </Typography>
             ) : (
@@ -421,7 +422,7 @@ const HealthMeter = ({
           />
         </Box>
         {showLabel && (
-          <Typography variant="caption" fontWeight={600} color={themeColor}>
+          <Typography variant="caption" fontWeight={600} sx={{ color: themeColor }}>
             {label}
           </Typography>
         )}

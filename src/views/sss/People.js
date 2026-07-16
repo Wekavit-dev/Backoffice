@@ -45,7 +45,8 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
-  Collapse
+  Collapse,
+  Skeleton
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -105,6 +106,12 @@ import {
 import HealthMeter from './components/HealthMeter';
 import PageHeader from './components/PageHeader';
 import PersonCard from './components/PersonCard';
+
+const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
+const tealGradient = {
+  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
+};
 
 // Composant de statistiques
 const StatsCard = ({ title, value, subtitle, icon, color, onClick, loading }) => {
@@ -219,8 +226,14 @@ const AdvancedFilters = ({ filters, onFilterChange, onClear }) => {
           startIcon={<FilterAltIcon />}
           onClick={() => setExpanded(!expanded)}
           variant={activeFilters.length > 0 ? 'contained' : 'outlined'}
-          color={activeFilters.length > 0 ? 'primary' : 'inherit'}
-          sx={{ borderRadius: 2 }}
+          sx={{
+            borderRadius: 2,
+            ...(activeFilters.length > 0 ? tealGradient : {
+              borderColor: alpha(TEAL.main, 0.3),
+              color: TEAL.dark,
+              '&:hover': { borderColor: TEAL.main, bgcolor: alpha(TEAL.main, 0.04) }
+            })
+          }}
         >
           Filtres {activeFilters.length > 0 && `(${activeFilters.length})`}
         </Button>
@@ -232,9 +245,9 @@ const AdvancedFilters = ({ filters, onFilterChange, onClear }) => {
             onDelete={() => onFilterChange(filter.id, '')}
             size="small"
             sx={{
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
-              color: theme.palette.primary.main,
-              borderColor: alpha(theme.palette.primary.main, 0.2),
+              bgcolor: alpha(TEAL.main, 0.08),
+              color: TEAL.dark,
+              borderColor: alpha(TEAL.main, 0.2),
             }}
           />
         ))}
@@ -252,9 +265,9 @@ const AdvancedFilters = ({ filters, onFilterChange, onClear }) => {
           sx={{
             mt: 2,
             p: 2,
-            borderRadius: 2,
-            bgcolor: alpha(theme.palette.background.default, 0.5),
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+            borderRadius: 3,
+            bgcolor: alpha(TEAL.main, 0.02),
+            border: `1px solid ${alpha(TEAL.main, 0.12)}`
           }}
         >
           <Grid container spacing={2}>
@@ -430,10 +443,18 @@ const PeoplePage = () => {
 
   // Rendu du tableau
   const renderTable = () => (
-    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+    <TableContainer
+      component={Paper}
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
+        overflow: 'hidden',
+        borderColor: alpha(TEAL.main, 0.12)
+      }}
+    >
       <Table size="small">
         <TableHead>
-          <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+          <TableRow sx={{ bgcolor: alpha(TEAL.main, 0.04) }}>
             <TableCell>Personne</TableCell>
             <TableCell>Étape</TableCell>
             <TableCell>Santé</TableCell>
@@ -455,7 +476,7 @@ const PeoplePage = () => {
                 <TableRow
                   hover
                   sx={{
-                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) },
+                    '&:hover': { bgcolor: alpha(TEAL.main, 0.03) },
                     bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.02) : 'inherit',
                     borderLeft: isUrgent ? `3px solid ${theme.palette.error.main}` : 'none'
                   }}
@@ -663,7 +684,23 @@ const PeoplePage = () => {
 
       {/* Filtres et recherche */}
       {!loading && (
-        <Box sx={{ mt: 2, mb: 3 }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            mt: 2,
+            mb: 3,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: 3,
+            borderColor: alpha(TEAL.main, 0.12),
+            bgcolor: alpha(TEAL.main, 0.02)
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+            <FilterAltIcon sx={{ fontSize: 18, color: TEAL.dark }} />
+            <Typography variant="subtitle2" fontWeight={600}>
+              Recherche et filtres
+            </Typography>
+          </Stack>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <Stack direction="row" spacing={1}>
@@ -690,9 +727,9 @@ const PeoplePage = () => {
                           <ClearIcon fontSize="small" />
                         </IconButton>
                       </InputAdornment>
-                    )
+                    ),
+                    sx: { borderRadius: 2, bgcolor: 'background.paper' }
                   }}
-                  sx={{ bgcolor: 'background.paper' }}
                 />
                 <Button
                   variant="contained"
@@ -700,8 +737,7 @@ const PeoplePage = () => {
                   sx={{
                     borderRadius: 2,
                     minWidth: 100,
-                    bgcolor: 'primary.main',
-                    '&:hover': { bgcolor: 'primary.dark' }
+                    ...tealGradient
                   }}
                 >
                   Chercher
@@ -716,7 +752,7 @@ const PeoplePage = () => {
               />
             </Grid>
           </Grid>
-        </Box>
+        </Paper>
       )}
 
       {/* Contenu principal */}
@@ -726,7 +762,7 @@ const PeoplePage = () => {
           subtitle="Essayez d'autres filtres, ou initialisez les profils dans Réglages."
           action={
             <Stack direction="row" spacing={2}>
-              <Button variant="contained" onClick={handleClearFilters}>
+              <Button variant="contained" onClick={handleClearFilters} sx={{ borderRadius: 2, ...tealGradient }}>
                 Réinitialiser les filtres
               </Button>
               <Button variant="outlined" onClick={() => navigate('/wekavit/sss/settings')}>

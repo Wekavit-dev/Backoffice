@@ -41,7 +41,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  CircularProgress
+  CircularProgress,
+  InputAdornment
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -91,6 +92,12 @@ import {
 import PageHeader from './components/PageHeader';
 import TaskCard from './components/TaskCard';
 import TaskActionDialog from './components/TaskActionDialog';
+
+const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
+const tealGradient = {
+  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
+  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
+};
 
 // Composant de statistiques
 const StatsCard = ({ title, value, subtitle, icon, color, onClick }) => {
@@ -157,11 +164,11 @@ const FilterChips = ({ filters, onFilterChange, onClear }) => {
           onDelete={() => onFilterChange(filter.id)}
           size="small"
           sx={{
-            bgcolor: alpha(theme.palette.primary.main, 0.08),
-            color: theme.palette.primary.main,
-            borderColor: alpha(theme.palette.primary.main, 0.2),
+            bgcolor: alpha(TEAL.main, 0.08),
+            color: TEAL.dark,
+            borderColor: alpha(TEAL.main, 0.2),
             '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.12)
+              bgcolor: alpha(TEAL.main, 0.12)
             }
           }}
         />
@@ -397,10 +404,18 @@ const OverdueTasksPage = () => {
 
   // Rendu du tableau des tâches
   const renderTable = () => (
-    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+    <TableContainer
+      component={Paper}
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
+        overflow: 'hidden',
+        borderColor: alpha(theme.palette.error.main, 0.15)
+      }}
+    >
       <Table size="small">
         <TableHead>
-          <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.04) }}>
+          <TableRow sx={{ bgcolor: alpha(theme.palette.error.main, 0.04) }}>
             <TableCell width={44}>#</TableCell>
             <TableCell>
               <Stack direction="row" spacing={1} alignItems="center">
@@ -429,8 +444,8 @@ const OverdueTasksPage = () => {
                 <TableRow
                   hover
                   sx={{
-                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) },
-                    bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.02) : 'inherit',
+                    '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.03) },
+                    bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.04) : 'inherit',
                     borderLeft: isUrgent ? `3px solid ${theme.palette.error.main}` : 'none'
                   }}
                 >
@@ -536,12 +551,12 @@ const OverdueTasksPage = () => {
                         sx={{
                           borderRadius: 2,
                           minWidth: 80,
-                          background: isUrgent
-                            ? `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`
-                            : undefined,
-                          '&:hover': isUrgent ? {
-                            background: `linear-gradient(135deg, ${theme.palette.error.dark}, ${theme.palette.warning.dark})`,
-                          } : undefined
+                          ...(isUrgent ? {
+                            background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`,
+                            '&:hover': {
+                              background: `linear-gradient(135deg, ${theme.palette.error.dark}, ${theme.palette.warning.dark})`,
+                            }
+                          } : tealGradient)
                         }}
                       >
                         Traiter
@@ -706,6 +721,50 @@ const OverdueTasksPage = () => {
         </Fade>
       )}
 
+      {/* Filtres */}
+      {!loading && tasks.length > 0 && (
+        <Paper
+          variant="outlined"
+          sx={{
+            mt: 2,
+            mb: 2,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: 3,
+            borderColor: alpha(theme.palette.error.main, 0.12),
+            bgcolor: alpha(theme.palette.error.main, 0.02)
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+            <FilterIcon sx={{ fontSize: 18, color: theme.palette.error.main }} />
+            <Typography variant="subtitle2" fontWeight={600}>
+              Rechercher
+            </Typography>
+          </Stack>
+          <TextField
+            size="small"
+            placeholder="Nom, téléphone ou action..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: searchTerm && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchTerm('')}>
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+              sx: { borderRadius: 2, bgcolor: 'background.paper' }
+            }}
+          />
+        </Paper>
+      )}
+
       {/* Filtres actifs */}
       {!loading && getActiveFilters().length > 0 && (
         <Box sx={{ mt: 2, mb: 2 }}>
@@ -724,7 +783,7 @@ const OverdueTasksPage = () => {
             title="Aucun retard"
             subtitle="Bravo — tout est à jour. Continuez à maintenir ce rythme !"
             action={
-              <Button variant="contained" onClick={load} startIcon={<RefreshIcon />}>
+              <Button variant="contained" onClick={load} startIcon={<RefreshIcon />} sx={{ borderRadius: 2, ...tealGradient }}>
                 Actualiser
               </Button>
             }

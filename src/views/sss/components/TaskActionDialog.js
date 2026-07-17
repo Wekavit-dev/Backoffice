@@ -66,12 +66,7 @@ import {
 import { ACTION_LABELS, OUTCOME_OPTIONS, TASK_STATUS_LABELS, displayName } from '../labels';
 import { ActionLabel, PersonAvatar, UrgencyChip, StageChip } from './Chips';
 import PhoneAction from './PhoneAction';
-
-const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
-const tealGradient = {
-  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
-  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
-};
+import { SSS_COLORS } from './SssLayout';
 
 // Options de statut enrichies
 const STATUS_CHOICES = [
@@ -125,7 +120,7 @@ const StepProgress = ({ currentStep, steps }) => {
               StepIconProps={{
                 sx: {
                   '& .MuiStepIcon-root': {
-                    color: index <= currentStep ? TEAL.main : theme.palette.grey[400],
+                    color: index <= currentStep ? SSS_COLORS.brand : theme.palette.grey[400],
                   }
                 }
               }}
@@ -471,8 +466,8 @@ const TaskActionDialog = ({
         <DialogTitle
           sx={{
             p: 3,
-            bgcolor: alpha(TEAL.main, 0.03),
-            borderBottom: `1px solid ${alpha(TEAL.main, 0.1)}`,
+            bgcolor: alpha(SSS_COLORS.brand, 0.03),
+            borderBottom: `1px solid ${alpha(SSS_COLORS.brand, 0.1)}`,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -484,7 +479,7 @@ const TaskActionDialog = ({
               left: 0,
               right: 0,
               height: 3,
-              background: `linear-gradient(90deg, ${TEAL.main}, ${TEAL.dark})`
+              background: `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`
             }
           }}
         >
@@ -522,7 +517,7 @@ const TaskActionDialog = ({
               width: 6,
             },
             '&::-webkit-scrollbar-thumb': {
-              backgroundColor: alpha(TEAL.main, 0.2),
+              backgroundColor: alpha(SSS_COLORS.brand, 0.2),
               borderRadius: 3,
             }
           }}
@@ -682,7 +677,9 @@ const TaskActionDialog = ({
             sx={{
               borderRadius: 2,
               minWidth: 120,
-              ...tealGradient,
+              bgcolor: SSS_COLORS.brand,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: SSS_COLORS.brandDark },
               '&:disabled': {
                 opacity: 0.7
               }

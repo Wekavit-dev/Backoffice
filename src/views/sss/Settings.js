@@ -77,13 +77,7 @@ import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
 import MainCard from 'ui-component/cards/MainCard';
 import SssApi from 'api/sss/sss';
-import PageHeader from './components/PageHeader';
-
-const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
-const tealGradient = {
-  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
-  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
-};
+import { PageToolbar, PrimaryButton, GhostButton, SSS_COLORS } from './components/SssLayout';
 
 // Composant de carte de configuration
 const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, saving }) => {
@@ -109,12 +103,12 @@ const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, savi
       sx={{
         borderRadius: 3,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        bgcolor: alpha(color || TEAL.main, 0.02),
+        bgcolor: alpha(color || SSS_COLORS.brand, 0.02),
         transition: 'all 0.3s ease',
         position: 'relative',
         overflow: 'hidden',
         '&:hover': {
-          borderColor: alpha(color || TEAL.main, 0.3),
+          borderColor: alpha(color || SSS_COLORS.brand, 0.3),
           boxShadow: theme.shadows[4],
           transform: 'translateY(-2px)'
         },
@@ -125,7 +119,7 @@ const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, savi
           left: 0,
           right: 0,
           height: 3,
-          background: `linear-gradient(90deg, ${color || TEAL.main}, ${alpha(color || TEAL.main, 0.3)})`,
+          background: `linear-gradient(90deg, ${color || SSS_COLORS.brand}, ${alpha(color || SSS_COLORS.brand, 0.3)})`,
           opacity: 0.3,
           transition: 'opacity 0.3s ease'
         },
@@ -156,7 +150,7 @@ const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, savi
           <Stack direction="row" spacing={1.5} alignItems="center">
             {icon && (
               <Box sx={{
-                color: color || TEAL.main,
+                color: color || SSS_COLORS.brand,
                 display: 'flex',
                 '& svg': { fontSize: 24 }
               }}>
@@ -302,8 +296,8 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
       sx={{
         p: 3,
         borderRadius: 3,
-        bgcolor: alpha(TEAL.main, 0.02),
-        border: `1px solid ${alpha(TEAL.main, 0.12)}`,
+        bgcolor: alpha(SSS_COLORS.brand, 0.02),
+        border: `1px solid ${alpha(SSS_COLORS.brand, 0.12)}`,
         mb: 3
       }}
     >
@@ -311,8 +305,8 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
         <Box sx={{
           p: 1,
           borderRadius: 2,
-          bgcolor: alpha(TEAL.main, 0.1),
-          color: TEAL.dark
+          bgcolor: alpha(SSS_COLORS.brand, 0.1),
+          color: SSS_COLORS.brandDark
         }}>
           <PlayArrowIcon />
         </Box>
@@ -328,7 +322,7 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
           label="3 étapes"
           size="small"
           variant="outlined"
-          sx={{ borderColor: alpha(TEAL.main, 0.3), color: TEAL.dark }}
+          sx={{ borderColor: alpha(SSS_COLORS.brand, 0.3), color: SSS_COLORS.brandDark }}
         />
       </Stack>
 
@@ -345,7 +339,7 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
               StepIconProps={{
                 sx: {
                   '& .MuiStepIcon-root': {
-                    color: index === activeStep ? TEAL.dark : theme.palette.grey[400],
+                    color: index === activeStep ? SSS_COLORS.brandDark : theme.palette.grey[400],
                     fontSize: 28
                   }
                 }
@@ -375,9 +369,13 @@ const SetupGuide = ({ onBackfill, backfilling }) => {
                 startIcon={index === 0 ? <BackfillIcon /> : <ArrowForwardIcon />}
                 sx={{
                   borderRadius: 2,
-                  ...(index === 0 ? tealGradient : {
-                    borderColor: alpha(TEAL.main, 0.3),
-                    color: TEAL.dark
+                  ...(index === 0 ? {
+                    bgcolor: SSS_COLORS.brand,
+                    boxShadow: 'none',
+                    '&:hover': { bgcolor: SSS_COLORS.brandDark }
+                  } : {
+                    borderColor: alpha(SSS_COLORS.brand, 0.3),
+                    color: SSS_COLORS.brandDark
                   })
                 }}
               >
@@ -551,76 +549,40 @@ const SettingsPage = () => {
   const hasUnsavedChanges = modifiedFields.length > 0;
 
   return (
-    <MainCard
-      title={
-        <PageHeader
-          icon={<TuneIcon />}
-          eyebrow="Accompagnement"
-          title="Réglages"
-          subtitle="Ces réglages décident qui apparaît dans la liste du jour et à quel moment. Les valeurs par défaut conviennent déjà à Wekavit — changez-les seulement si nécessaire."
-          color="secondary"
-        />
-      }
-      secondary={
-        <Stack direction="row" spacing={1} alignItems="center">
-          {!isXs && (
-            <>
-              <Button
-                startIcon={<RefreshIcon />}
-                onClick={load}
-                size="small"
-                sx={{ borderRadius: 2 }}
-              >
-                Actualiser
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={() => setSaveDialogOpen(true)}
-                disabled={saving || !hasUnsavedChanges}
-                size="small"
-                sx={{
-                  borderRadius: 2,
-                  ...(hasUnsavedChanges ? tealGradient : {})
-                }}
-              >
-                {saving ? <CircularProgress size={20} /> : 'Enregistrer'}
-                {hasUnsavedChanges && (
-                  <Chip
-                    label={modifiedFields.length}
-                    size="small"
-                    sx={{
-                      ml: 1,
-                      height: 18,
-                      bgcolor: alpha(theme.palette.common.white, 0.2),
-                      color: 'white',
-                      fontSize: '0.6rem'
-                    }}
-                  />
-                )}
-              </Button>
-            </>
-          )}
-          {isXs && (
-            <>
-              <IconButton size="small" onClick={load}>
-                <RefreshIcon />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={() => setSaveDialogOpen(true)}
-                disabled={saving || !hasUnsavedChanges}
-                color={hasUnsavedChanges ? 'primary' : 'default'}
-              >
-                <SaveIcon />
-              </IconButton>
-            </>
-          )}
-        </Stack>
-      }
-      sx={{ '& .MuiCardHeader-content': { minWidth: 0 } }}
-      contentSX={{ p: { xs: 1.5, sm: 3 } }}
-    >
+    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}>
+      <PageToolbar
+        icon={<TuneIcon />}
+        title="Réglages"
+        subtitle="Ces réglages décident qui apparaît dans la liste du jour et à quel moment. Les valeurs par défaut conviennent déjà à Wekavit — changez-les seulement si nécessaire."
+        actions={
+          <>
+            <GhostButton startIcon={<RefreshIcon />} onClick={load}>
+              Actualiser
+            </GhostButton>
+            <PrimaryButton
+              startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+              onClick={() => setSaveDialogOpen(true)}
+              disabled={saving || !hasUnsavedChanges}
+            >
+              Enregistrer
+              {hasUnsavedChanges && (
+                <Chip
+                  label={modifiedFields.length}
+                  size="small"
+                  sx={{
+                    ml: 1,
+                    height: 18,
+                    bgcolor: alpha(theme.palette.common.white, 0.2),
+                    color: 'white',
+                    fontSize: '0.6rem'
+                  }}
+                />
+              )}
+            </PrimaryButton>
+          </>
+        }
+      />
+
       {/* Guide de mise en route */}
       <SetupGuide onBackfill={handleBackfill} backfilling={backfilling} />
 
@@ -679,7 +641,7 @@ const SettingsPage = () => {
             <ConfigCard
               title="Activation"
               icon={<PowerSettingsNewIcon />}
-              color={TEAL.main}
+              color={SSS_COLORS.brand}
             >
               <ConfigOption
                 label="Module activé"
@@ -783,10 +745,10 @@ const SettingsPage = () => {
             borderRadius: 2,
             px: 2,
             py: 1,
-            bgcolor: alpha(TEAL.main, 0.04),
-            color: TEAL.dark,
+            bgcolor: alpha(SSS_COLORS.brand, 0.04),
+            color: SSS_COLORS.brandDark,
             '&:hover': {
-              bgcolor: alpha(TEAL.main, 0.08),
+              bgcolor: alpha(SSS_COLORS.brand, 0.08),
             }
           }}
         >
@@ -806,7 +768,7 @@ const SettingsPage = () => {
               <ConfigCard
                 title="Limites de la liste"
                 icon={<SpeedIcon />}
-                color={TEAL.main}
+                color={SSS_COLORS.brand}
               >
                 <ConfigOption
                   label="Actions max par jour"
@@ -920,7 +882,7 @@ const SettingsPage = () => {
                 size="small"
                 variant="contained"
                 onClick={() => setSaveDialogOpen(true)}
-                sx={{ borderRadius: 2, ...tealGradient }}
+                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
               >
                 Enregistrer maintenant
               </Button>
@@ -972,7 +934,7 @@ const SettingsPage = () => {
             onClick={handleSave}
             disabled={saving}
             startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-            sx={{ borderRadius: 2, ...tealGradient }}
+            sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
           >
             {saving ? 'Enregistrement...' : 'Confirmer'}
           </Button>

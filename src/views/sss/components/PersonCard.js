@@ -60,6 +60,7 @@ import { styled, useTheme as useMuiTheme } from '@mui/material/styles';
 import { displayName, maskPhone, telHref, whatsappHref, formatDateFr, URGENCY_COLORS } from '../labels';
 import { AlertChips, PersonAvatar, StageChip, UrgencyChip } from './Chips';
 import HealthMeter from './HealthMeter';
+import { SSS_COLORS } from './SssLayout';
 
 // Styles personnalisés
 const CardWrapper = styled(Paper)(({ theme }) => ({
@@ -72,8 +73,8 @@ const CardWrapper = styled(Paper)(({ theme }) => ({
   overflow: 'hidden',
   '&:hover': {
     transform: 'translateY(-3px)',
-    boxShadow: `0 8px 24px ${alpha('#0D9488', 0.1)}`,
-    borderColor: alpha('#0D9488', 0.25),
+    boxShadow: `0 8px 24px ${alpha(SSS_COLORS.brand, 0.1)}`,
+    borderColor: alpha(SSS_COLORS.brand, 0.25),
     '& .action-buttons': {
       opacity: 1,
       transform: 'translateX(0)',

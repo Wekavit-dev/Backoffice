@@ -41,6 +41,7 @@ import {
   avatarColor,
   displayName
 } from '../labels';
+import { SSS_COLORS } from './SssLayout';
 
 // Import des icônes
 import {
@@ -73,32 +74,24 @@ import {
  */
 export const StageChip = ({ stage, size = 'small', showIcon = true, onClick }) => {
   const theme = useTheme();
-  const stageColors = {
-    'S1': { bg: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.main },
-    'S2': { bg: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main },
-    'S3': { bg: alpha(theme.palette.success.main, 0.1), color: theme.palette.success.main },
-    'S4': { bg: alpha(theme.palette.warning.main, 0.1), color: theme.palette.warning.main },
-  };
-
-  const colors = stageColors[stage] || { bg: alpha(theme.palette.grey[500], 0.1), color: theme.palette.grey[500] };
+  const tone = SSS_COLORS.brand;
 
   return (
     <Chip
       size={size}
       label={STAGE_LABELS[stage] || stage || '—'}
-      icon={showIcon ? <FlagIcon style={{ fontSize: size === 'small' ? 14 : 18 }} /> : undefined}
       onClick={onClick}
       sx={{
-        bgcolor: colors.bg,
-        color: colors.color,
-        borderColor: alpha(colors.color, 0.2),
         fontWeight: 600,
-        '&:hover': onClick ? {
-          bgcolor: alpha(colors.color, 0.15),
-          transform: 'translateY(-1px)',
-          transition: 'all 0.2s ease'
-        } : undefined,
-        '& .MuiChip-icon': { color: colors.color }
+        fontSize: size === 'small' ? '0.7rem' : '0.75rem',
+        height: size === 'small' ? 24 : 28,
+        borderRadius: 2,
+        bgcolor: alpha(tone, 0.1),
+        color: tone,
+        border: 'none',
+        cursor: onClick ? 'pointer' : 'default',
+        '& .MuiChip-label': { px: 1.25 },
+        '&:hover': onClick ? { bgcolor: alpha(tone, 0.16) } : undefined
       }}
     />
   );
@@ -110,34 +103,29 @@ export const StageChip = ({ stage, size = 'small', showIcon = true, onClick }) =
 export const UrgencyChip = ({ urgency, size = 'small', showDot = true }) => {
   const theme = useTheme();
   const label = URGENCY_LABELS[urgency] || urgency || '—';
-  const color = URGENCY_COLORS[urgency] || 'default';
-
-  const urgencyIcons = {
-    critical: <PriorityHighIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    high: <WarningIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    medium: <InfoIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    low: <CheckCircleIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />
-  };
+  const paletteKey = URGENCY_COLORS[urgency] || 'default';
+  const tone =
+    paletteKey === 'error'
+      ? theme.palette.error.main
+      : paletteKey === 'warning'
+        ? theme.palette.warning.main
+        : paletteKey === 'info'
+          ? theme.palette.info.main
+          : theme.palette.grey[600];
 
   return (
     <Chip
       size={size}
       label={label}
-      icon={showDot ? urgencyIcons[urgency] : undefined}
-      color={color}
       sx={{
         fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.3px',
-        '& .MuiChip-icon': {
-          fontSize: size === 'small' ? 14 : 18
-        },
-        animation: urgency === 'critical' ? 'pulse 2s infinite' : undefined,
-        '@keyframes pulse': {
-          '0%': { transform: 'scale(1)' },
-          '50%': { transform: 'scale(1.02)' },
-          '100%': { transform: 'scale(1)' }
-        }
+        fontSize: size === 'small' ? '0.7rem' : '0.75rem',
+        height: size === 'small' ? 24 : 28,
+        borderRadius: 2,
+        bgcolor: alpha(tone, 0.12),
+        color: tone,
+        border: 'none',
+        '& .MuiChip-label': { px: 1.25 }
       }}
     />
   );
@@ -196,27 +184,35 @@ export const HealthChip = ({ level, score, size = 'small', showProgress = false 
  * StatusChip - Version améliorée avec icône
  */
 export const StatusChip = ({ status, size = 'small', showIcon = true }) => {
-  const color = TASK_STATUS_COLORS[status] || 'default';
+  const theme = useTheme();
+  const paletteKey = TASK_STATUS_COLORS[status] || 'default';
   const label = TASK_STATUS_LABELS[status] || status || '—';
-
-  const statusIcons = {
-    pending: <ScheduleIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    in_progress: <InfoIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    completed: <CheckCircleIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    cancelled: <ErrorIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />
-  };
+  const tone =
+    paletteKey === 'success'
+      ? theme.palette.success.main
+      : paletteKey === 'warning'
+        ? theme.palette.warning.main
+        : paletteKey === 'error'
+          ? theme.palette.error.main
+          : paletteKey === 'info'
+            ? theme.palette.info.main
+            : paletteKey === 'secondary'
+              ? SSS_COLORS.brand
+              : theme.palette.grey[600];
 
   return (
     <Chip
       size={size}
       label={label}
-      icon={showIcon ? statusIcons[status] : undefined}
-      color={color}
       sx={{
         fontWeight: 600,
-        '& .MuiChip-icon': {
-          fontSize: size === 'small' ? 14 : 18
-        }
+        fontSize: size === 'small' ? '0.7rem' : '0.75rem',
+        height: size === 'small' ? 24 : 28,
+        borderRadius: 2,
+        bgcolor: alpha(tone, 0.12),
+        color: tone,
+        border: 'none',
+        '& .MuiChip-label': { px: 1.25 }
       }}
     />
   );
@@ -360,8 +356,8 @@ export const EmptyState = ({ title, subtitle, action, icon, loading = false }) =
           borderColor: alpha(theme.palette.divider, 0.35),
           transition: 'all 0.3s ease',
           '&:hover': {
-            borderColor: alpha('#0D9488', 0.35),
-            bgcolor: alpha('#0D9488', 0.02),
+            borderColor: alpha(SSS_COLORS.brand, 0.35),
+            bgcolor: alpha(SSS_COLORS.brand, 0.02),
           }
         }}
       >
@@ -375,23 +371,23 @@ export const EmptyState = ({ title, subtitle, action, icon, loading = false }) =
               position: 'absolute',
               inset: -8,
               borderRadius: '50%',
-              border: `2px dashed ${alpha('#0D9488', 0.2)}`,
+              border: `2px dashed ${alpha(SSS_COLORS.brand, 0.2)}`,
             },
             '&::after': {
               content: '""',
               position: 'absolute',
               inset: -4,
               borderRadius: '50%',
-              bgcolor: alpha('#14B8A6', 0.06),
+              bgcolor: alpha(SSS_COLORS.brand, 0.06),
             }
           }}>
             <Box sx={{
               position: 'relative',
               p: 2.5,
               borderRadius: '50%',
-              bgcolor: alpha('#0D9488', 0.1),
-              color: '#0D9488',
-              boxShadow: `0 4px 20px ${alpha('#0D9488', 0.15)}`,
+              bgcolor: alpha(SSS_COLORS.brand, 0.1),
+              color: SSS_COLORS.brand,
+              boxShadow: `0 4px 20px ${alpha(SSS_COLORS.brand, 0.15)}`,
               '& svg': { fontSize: 40 }
             }}>
               {icon}
@@ -417,7 +413,8 @@ export const EmptyState = ({ title, subtitle, action, icon, loading = false }) =
 };
 
 /**
- * StatCard - Version améliorée avec tendances et interactions
+ * StatCard - Aligné sur le style KpiCard de référence : fond teinté,
+ * icône en haut à gauche, gros chiffre en haut à droite, libellé + hint.
  */
 export const StatCard = ({
   title,
@@ -433,7 +430,6 @@ export const StatCard = ({
   subtitle
 }) => {
   const theme = useTheme();
-  const [hovered, setHovered] = useState(false);
 
   const resolvedColor = typeof color === 'string' && color.includes('.')
     ? theme.palette[color.split('.')[0]]?.[color.split('.')[1]] || theme.palette.primary.main
@@ -441,7 +437,7 @@ export const StatCard = ({
 
   if (loading) {
     return (
-      <Card elevation={0} sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+      <Card elevation={0} sx={{ borderRadius: 2.5, border: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
         <CardContent>
           <Stack spacing={1}>
             <Skeleton variant="text" width={100} />
@@ -463,30 +459,20 @@ export const StatCard = ({
     <Card
       elevation={0}
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       sx={{
-        borderRadius: 3,
-        border: '1px solid',
-        borderColor: hovered ? alpha(resolvedColor, 0.4) : alpha(theme.palette.divider, 0.5),
-        bgcolor: hovered ? alpha(resolvedColor, 0.03) : 'background.paper',
+        borderRadius: 2.5,
+        border: `1px solid ${alpha(resolvedColor, 0.18)}`,
+        bgcolor: alpha(resolvedColor, 0.1),
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: hovered && onClick ? 'translateY(-3px)' : 'none',
-        boxShadow: hovered && onClick ? `0 8px 24px ${alpha(resolvedColor, 0.12)}` : 'none',
+        transition: 'box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease',
         position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          bgcolor: resolvedColor,
-          opacity: hovered ? 1 : 0.45,
-          transition: 'opacity 0.25s ease'
-        }
+        '&:hover': onClick
+          ? {
+              boxShadow: `0 6px 18px ${alpha(resolvedColor, 0.18)}`,
+              transform: 'translateY(-2px)',
+              borderColor: resolvedColor
+            }
+          : undefined
       }}
     >
       {badge && (
@@ -507,67 +493,59 @@ export const StatCard = ({
         />
       )}
       <CardContent>
-        <Stack spacing={1.5}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" sx={{
-              color: alpha(theme.palette.text.primary, 0.55),
-              fontWeight: 600,
-              letterSpacing: '0.6px',
-              textTransform: 'uppercase',
-              fontSize: '0.65rem'
-            }}>
-              {title}
-            </Typography>
-            {icon && (
-              <Box sx={{
-                color: resolvedColor,
-                opacity: hovered ? 1 : 0.7,
-                display: 'flex',
-                p: 0.75,
-                borderRadius: 1.5,
-                bgcolor: alpha(resolvedColor, 0.08),
-                transition: 'all 0.25s ease',
-                transform: hovered ? 'scale(1.05)' : 'scale(1)'
-              }}>
-                {icon}
-              </Box>
-            )}
-          </Stack>
-
-          <Box>
-            <Typography variant="h2" sx={{
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1.25 }}>
+          {icon && (
+            <Box sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: alpha(resolvedColor, 0.16),
               color: resolvedColor,
-              fontWeight: 800,
-              fontSize: { xs: '1.75rem', sm: '2.25rem' },
-              lineHeight: 1.1
+              '& svg': { fontSize: 20 }
             }}>
-              {value}
-            </Typography>
-            {subtitle && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                {subtitle}
-              </Typography>
-            )}
-          </Box>
-
-          {hint && (
-            <Stack direction="row" spacing={1} alignItems="center">
-              {TrendIcon && trendValue && (
-                <Chip
-                  size="small"
-                  icon={<TrendIcon style={{ fontSize: 14 }} />}
-                  label={trendValue}
-                  color={trend === 'up' ? 'success' : trend === 'down' ? 'error' : 'default'}
-                  variant="outlined"
-                  sx={{ height: 20, '& .MuiChip-label': { fontSize: '0.65rem' } }}
-                />
-              )}
-              <Typography variant="caption" color="text.secondary">
-                {hint}
-              </Typography>
-            </Stack>
+              {icon}
+            </Box>
           )}
+          <Typography sx={{
+            fontWeight: 800,
+            fontSize: '1.75rem',
+            lineHeight: 1,
+            color: 'text.primary',
+            letterSpacing: '-0.02em'
+          }}>
+            {value ?? '—'}
+          </Typography>
         </Stack>
+
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.25 }}>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            {subtitle}
+          </Typography>
+        )}
+
+        {hint && (
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+            {TrendIcon && trendValue && (
+              <Chip
+                size="small"
+                icon={<TrendIcon style={{ fontSize: 14 }} />}
+                label={trendValue}
+                color={trend === 'up' ? 'success' : trend === 'down' ? 'error' : 'default'}
+                variant="outlined"
+                sx={{ height: 20, '& .MuiChip-label': { fontSize: '0.65rem' } }}
+              />
+            )}
+            <Typography variant="caption" color="text.secondary">
+              {hint}
+            </Typography>
+          </Stack>
+        )}
       </CardContent>
     </Card>
   );

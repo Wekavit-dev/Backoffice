@@ -95,12 +95,7 @@ import {
 import { AlertChips, EmptyState, PersonAvatar, StageChip, StatusChip, UrgencyChip } from './components/Chips';
 import HealthMeter from './components/HealthMeter';
 import PhoneAction from './components/PhoneAction';
-
-const TEAL = { main: '#0D9488', dark: '#0F766E', deeper: '#115E59' };
-const tealGradient = {
-  background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
-  '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, ${TEAL.deeper})` }
-};
+import { SSS_COLORS } from './components/SssLayout';
 
 // Composant Row amélioré
 const Row = ({ label, value, color, icon, onClick }) => {
@@ -119,7 +114,7 @@ const Row = ({ label, value, color, icon, onClick }) => {
         transition: 'all 0.2s ease',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick ? {
-          bgcolor: alpha(TEAL.main, 0.04),
+          bgcolor: alpha(SSS_COLORS.brand, 0.04),
         } : {}
       }}
       onClick={onClick}
@@ -171,11 +166,11 @@ const InfoCard = ({ title, icon, children, color, action, loading }) => {
       sx={{
         p: 2.5,
         borderRadius: 3,
-        borderColor: alpha(color || TEAL.main, 0.12),
-        bgcolor: alpha(color || TEAL.main, 0.02),
+        borderColor: alpha(color || SSS_COLORS.brand, 0.12),
+        bgcolor: alpha(color || SSS_COLORS.brand, 0.02),
         transition: 'all 0.3s ease',
         '&:hover': {
-          borderColor: alpha(color || TEAL.main, 0.25),
+          borderColor: alpha(color || SSS_COLORS.brand, 0.25),
           boxShadow: theme.shadows[2]
         }
       }}
@@ -521,8 +516,8 @@ const PersonFichePage = () => {
             sx={{
               p: 0.5,
               borderRadius: '50%',
-              background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
-              boxShadow: `0 4px 14px ${alpha(TEAL.main, 0.25)}`
+              background: `linear-gradient(135deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`,
+              boxShadow: `0 4px 14px ${alpha(SSS_COLORS.brand, 0.25)}`
             }}
           >
             <Box
@@ -589,17 +584,17 @@ const PersonFichePage = () => {
           flex: 1
         }
       }}
-      contentSX={{ p: { xs: 1.5, sm: 3 } }}
+      contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}
     >
       {/* En-tête de la fiche */}
       <Paper
         variant="outlined"
         sx={{
-          p: { xs: 2, sm: 3 },
-          mb: 3,
-          borderRadius: 3,
-          borderColor: isUrgent ? alpha(theme.palette.error.main, 0.25) : alpha(TEAL.main, 0.12),
-          bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.02) : alpha(TEAL.main, 0.015),
+          p: { xs: 1.5, sm: 2.5 },
+          mb: 2.5,
+          borderRadius: 2,
+          borderColor: isUrgent ? alpha(theme.palette.error.main, 0.25) : alpha(SSS_COLORS.brand, 0.12),
+          bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.02) : alpha(SSS_COLORS.brand, 0.015),
           position: 'relative',
           overflow: 'hidden',
           boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.04)}`,
@@ -612,7 +607,7 @@ const PersonFichePage = () => {
             height: 3,
             background: isUrgent
               ? `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`
-              : `linear-gradient(90deg, ${TEAL.main}, ${TEAL.dark})`,
+              : `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`,
           }
         }}
       >
@@ -706,11 +701,11 @@ const PersonFichePage = () => {
             fontWeight: 600,
             minHeight: 48,
             '&.Mui-selected': {
-              color: TEAL.dark,
+              color: SSS_COLORS.brandDark,
             }
           },
           '& .MuiTabs-indicator': {
-            backgroundColor: TEAL.main,
+            backgroundColor: SSS_COLORS.brand,
             height: 3,
             borderRadius: '3px 3px 0 0'
           }
@@ -941,7 +936,7 @@ const PersonFichePage = () => {
                 startIcon={<SaveIcon />}
                 onClick={handleAddNote}
                 disabled={saving || !noteBody.trim()}
-                sx={{ borderRadius: 2, ...tealGradient }}
+                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
               >
                 {saving ? <CircularProgress size={20} /> : 'Enregistrer la note'}
               </Button>
@@ -1073,7 +1068,7 @@ const PersonFichePage = () => {
                 variant="contained"
                 onClick={handleSaveStage}
                 disabled={saving || !stageDraft}
-                sx={{ borderRadius: 2, ...tealGradient }}
+                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
               >
                 {saving ? <CircularProgress size={20} /> : 'Enregistrer l’étape'}
               </Button>
@@ -1106,7 +1101,7 @@ const PersonFichePage = () => {
                 variant="contained"
                 onClick={handleSaveNba}
                 disabled={saving}
-                sx={{ borderRadius: 2, ...tealGradient }}
+                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
               >
                 {saving ? <CircularProgress size={20} /> : 'Enregistrer l’action'}
               </Button>

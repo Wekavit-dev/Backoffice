@@ -58,18 +58,17 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { maskPhone, telHref, whatsappHref } from '../labels';
-
-const TEAL = { main: '#0D9488', dark: '#0F766E' };
+import { SSS_COLORS } from './SssLayout';
 
 // Styles personnalisés
 const PhoneContainer = styled(Paper)(({ theme, isHovered }) => ({
   padding: theme.spacing(0.5, 1),
   borderRadius: theme.spacing(2),
   backgroundColor: isHovered
-    ? alpha(TEAL.main, 0.04)
+    ? alpha(SSS_COLORS.brand, 0.04)
     : 'transparent',
   border: `1px solid ${isHovered
-    ? alpha(TEAL.main, 0.15)
+    ? alpha(SSS_COLORS.brand, 0.15)
     : 'transparent'}`,
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   display: 'inline-flex',
@@ -77,8 +76,8 @@ const PhoneContainer = styled(Paper)(({ theme, isHovered }) => ({
   gap: theme.spacing(0.5),
   cursor: 'default',
   '&:hover': {
-    backgroundColor: alpha(TEAL.main, 0.05),
-    borderColor: alpha(TEAL.main, 0.18),
+    backgroundColor: alpha(SSS_COLORS.brand, 0.05),
+    borderColor: alpha(SSS_COLORS.brand, 0.18),
   },
   '&:hover .phone-action-btn': {
     opacity: 1
@@ -101,7 +100,7 @@ const PhoneNumber = styled(Typography)(({ theme, isRevealed, isHovered }) => ({
     left: 0,
     right: 0,
     height: 1,
-    background: `linear-gradient(90deg, ${TEAL.main}, ${TEAL.dark})`,
+    background: `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`,
     opacity: isHovered ? 0.6 : 0,
     transition: 'opacity 0.25s ease'
   } : {}
@@ -116,7 +115,7 @@ const ActionButton = styled(IconButton)(({ theme, color }) => ({
     opacity: 1,
     backgroundColor: color
       ? alpha(theme.palette[color].main, 0.12)
-      : alpha(TEAL.main, 0.1),
+      : alpha(SSS_COLORS.brand, 0.1),
   },
   '&:active': {
     transform: 'scale(0.95)',
@@ -349,7 +348,7 @@ const PhoneAction = ({
           <PhoneEnabledIcon
             sx={{
               fontSize: isSmall ? 16 : isLarge ? 24 : 20,
-              color: error ? theme.palette.error.main : TEAL.main,
+              color: error ? theme.palette.error.main : SSS_COLORS.brand,
               opacity: disabled ? 0.5 : 1,
               transition: 'color 0.2s ease'
             }}
@@ -462,7 +461,7 @@ const PhoneAction = ({
           >
             <ClickAwayListener onClickAway={() => setShowPopper(false)}>
               <Box>
-                <Box sx={{ p: 2, bgcolor: alpha(TEAL.main, 0.05) }}>
+                <Box sx={{ p: 2, bgcolor: alpha(SSS_COLORS.brand, 0.05) }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600}>
                     Actions disponibles
                   </Typography>
@@ -588,8 +587,9 @@ const PhoneAction = ({
         <Button onClick={handleDialogClose}>Annuler</Button>
         <Button onClick={handleDialogConfirm} variant="contained" sx={{
           borderRadius: 2,
-          background: `linear-gradient(135deg, ${TEAL.main}, ${TEAL.dark})`,
-          '&:hover': { background: `linear-gradient(135deg, ${TEAL.dark}, #115E59)` }
+          bgcolor: SSS_COLORS.brand,
+          boxShadow: 'none',
+          '&:hover': { bgcolor: SSS_COLORS.brandDark }
         }}>
           Confirmer
         </Button>

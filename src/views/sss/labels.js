@@ -479,10 +479,11 @@ export const initials = (nameOrUser) => {
 };
 
 // Palette de couleurs pour les avatars
+// Palette d'avatars douce et harmonisée (mêmes saturation/luminance que les accents)
 const AVATAR_PALETTE = [
-  '#5C6BC0', '#26A69A', '#EF6C7A', '#F0A030',
-  '#7E57C2', '#42A5A5', '#66BB6A', '#EF5350',
-  '#FFA726', '#AB47BC', '#26C6DA', '#8D6E63'
+  '#5b5bd6', '#4a8fd6', '#3aa17a', '#cc8b3c',
+  '#7a6fd1', '#4ca3b0', '#57a279', '#c56ba6',
+  '#6e7fc0', '#8e7bd9', '#3fa1ae', '#9b8579'
 ];
 
 /**

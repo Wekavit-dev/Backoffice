@@ -66,11 +66,12 @@ import {
 } from '@mui/icons-material';
 import { displayName, maskPhone, telHref, whatsappHref, URGENCY_COLORS } from '../labels';
 import { ActionLabel, AlertChips, PersonAvatar, RankBadge, StageChip, StatusChip } from './Chips';
+import { SSS_COLORS, toneColor } from './SssLayout';
 
 const getUrgencyStripeColor = (theme, urgency) => {
   const colorKey = URGENCY_COLORS[urgency];
-  if (!colorKey || colorKey === 'default') return theme.palette.grey[400];
-  return theme.palette[colorKey]?.main || theme.palette.grey[400];
+  if (!colorKey || colorKey === 'default') return SSS_COLORS.neutral;
+  return toneColor(colorKey);
 };
 
 // Composant d'indicateur de temps
@@ -650,12 +651,11 @@ const TaskCard = ({
               sx={{
                 borderRadius: 2,
                 minWidth: 120,
-                background: isUrgent
-                  ? `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`
-                  : undefined,
-                '&:hover': isUrgent ? {
-                  background: `linear-gradient(135deg, ${theme.palette.error.dark}, ${theme.palette.warning.dark})`,
-                } : undefined
+                textTransform: 'none',
+                fontWeight: 600,
+                boxShadow: 'none',
+                bgcolor: SSS_COLORS.brand,
+                '&:hover': { bgcolor: SSS_COLORS.brandDark, boxShadow: 'none' }
               }}
             >
               Traiter

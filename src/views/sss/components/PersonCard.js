@@ -60,7 +60,7 @@ import { styled, useTheme as useMuiTheme } from '@mui/material/styles';
 import { displayName, maskPhone, telHref, whatsappHref, formatDateFr, URGENCY_COLORS } from '../labels';
 import { AlertChips, PersonAvatar, StageChip, UrgencyChip } from './Chips';
 import HealthMeter from './HealthMeter';
-import { SSS_COLORS } from './SssLayout';
+import { SSS_COLORS, toneColor } from './SssLayout';
 
 // Styles personnalisés
 const CardWrapper = styled(Paper)(({ theme }) => ({
@@ -141,8 +141,8 @@ const PersonCard = ({
   const hasUrgency = profile.urgency === 'critical' || profile.urgency === 'high';
   const urgencyStripe = (() => {
     const colorKey = URGENCY_COLORS[profile.urgency];
-    if (!colorKey || colorKey === 'default') return theme.palette.grey[400];
-    return theme.palette[colorKey]?.main || theme.palette.grey[400];
+    if (!colorKey || colorKey === 'default') return SSS_COLORS.neutral;
+    return toneColor(colorKey);
   })();
 
   // Animation au montage
@@ -421,31 +421,12 @@ const PersonCard = ({
           </Stack>
 
           <Stack direction="row" spacing={0.5} alignItems="center">
-            <Tooltip title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}>
-              <IconButton size="small" onClick={handleFavoriteToggle}>
-                {isFavorite ? (
-                  <FavoriteIcon sx={{ color: theme.palette.error.main, fontSize: 18 }} />
-                ) : (
-                  <FavoriteBorderIcon sx={{ fontSize: 18 }} />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={isPinned ? 'Désépingler' : 'Épingler'}>
-              <IconButton size="small" onClick={handlePinToggle}>
-                {isPinned ? (
-                  <PushPinIcon sx={{ color: theme.palette.warning.main, fontSize: 18 }} />
-                ) : (
-                  <PushPinOutlinedIcon sx={{ fontSize: 18 }} />
-                )}
-              </IconButton>
-            </Tooltip>
-            {!compact && renderQuickActions()}
+            <UrgencyChip urgency={profile.urgency} size="small" />
           </Stack>
         </Stack>
 
-        {/* Urgence et métriques */}
+        {/* Étape et santé */}
         <Stack direction="row" spacing={1.5} mt={1.5} flexWrap="wrap" useFlexGap alignItems="center">
-          <UrgencyChip urgency={profile.urgency} />
           <StageChip stage={profile.stage} />
           <HealthMeter level={profile.healthLevel} score={profile.healthScore} dense />
         </Stack>
@@ -475,6 +456,46 @@ const PersonCard = ({
             />
           )}
         </Typography>
+
+        {/* Actions principales — toujours visibles (tactile) */}
+        <Stack direction="row" spacing={1} mt={2} alignItems="center">
+          <Button
+            fullWidth
+            variant="contained"
+            startIcon={<ViewIcon />}
+            onClick={(e) => { e.stopPropagation(); handleAction('view'); }}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              boxShadow: 'none',
+              bgcolor: SSS_COLORS.brand,
+              '&:hover': { bgcolor: SSS_COLORS.brandDark, boxShadow: 'none' }
+            }}
+          >
+            Voir la fiche
+          </Button>
+          {phone && (
+            <>
+              <Tooltip title="Appeler">
+                <IconButton
+                  onClick={(e) => handleAction('call', e)}
+                  sx={{ border: `1px solid ${SSS_COLORS.cardBorder}`, borderRadius: 2, color: SSS_COLORS.brand }}
+                >
+                  <CallIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="WhatsApp">
+                <IconButton
+                  onClick={(e) => handleAction('whatsapp', e)}
+                  sx={{ border: `1px solid ${SSS_COLORS.cardBorder}`, borderRadius: 2, color: SSS_COLORS.success }}
+                >
+                  <WhatsAppIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Stack>
 
         {/* Section développée */}
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
@@ -529,51 +550,6 @@ const PersonCard = ({
                     </Stack>
                   </Stack>
                 </Box>
-              </Stack>
-
-              {/* Actions supplémentaires */}
-              <Divider />
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<ViewIcon />}
-                  onClick={(e) => { e.stopPropagation(); handleAction('view'); }}
-                >
-                  Voir la fiche
-                </Button>
-                {phone && (
-                  <>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="primary"
-                      startIcon={<CallIcon />}
-                      onClick={(e) => { e.stopPropagation(); handleAction('call'); }}
-                    >
-                      Appeler
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="success"
-                      startIcon={<WhatsAppIcon />}
-                      onClick={(e) => { e.stopPropagation(); handleAction('whatsapp'); }}
-                    >
-                      WhatsApp
-                    </Button>
-                  </>
-                )}
-                {user.email && (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<EmailIcon />}
-                    onClick={(e) => { e.stopPropagation(); handleAction('email'); }}
-                  >
-                    Email
-                  </Button>
-                )}
               </Stack>
             </Stack>
           </Box>

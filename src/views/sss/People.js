@@ -67,6 +67,7 @@ import {
   TableShell,
   tableHeadCellSx,
   tableBodyCellSx,
+  viewButtonSx,
   PrimaryButton,
   GhostButton,
   SSS_COLORS
@@ -239,16 +240,7 @@ const PeoplePage = () => {
                     variant="outlined"
                     startIcon={<ViewIcon fontSize="small" />}
                     onClick={() => navigate(`/wekavit/sss/people/${userId}`)}
-                    sx={{
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      borderColor: SSS_COLORS.brandBorder,
-                      color: SSS_COLORS.brand,
-                      bgcolor: 'rgba(103,58,183,0.04)',
-                      px: 1.5,
-                      '&:hover': { borderColor: SSS_COLORS.brand, bgcolor: 'rgba(103,58,183,0.1)' }
-                    }}
+                    sx={viewButtonSx}
                   >
                     Voir
                   </Button>

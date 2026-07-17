@@ -606,7 +606,7 @@ const PersonFichePage = () => {
             right: 0,
             height: 3,
             background: isUrgent
-              ? `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.warning.main})`
+              ? `linear-gradient(90deg, ${SSS_COLORS.error}, ${SSS_COLORS.warning})`
               : `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`,
           }
         }}

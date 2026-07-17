@@ -18,6 +18,7 @@ import {
   HEALTH_LABELS,
   HEALTH_COLORS
 } from '../labels';
+import { toneColor } from './SssLayout';
 
 // Import des icônes
 import {
@@ -98,11 +99,8 @@ const HealthMeter = ({
   const config = LEVEL_CONFIG[level] || LEVEL_CONFIG.good;
   const LevelIcon = config.icon;
 
-  // Couleur du thème via HEALTH_COLORS
-  const themeColor = useMemo(() => {
-    if (color === 'default') return theme.palette.grey[500];
-    return theme.palette[color]?.main || theme.palette.primary.main;
-  }, [color, theme]);
+  // Couleur douce via HEALTH_COLORS (palette SSS harmonisée)
+  const themeColor = useMemo(() => toneColor(color), [color]);
 
   // Animation au montage
   useEffect(() => {
@@ -564,9 +562,7 @@ export const HealthMeterSummary = ({ levels, total }) => {
       <Stack direction="row" spacing={0.5} sx={{ height: 6 }}>
         {distribution.map(({ level, percentage, count }) => {
           const color = HEALTH_COLORS[level] || 'default';
-          const themeColor = color === 'default'
-            ? theme.palette.grey[400]
-            : theme.palette[color]?.main || theme.palette.primary.main;
+          const themeColor = toneColor(color);
 
           return (
             <Tooltip key={level} title={`${HEALTH_LABELS[level]}: ${count} (${Math.round(percentage)}%)`} arrow>
@@ -587,9 +583,7 @@ export const HealthMeterSummary = ({ levels, total }) => {
       <Stack direction="row" spacing={1} flexWrap="wrap">
         {distribution.map(({ level, count }) => {
           const color = HEALTH_COLORS[level] || 'default';
-          const themeColor = color === 'default'
-            ? theme.palette.grey[400]
-            : theme.palette[color]?.main || theme.palette.primary.main;
+          const themeColor = toneColor(color);
 
           return count > 0 ? (
             <Chip

@@ -41,7 +41,7 @@ import {
   avatarColor,
   displayName
 } from '../labels';
-import { SSS_COLORS } from './SssLayout';
+import { SSS_COLORS, toneColor } from './SssLayout';
 
 // Import des icônes
 import {
@@ -104,14 +104,7 @@ export const UrgencyChip = ({ urgency, size = 'small', showDot = true }) => {
   const theme = useTheme();
   const label = URGENCY_LABELS[urgency] || urgency || '—';
   const paletteKey = URGENCY_COLORS[urgency] || 'default';
-  const tone =
-    paletteKey === 'error'
-      ? theme.palette.error.main
-      : paletteKey === 'warning'
-        ? theme.palette.warning.main
-        : paletteKey === 'info'
-          ? theme.palette.info.main
-          : theme.palette.grey[600];
+  const tone = toneColor(paletteKey);
 
   return (
     <Chip
@@ -136,7 +129,7 @@ export const UrgencyChip = ({ urgency, size = 'small', showDot = true }) => {
  */
 export const HealthChip = ({ level, score, size = 'small', showProgress = false }) => {
   const theme = useTheme();
-  const color = HEALTH_COLORS[level] || 'default';
+  const color = toneColor(HEALTH_COLORS[level] || 'default');
   const label = score != null
     ? `${HEALTH_LABELS[level] || level || '—'} ${score}%`
     : HEALTH_LABELS[level] || level || '—';
@@ -187,18 +180,7 @@ export const StatusChip = ({ status, size = 'small', showIcon = true }) => {
   const theme = useTheme();
   const paletteKey = TASK_STATUS_COLORS[status] || 'default';
   const label = TASK_STATUS_LABELS[status] || status || '—';
-  const tone =
-    paletteKey === 'success'
-      ? theme.palette.success.main
-      : paletteKey === 'warning'
-        ? theme.palette.warning.main
-        : paletteKey === 'error'
-          ? theme.palette.error.main
-          : paletteKey === 'info'
-            ? theme.palette.info.main
-            : paletteKey === 'secondary'
-              ? SSS_COLORS.brand
-              : theme.palette.grey[600];
+  const tone = toneColor(paletteKey);
 
   return (
     <Chip
@@ -702,7 +684,7 @@ export const RankBadge = ({ rank, urgency, size = 28, showTrophy = false }) => {
         height: size,
         fontSize: size * 0.45,
         fontWeight: 700,
-        bgcolor: urgency ? URGENCY_BG[urgency] : theme.palette.grey[400],
+        bgcolor: urgency ? toneColor(URGENCY_COLORS[urgency]) : SSS_COLORS.neutral,
         color: '#fff',
         transition: 'all 0.3s ease',
         '&:hover': {

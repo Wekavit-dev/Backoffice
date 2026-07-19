@@ -1,80 +1,47 @@
-import React, { useCallback, useContext, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   Box,
   Button,
   Chip,
+  CircularProgress,
   Divider,
+  Fade,
   Grid,
-  IconButton,
-  LinearProgress,
   MenuItem,
-  Paper,
-  Stack,
+  Snackbar,
   Tab,
   Tabs,
   TextField,
-  Tooltip,
   Typography,
   useMediaQuery,
-  alpha,
-  useTheme,
-  Fade,
-  Grow,
-  Zoom,
-  Card,
-  CardContent,
-  Badge,
-  Avatar,
-  Collapse,
-  Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  SpeedDial,
-  SpeedDialAction,
-  SpeedDialIcon,
-  Fab,
-  Skeleton
+  useTheme
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Refresh as RefreshIcon,
   ContentCopy as CopyIcon,
   Save as SaveIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
-  MoreVert as MoreVertIcon,
   Phone as PhoneIcon,
   WhatsApp as WhatsAppIcon,
-  Email as EmailIcon,
-  Share as ShareIcon,
-  Archive as ArchiveIcon,
-  Star as StarIcon,
-  StarBorder as StarBorderIcon,
   AccessTime as AccessTimeIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
   Schedule as ScheduleIcon,
-  NotificationsActive as NotificationIcon,
   Timeline as TimelineIcon,
   PeopleAlt as PeopleAltIcon,
   Wallet as WalletIcon,
   Savings as SavingsIcon,
   History as HistoryIcon,
   Settings as SettingsIcon,
-  Print as PrintIcon,
-  Download as DownloadIcon,
   Add as AddIcon,
   Flag as FlagIcon,
-  PersonAdd as PersonAddIcon
+  PersonAdd as PersonAddIcon,
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
@@ -90,224 +57,117 @@ import {
   formatMoney,
   OUTCOME_LABELS,
   telHref,
-  whatsappHref
+  whatsappHref,
+  maskPhone
 } from './labels';
 import { AlertChips, EmptyState, PersonAvatar, StageChip, StatusChip, UrgencyChip } from './components/Chips';
 import HealthMeter from './components/HealthMeter';
-import PhoneAction from './components/PhoneAction';
-import { SSS_COLORS } from './components/SssLayout';
+import { GhostButton, PrimaryButton, SSS_COLORS } from './components/SssLayout';
 
-// Composant Row amélioré
-const Row = ({ label, value, color, icon, onClick }) => {
-  const theme = useTheme();
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 2,
-        py: 0.75,
-        px: 1,
-        borderRadius: 1,
-        transition: 'all 0.2s ease',
-        cursor: onClick ? 'pointer' : 'default',
-        '&:hover': onClick ? {
-          bgcolor: alpha(SSS_COLORS.brand, 0.04),
-        } : {}
-      }}
-      onClick={onClick}
+const Row = ({ label, value, tone, icon }) => (
+  <div className="flex items-start justify-between gap-3 border-b border-sss-border/80 py-2.5 last:border-0">
+    <div className="flex min-w-0 items-center gap-2 text-sm text-sss-muted">
+      {icon && <span className="inline-flex text-sss-muted [&>svg]:text-[1rem]">{icon}</span>}
+      <span>{label}</span>
+    </div>
+    <div
+      className="max-w-[55%] text-right text-sm font-semibold text-sss-text"
+      style={tone ? { color: tone } : undefined}
     >
-      <Stack direction="row" spacing={1} alignItems="center">
-        {icon && (
-          <Box sx={{ color: color || theme.palette.text.secondary, display: 'flex' }}>
-            {icon}
-          </Box>
-        )}
-        <Typography variant="body2" color="text.secondary">
-          {label}
-        </Typography>
-      </Stack>
-      <Typography
-        variant="body2"
-        fontWeight={600}
-        textAlign="right"
-        color={color || 'text.primary'}
-        sx={{
-          fontFamily: typeof value === 'string' && value.includes('F CFA') ? 'monospace' : 'inherit'
-        }}
-      >
-        {value ?? '—'}
-      </Typography>
-    </Box>
-  );
-};
+      {value ?? '—'}
+    </div>
+  </div>
+);
 
-// Composant de carte d'information
-const InfoCard = ({ title, icon, children, color, action, loading }) => {
-  const theme = useTheme();
+const SectionCard = ({ title, icon, children, action, hint, tone = SSS_COLORS.brand }) => (
+  <section className="sss-surface h-full overflow-hidden">
+    <div className="flex items-start justify-between gap-3 border-b border-sss-border px-4 py-3.5 sm:px-5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl [&>svg]:text-[1.15rem]"
+          style={{ backgroundColor: `${tone}1a`, color: tone }}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <h3 className="m-0 text-base font-bold text-sss-text">{title}</h3>
+          {hint && <p className="sss-muted m-0 mt-0.5 text-xs">{hint}</p>}
+        </div>
+      </div>
+      {action}
+    </div>
+    <div className="px-4 py-3 sm:px-5 sm:py-4">{children}</div>
+  </section>
+);
 
-  if (loading) {
-    return (
-      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-        <Stack spacing={1}>
-          <Skeleton variant="text" width={120} />
-          <Skeleton variant="text" width="90%" />
-          <Skeleton variant="text" width="80%" />
-        </Stack>
-      </Paper>
-    );
-  }
-
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 2.5,
-        borderRadius: 3,
-        borderColor: alpha(color || SSS_COLORS.brand, 0.12),
-        bgcolor: alpha(color || SSS_COLORS.brand, 0.02),
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          borderColor: alpha(color || SSS_COLORS.brand, 0.25),
-          boxShadow: theme.shadows[2]
-        }
-      }}
-    >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          {icon && (
-            <Box sx={{
-              color: color || theme.palette.primary.main,
-              display: 'flex',
-              '& svg': { fontSize: 20 }
-            }}>
-              {icon}
-            </Box>
-          )}
-          <Typography variant="h6" fontWeight={600}>
-            {title}
-          </Typography>
-        </Stack>
-        {action && (
-          <Button size="small" startIcon={<EditIcon />} onClick={action}>
-            Modifier
-          </Button>
-        )}
-      </Stack>
-      <Stack spacing={1}>
-        {children}
-      </Stack>
-    </Paper>
-  );
-};
-
-// Composant de note
 const NoteItem = ({ note, onDelete }) => {
-  const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const long = (note.body || '').length > 120;
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 1.5,
-        borderRadius: 2,
-        bgcolor: alpha(theme.palette.background.default, 0.5),
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          borderColor: alpha(theme.palette.primary.main, 0.2),
-        }
-      }}
-    >
-      <Stack spacing={1}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-          <Typography
-            variant="body2"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              maxHeight: expanded ? 'none' : 60,
-              overflow: 'hidden',
-              cursor: 'pointer'
-            }}
-            onClick={() => setExpanded(!expanded)}
+    <article className="rounded-2xl border border-sss-border bg-sss-page/70 p-3.5">
+      <p
+        className={`m-0 whitespace-pre-wrap text-sm leading-relaxed text-sss-text ${
+          !expanded && long ? 'line-clamp-3' : ''
+        }`}
+      >
+        {note.body}
+      </p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-sss-muted">{note.authorName || 'Admin'}</span>
+        <span className="text-xs text-sss-muted">·</span>
+        <span className="text-xs text-sss-muted">{formatDateFr(note.createdAt)}</span>
+        {long && (
+          <button
+            type="button"
+            className="ml-auto text-xs font-bold text-sss-brand"
+            onClick={() => setExpanded((v) => !v)}
           >
-            {note.body}
-          </Typography>
-          {onDelete && (
-            <IconButton size="small" onClick={() => onDelete(note._id)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          )}
-        </Stack>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Typography variant="caption" color="text.secondary">
-            {note.authorName || 'Admin'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            •
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {formatDateFr(note.createdAt)}
-          </Typography>
-          {note.body.length > 100 && (
-            <Chip
-              label={expanded ? 'Voir moins' : 'Voir plus'}
-              size="small"
-              onClick={() => setExpanded(!expanded)}
-              sx={{ height: 20, fontSize: '0.6rem' }}
-            />
-          )}
-        </Stack>
-      </Stack>
-    </Paper>
+            {expanded ? 'Réduire' : 'Lire plus'}
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            className="rounded-lg p-1 text-sss-muted hover:bg-sss-error-soft hover:text-sss-error"
+            onClick={() => onDelete(note._id)}
+            aria-label="Supprimer la note"
+          >
+            <DeleteIcon sx={{ fontSize: 16 }} />
+          </button>
+        )}
+      </div>
+    </article>
   );
 };
 
-// Composant d'action récente
-const TaskItem = ({ task }) => {
-  const theme = useTheme();
+const TaskItem = ({ task }) => (
+  <div className="flex items-center justify-between gap-3 rounded-2xl border border-sss-border bg-white px-3.5 py-3">
+    <div className="min-w-0">
+      <div className="truncate text-sm font-bold text-sss-text">
+        {ACTION_LABELS[task.actionType] || task.actionType}
+      </div>
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-sss-muted">
+        <span>{task.date || '—'}</span>
+        {task.outcome && (
+          <>
+            <span>·</span>
+            <span>{OUTCOME_LABELS[task.outcome] || task.outcome}</span>
+          </>
+        )}
+      </div>
+    </div>
+    <StatusChip status={task.status} size="small" />
+  </div>
+);
 
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        py: 1,
-        px: 1.5,
-        borderRadius: 1,
-        bgcolor: alpha(theme.palette.background.default, 0.3),
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          bgcolor: alpha(theme.palette.primary.main, 0.04),
-        }
-      }}
-    >
-      <Stack spacing={0.5}>
-        <Typography variant="body2" fontWeight={600}>
-          {ACTION_LABELS[task.actionType] || task.actionType}
-        </Typography>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="caption" color="text.secondary">
-            {task.date}
-          </Typography>
-          {task.outcome && (
-            <>
-              <Typography variant="caption" color="text.secondary">•</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {OUTCOME_LABELS[task.outcome] || task.outcome}
-              </Typography>
-            </>
-          )}
-        </Stack>
-      </Stack>
-      <StatusChip status={task.status} size="small" />
-    </Box>
-  );
-};
+const TabPanel = ({ children, value, index }) => (
+  <Fade in={value === index} timeout={250}>
+    <div hidden={value !== index} className={value === index ? 'animate-sss-fade-up' : ''}>
+      {value === index && children}
+    </div>
+  </Fade>
+);
 
 const PersonFichePage = () => {
   const { id } = useParams();
@@ -315,33 +175,26 @@ const PersonFichePage = () => {
   const { globalState } = useContext(AppContext);
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
-  // États principaux
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fiche, setFiche] = useState(null);
   const [tab, setTab] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // États des formulaires
   const [stageDraft, setStageDraft] = useState('');
   const [stageReason, setStageReason] = useState('');
   const [nbaDraft, setNbaDraft] = useState('');
   const [noteBody, setNoteBody] = useState('');
   const [snoozeDays, setSnoozeDays] = useState('7');
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editField, setEditField] = useState(null);
 
-  // Chargement des données
   const load = useCallback(async () => {
     if (!globalState?.key || !id) return;
     setLoading(true);
     try {
       const res = await SssApi.getUserFiche(id, globalState.key);
       if (res?.status === 200) {
-        const data = res.data?.data;
+        const data = res.data?.data || res.data;
         setFiche(data);
         setStageDraft(data?.situation?.stage || '');
         setNbaDraft(data?.nextBestAction?.override || data?.nextBestAction?.nba || '');
@@ -358,7 +211,6 @@ const PersonFichePage = () => {
     load();
   }, [load]);
 
-  // Données dérivées
   const identity = fiche?.identity || {};
   const situation = fiche?.situation || {};
   const savings = fiche?.savings || {};
@@ -368,23 +220,25 @@ const PersonFichePage = () => {
   const nba = fiche?.nextBestAction || {};
   const isUrgent = situation.urgency === 'critical' || situation.urgency === 'high';
 
-  // Gestionnaires
+  const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+
   const handleSaveStage = async () => {
     setSaving(true);
     try {
-      const res = await SssApi.overrideStage(id, {
-        stage: stageDraft,
-        reason: stageReason || undefined
-      }, globalState.key);
+      const res = await SssApi.overrideStage(
+        id,
+        { stage: stageDraft, reason: stageReason || undefined },
+        globalState.key
+      );
       if (res?.status === 200) {
-        toast.success('Étape mise à jour avec succès');
+        toast.success('Étape mise à jour');
         setStageReason('');
         await load();
-        setSnackbar({ open: true, message: 'Étape mise à jour', severity: 'success' });
+        notify('Étape mise à jour');
       }
     } catch (err) {
-      toast.error(err?.data?.message || 'Échec de la mise à jour');
-      setSnackbar({ open: true, message: 'Erreur lors de la mise à jour', severity: 'error' });
+      toast.error(err?.data?.message || 'Échec');
+      notify('Erreur lors de la mise à jour', 'error');
     } finally {
       setSaving(false);
     }
@@ -397,11 +251,11 @@ const PersonFichePage = () => {
       if (res?.status === 200) {
         toast.success('Action conseillée mise à jour');
         await load();
-        setSnackbar({ open: true, message: 'Action mise à jour', severity: 'success' });
+        notify('Action mise à jour');
       }
     } catch (err) {
       toast.error(err?.data?.message || 'Échec');
-      setSnackbar({ open: true, message: 'Erreur lors de la mise à jour', severity: 'error' });
+      notify('Erreur lors de la mise à jour', 'error');
     } finally {
       setSaving(false);
     }
@@ -419,11 +273,11 @@ const PersonFichePage = () => {
         toast.success('Note enregistrée');
         setNoteBody('');
         await load();
-        setSnackbar({ open: true, message: 'Note ajoutée', severity: 'success' });
+        notify('Note ajoutée');
       }
     } catch (err) {
       toast.error(err?.data?.message || 'Échec');
-      setSnackbar({ open: true, message: 'Erreur lors de l\'ajout', severity: 'error' });
+      notify("Erreur lors de l'ajout", 'error');
     } finally {
       setSaving(false);
     }
@@ -434,13 +288,13 @@ const PersonFichePage = () => {
     try {
       const res = await SssApi.snoozeUser(id, { days: Number(snoozeDays) || 7 }, globalState.key);
       if (res?.status === 200) {
-        toast.success(`Pause de contact pendant ${snoozeDays} jour(s)`);
+        toast.success(`Pause pendant ${snoozeDays} jour(s)`);
         await load();
-        setSnackbar({ open: true, message: 'Pause activée', severity: 'success' });
+        notify('Pause activée');
       }
     } catch (err) {
       toast.error(err?.data?.message || 'Échec');
-      setSnackbar({ open: true, message: 'Erreur lors de la pause', severity: 'error' });
+      notify('Erreur lors de la pause', 'error');
     } finally {
       setSaving(false);
     }
@@ -453,11 +307,11 @@ const PersonFichePage = () => {
       if (res?.status === 200) {
         toast.success('Situation recalculée');
         await load();
-        setSnackbar({ open: true, message: 'Recalcul effectué', severity: 'success' });
+        notify('Recalcul effectué');
       }
     } catch (err) {
       toast.error(err?.data?.message || 'Échec');
-      setSnackbar({ open: true, message: 'Erreur lors du recalcul', severity: 'error' });
+      notify('Erreur lors du recalcul', 'error');
     } finally {
       setSaving(false);
     }
@@ -467,736 +321,490 @@ const PersonFichePage = () => {
     if (!nba.template) return;
     try {
       await navigator.clipboard.writeText(nba.template);
-      toast.success('Message copié dans le presse-papier');
-      setSnackbar({ open: true, message: 'Message copié', severity: 'success' });
+      toast.success('Message copié');
+      notify('Message copié');
     } catch {
       toast.error('Copie impossible');
     }
   };
 
-  const handleDeleteNote = async (noteId) => {
-    // Implémenter la suppression de note
-    setSnackbar({ open: true, message: 'Note supprimée', severity: 'success' });
+  const handleDeleteNote = async () => {
+    notify('Suppression non disponible côté API', 'info');
   };
 
   if (loading) {
     return (
-      <MainCard title="Fiche personne">
-        <Box sx={{ p: 3 }}>
-          <LinearProgress sx={{ borderRadius: 2, height: 6 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-            Chargement de la fiche...
-          </Typography>
-        </Box>
+      <MainCard contentSX={{ p: { xs: 2, sm: 3 }, bgcolor: SSS_COLORS.pageBg }}>
+        <div className="sss-page">
+          <div className="h-1.5 overflow-hidden rounded-full bg-sss-brand-soft">
+            <div className="h-full w-1/3 animate-sss-shimmer rounded-full bg-sss-brand" />
+          </div>
+          <p className="sss-muted mt-3 text-sm">Chargement de la fiche…</p>
+        </div>
       </MainCard>
     );
   }
 
   if (!fiche) {
     return (
-      <MainCard title="Fiche personne">
+      <MainCard contentSX={{ p: { xs: 2, sm: 3 }, bgcolor: SSS_COLORS.pageBg }}>
         <EmptyState
           title="Personne introuvable"
-          subtitle="La fiche que vous recherchez n'existe pas ou a été supprimée."
+          subtitle="La fiche demandée n’existe pas ou a été supprimée."
           action={
-            <Button startIcon={<BackIcon />} onClick={() => navigate('/wekavit/sss/people')}>
+            <PrimaryButton startIcon={<BackIcon />} onClick={() => navigate('/wekavit/sss/people')}>
               Retour à la liste
-            </Button>
+            </PrimaryButton>
           }
         />
       </MainCard>
     );
   }
 
-  return (
-    <MainCard
-      title={
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Box
-            sx={{
-              p: 0.5,
-              borderRadius: '50%',
-              background: `linear-gradient(135deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`,
-              boxShadow: `0 4px 14px ${alpha(SSS_COLORS.brand, 0.25)}`
-            }}
-          >
-            <Box
-              sx={{
-                borderRadius: '50%',
-                border: `2px solid ${theme.palette.background.paper}`,
-                overflow: 'hidden'
-              }}
-            >
-              <PersonAvatar user={identity} size={44} />
-            </Box>
-          </Box>
-          <Box>
-            <Typography variant="h3" sx={{ fontSize: { xs: '1.15rem', sm: '1.5rem' } }}>
-              {displayName(identity)}
-            </Typography>
-            {identity.profession && (
-              <Typography variant="caption" color="text.secondary">
-                {identity.profession}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
-      }
-      secondary={
-        <Stack direction="row" spacing={1} alignItems="center">
-          {!isXs && (
-            <>
-              <Button
-                startIcon={<BackIcon />}
-                onClick={() => navigate('/wekavit/sss/people')}
-                size="small"
-                sx={{ borderRadius: 2 }}
-              >
-                Retour
-              </Button>
-              <Button
-                startIcon={<RefreshIcon />}
-                onClick={handleRecompute}
-                disabled={saving}
-                size="small"
-                sx={{ borderRadius: 2 }}
-              >
-                Recalculer
-              </Button>
-            </>
-          )}
-          {isXs && (
-            <>
-              <IconButton size="small" onClick={() => navigate('/wekavit/sss/people')}>
-                <BackIcon />
-              </IconButton>
-              <IconButton size="small" onClick={handleRecompute} disabled={saving}>
-                <RefreshIcon />
-              </IconButton>
-            </>
-          )}
-        </Stack>
-      }
-      sx={{
-        '& .MuiCardHeader-content': {
-          minWidth: 0,
-          overflow: 'hidden',
-          flex: 1
-        }
-      }}
-      contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}
-    >
-      {/* En-tête de la fiche */}
-      <Paper
-        variant="outlined"
-        sx={{
-          p: { xs: 1.5, sm: 2.5 },
-          mb: 2.5,
-          borderRadius: 2,
-          borderColor: isUrgent ? alpha(theme.palette.error.main, 0.25) : alpha(SSS_COLORS.brand, 0.12),
-          bgcolor: isUrgent ? alpha(theme.palette.error.main, 0.02) : alpha(SSS_COLORS.brand, 0.015),
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.04)}`,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: isUrgent
-              ? `linear-gradient(90deg, ${SSS_COLORS.error}, ${SSS_COLORS.warning})`
-              : `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`,
-          }
-        }}
-      >
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={5}>
-            <Stack spacing={2}>
-              <Box>
-                <PhoneAction phone={identity.phone} size="medium" showQuality />
-              </Box>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
-                <StageChip stage={situation.stage} />
-                <UrgencyChip urgency={situation.urgency} />
-                <HealthMeter level={situation.healthLevel} score={situation.healthScore} />
-                {situation.snoozeUntil && (
-                  <Chip
-                    icon={<ScheduleIcon />}
-                    label={`Pause jusqu'au ${formatDateFr(situation.snoozeUntil)}`}
-                    size="small"
-                    color="warning"
-                  />
-                )}
-              </Stack>
-            </Stack>
-          </Grid>
+  const tabs = [
+    { label: 'Situation', icon: <PeopleAltIcon /> },
+    { label: 'Épargne', icon: <WalletIcon /> },
+    { label: 'Notes', icon: <HistoryIcon /> },
+    { label: 'Historique', icon: <TimelineIcon /> },
+    { label: 'Modifier', icon: <SettingsIcon /> }
+  ];
 
-          <Grid item xs={12} md={7}>
-            <Alert
-              severity={isUrgent ? 'error' : 'info'}
-              icon={isUrgent ? <ErrorIcon /> : <InfoIcon />}
-              action={
-                <Stack direction="row" spacing={1}>
-                  {nba.template && (
-                    <Button
-                      size="small"
-                      startIcon={<CopyIcon />}
-                      onClick={copyTemplate}
-                      sx={{
-                        borderRadius: 2,
-                        bgcolor: alpha(theme.palette.common.white, 0.2),
-                        '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.3) }
-                      }}
-                    >
-                      Copier
-                    </Button>
-                  )}
-                </Stack>
-              }
-              sx={{
-                borderRadius: 2,
-                '& .MuiAlert-action': { alignItems: 'center', pt: 0 }
-              }}
-            >
-              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                {isUrgent && '⚠️ '}Prochaine action conseillée : {ACTION_LABELS[nba.nba] || nba.nba || '—'}
-              </Typography>
-              {nba.template && (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    opacity: 0.9,
-                    fontStyle: 'italic'
+  return (
+    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5, md: 3 }, bgcolor: SSS_COLORS.pageBg }}>
+      <div className="sss-page">
+        {/* Toolbar */}
+        <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
+          <GhostButton startIcon={<BackIcon />} onClick={() => navigate('/wekavit/sss/people')}>
+            Retour aux personnes
+          </GhostButton>
+          <div className="flex flex-wrap gap-2">
+            <GhostButton startIcon={<RefreshIcon />} onClick={handleRecompute} disabled={saving}>
+              {saving ? 'Recalcul…' : 'Recalculer'}
+            </GhostButton>
+            {identity.phone && (
+              <>
+                <GhostButton startIcon={<PhoneIcon />} href={telHref(identity.phone)} component="a">
+                  Appeler
+                </GhostButton>
+                <PrimaryButton
+                  startIcon={<WhatsAppIcon />}
+                  href={whatsappHref(identity.phone)}
+                  component="a"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp
+                </PrimaryButton>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Hero */}
+        <section
+          className={`sss-surface relative mb-5 overflow-hidden ${
+            isUrgent ? 'border-sss-error/25' : 'border-sss-brand-border'
+          }`}
+        >
+          <div
+            className="absolute inset-x-0 top-0 h-1.5"
+            style={{
+              background: isUrgent
+                ? `linear-gradient(90deg, ${SSS_COLORS.error}, ${SSS_COLORS.warning})`
+                : `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`
+            }}
+          />
+
+          <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="min-w-0">
+              <div className="flex items-start gap-3.5 sm:gap-4">
+                <div
+                  className="rounded-full p-0.5 shadow-sss-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`
                   }}
                 >
-                  "{nba.template}"
-                </Typography>
+                  <div className="rounded-full border-2 border-white">
+                    <PersonAvatar user={identity} size={isXs ? 52 : 64} />
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="m-0 text-xl font-extrabold tracking-tight text-sss-text sm:text-2xl">
+                    {displayName(identity)}
+                  </h1>
+                  <p className="sss-muted m-0 mt-1 text-sm">
+                    {identity.profession || 'Client accompagné'}
+                    {identity.phone ? ` · ${maskPhone(identity.phone)}` : ''}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <StageChip stage={situation.stage} />
+                    <UrgencyChip urgency={situation.urgency} />
+                    <HealthMeter level={situation.healthLevel} score={situation.healthScore} dense />
+                    {situation.snoozeUntil && (
+                      <Chip
+                        icon={<ScheduleIcon />}
+                        label={`Pause jusqu’au ${formatDateFr(situation.snoozeUntil)}`}
+                        size="small"
+                        color="warning"
+                        sx={{ fontWeight: 700 }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {situation.alerts?.length > 0 && (
+                <div className="mt-4 rounded-2xl border border-sss-warning/20 bg-sss-warning-soft/60 p-3">
+                  <p className="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-sss-warning">Alertes</p>
+                  <AlertChips alerts={situation.alerts} max={6} />
+                </div>
               )}
-            </Alert>
-          </Grid>
-        </Grid>
+            </div>
 
-        {situation.alerts?.length > 0 && (
-          <Box mt={2}>
-            <AlertChips alerts={situation.alerts} max={5} />
-          </Box>
-        )}
-      </Paper>
-
-      {/* Tabs */}
-      <Tabs
-        value={tab}
-        onChange={(_, v) => setTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          mb: 2,
-          '& .MuiTab-root': {
-            textTransform: 'none',
-            fontWeight: 600,
-            minHeight: 48,
-            '&.Mui-selected': {
-              color: SSS_COLORS.brandDark,
-            }
-          },
-          '& .MuiTabs-indicator': {
-            backgroundColor: SSS_COLORS.brand,
-            height: 3,
-            borderRadius: '3px 3px 0 0'
-          }
-        }}
-      >
-        <Tab label="Situation" icon={<PeopleAltIcon />} iconPosition="start" />
-        <Tab label="Épargne & dépôts" icon={<WalletIcon />} iconPosition="start" />
-        <Tab label="Actions & notes" icon={<HistoryIcon />} iconPosition="start" />
-        <Tab label="Historique" icon={<TimelineIcon />} iconPosition="start" />
-        <Tab label="Modifier" icon={<SettingsIcon />} iconPosition="start" />
-      </Tabs>
-
-      {/* Onglet 0: Situation */}
-      <TabPanel value={tab} index={0}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <InfoCard
-              title="Parcours"
-              icon={<TimelineIcon />}
-              color={theme.palette.primary.main}
-              action={() => setTab(4)}
+            <div
+              className={`rounded-sss border p-4 sm:p-5 ${
+                isUrgent
+                  ? 'border-sss-error/25 bg-sss-error-soft/50'
+                  : 'border-sss-brand-border bg-sss-brand-soft/70'
+              }`}
             >
-              <Row
-                label="Étape actuelle"
-                value={STAGE_LABELS[situation.stage] || situation.stage}
-                color={theme.palette.primary.main}
-                icon={<FlagIcon />}
-              />
-              <Row
-                label="Étape calculée"
-                value={STAGE_LABELS[situation.stageSuggested] || situation.stageSuggested}
-                icon={<InfoIcon />}
-              />
-              <Row
-                label="Depuis le"
-                value={formatDateFr(situation.stageEnteredAt)}
-                icon={<AccessTimeIcon />}
-              />
-              <Row
-                label="Inscrit(e) le"
-                value={formatDateFr(situation.signupDate)}
-                icon={<PersonAddIcon />}
-              />
-              <Row
-                label="Dernier calcul"
-                value={formatDateFr(situation.lastComputedAt)}
-                icon={<RefreshIcon />}
-              />
-            </InfoCard>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <InfoCard
-              title="Engagement"
-              icon={<PeopleAltIcon />}
-              color={theme.palette.secondary.main}
-            >
-              <Row
-                label="Dernière activité"
-                value={formatDateFr(engagement.lastActivityAt)}
-                icon={<AccessTimeIcon />}
-              />
-              <Row
-                label="Jours sans activité"
-                value={engagement.daysSinceLastActivity != null ? `${engagement.daysSinceLastActivity} j` : '—'}
-                color={engagement.daysSinceLastActivity > 7 ? theme.palette.warning.main : undefined}
-                icon={<ScheduleIcon />}
-              />
-              <Row
-                label="Dernier contact"
-                value={formatDateFr(engagement.lastContactedAt)}
-                icon={<PhoneIcon />}
-              />
-              <Row
-                label="Dernière action"
-                value={ACTION_LABELS[engagement.lastContactAction] || '—'}
-                icon={<CheckCircleIcon />}
-              />
-              <Row
-                label="Parrainages"
-                value={`${engagement.activeReferralCount || 0} actifs / ${engagement.referralCount || 0}`}
-                icon={<PeopleAltIcon />}
-              />
-            </InfoCard>
-          </Grid>
-        </Grid>
-      </TabPanel>
-
-      {/* Onglet 1: Épargne & dépôts */}
-      <TabPanel value={tab} index={1}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <InfoCard
-              title="Dépôts"
-              icon={<WalletIcon />}
-              color={theme.palette.success.main}
-            >
-              <Row
-                label="Validés"
-                value={deposits.validatedDepositCount || 0}
-                icon={<CheckCircleIcon />}
-              />
-              <Row
-                label="En attente"
-                value={deposits.pendingDepositCount || 0}
-                color={deposits.pendingDepositCount > 0 ? theme.palette.warning.main : undefined}
-                icon={<ScheduleIcon />}
-              />
-              <Row
-                label="Premier dépôt"
-                value={formatDateFr(deposits.firstDepositAt)}
-                icon={<AccessTimeIcon />}
-              />
-              <Row
-                label="Dernier dépôt"
-                value={formatDateFr(deposits.lastDepositAt)}
-                icon={<AccessTimeIcon />}
-              />
-              <Row
-                label="Total déposé"
-                value={formatMoney(deposits.totalDepositedUsd)}
-                color={theme.palette.success.main}
-                icon={<TrendingUpIcon />}
-              />
-              <Row
-                label="Semaines d'affilée"
-                value={deposits.streakWeeks || 0}
-                icon={<TrendingUpIcon />}
-              />
-            </InfoCard>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <InfoCard
-              title="Plans d'épargne"
-              icon={<SavingsIcon />}
-              color={theme.palette.info.main}
-            >
-              <Row
-                label="Plans actifs"
-                value={savings.activePlanCount || 0}
-                icon={<CheckCircleIcon />}
-              />
-              <Row
-                label="Plans créés"
-                value={savings.everPlanCount || 0}
-                icon={<AddIcon />}
-              />
-              <Row
-                label="Capital en cours"
-                value={formatMoney(savings.totalSavedCapitalUsd)}
-                icon={<SavingsIcon />}
-              />
-              <Row
-                label="Total avec intérêts"
-                value={formatMoney(savings.totalSaveSumUsd)}
-                color={theme.palette.success.main}
-                icon={<TrendingUpIcon />}
-              />
-              <Row
-                label="Plans terminés"
-                value={savings.plansMaturedCount || 0}
-                icon={<CheckCircleIcon />}
-              />
-              <Row
-                label="Retraits anticipés"
-                value={savings.earlyWithdrawCount || 0}
-                color={savings.earlyWithdrawCount > 0 ? theme.palette.warning.main : undefined}
-                icon={<WarningIcon />}
-              />
-            </InfoCard>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <InfoCard
-              title="Solde disponible"
-              icon={<WalletIcon />}
-              color={theme.palette.primary.main}
-            >
-              <Row
-                label="Argent non placé"
-                value={formatMoney(balance.idleBalanceUsd)}
-                icon={<WalletIcon />}
-              />
-              <Row
-                label="Depuis (jours)"
-                value={balance.idleBalanceDays || 0}
-                icon={<AccessTimeIcon />}
-              />
-              <Row
-                label="Retraits wallet"
-                value={engagement.withdrawCount || 0}
-                icon={<TrendingDownIcon />}
-              />
-              <Row
-                label="Dernier retrait"
-                value={formatDateFr(engagement.lastWithdrawAt)}
-                icon={<AccessTimeIcon />}
-              />
-            </InfoCard>
-          </Grid>
-        </Grid>
-      </TabPanel>
-
-      {/* Onglet 2: Actions & notes */}
-      <TabPanel value={tab} index={2}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <InfoCard
-              title="Ajouter une note"
-              icon={<AddIcon />}
-              color={theme.palette.primary.main}
-            >
-              <TextField
-                fullWidth
-                multiline
-                minRows={3}
-                placeholder="Ex. : Attend son salaire vendredi. Relancer samedi matin."
-                value={noteBody}
-                onChange={(e) => setNoteBody(e.target.value)}
-                sx={{ mb: 1.5 }}
-                InputProps={{
-                  sx: { borderRadius: 2 }
-                }}
-              />
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={handleAddNote}
-                disabled={saving || !noteBody.trim()}
-                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
-              >
-                {saving ? <CircularProgress size={20} /> : 'Enregistrer la note'}
-              </Button>
-
-              <Divider sx={{ my: 3 }} />
-
-              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                Notes précédentes
-              </Typography>
-              <Stack spacing={1.5}>
-                {(fiche.notes || []).length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                    Aucune note pour l’instant.
-                  </Typography>
-                ) : (
-                  (fiche.notes || []).map((note) => (
-                    <NoteItem
-                      key={note._id}
-                      note={note}
-                      onDelete={handleDeleteNote}
-                    />
-                  ))
-                )}
-              </Stack>
-            </InfoCard>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <InfoCard
-              title="Dernières actions"
-              icon={<HistoryIcon />}
-              color={theme.palette.secondary.main}
-            >
-              {(fiche.tasks || []).length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                  Aucune action planifiée.
-                </Typography>
+              <div className="mb-2 flex items-center gap-2">
+                <AutoAwesomeIcon sx={{ color: isUrgent ? SSS_COLORS.error : SSS_COLORS.brand, fontSize: 20 }} />
+                <h2 className="m-0 text-sm font-bold uppercase tracking-wide text-sss-muted">
+                  Prochaine action conseillée
+                </h2>
+              </div>
+              <p className="m-0 text-lg font-extrabold text-sss-text">
+                {ACTION_LABELS[nba.nba] || nba.nba || 'Aucune action définie'}
+              </p>
+              {nba.template ? (
+                <p className="m-0 mt-2 whitespace-pre-wrap rounded-2xl bg-white/80 p-3 text-sm italic leading-relaxed text-sss-text border border-white">
+                  “{nba.template}”
+                </p>
               ) : (
-                  <Stack spacing={1.5}>
+                <p className="sss-muted m-0 mt-2 text-sm">Aucun message suggéré pour cette action.</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {nba.template && (
+                  <PrimaryButton size="small" startIcon={<CopyIcon />} onClick={copyTemplate}>
+                    Copier le message
+                  </PrimaryButton>
+                )}
+                <GhostButton size="small" startIcon={<SettingsIcon />} onClick={() => setTab(4)}>
+                  Modifier l’action
+                </GhostButton>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Tabs */}
+        <div className="sss-surface mb-4 overflow-hidden">
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              minHeight: 56,
+              px: 1,
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 700,
+                minHeight: 56,
+                color: SSS_COLORS.muted,
+                '&.Mui-selected': { color: SSS_COLORS.brandDark }
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: '3px 3px 0 0',
+                backgroundColor: SSS_COLORS.brand
+              }
+            }}
+          >
+            {tabs.map((t) => (
+              <Tab key={t.label} label={t.label} icon={t.icon} iconPosition="start" />
+            ))}
+          </Tabs>
+        </div>
+
+        {/* Situation */}
+        <TabPanel value={tab} index={0}>
+          <Grid container spacing={2.5}>
+            <Grid item xs={12} md={6}>
+              <SectionCard
+                title="Parcours"
+                hint="Où en est cette personne dans le cycle"
+                icon={<TimelineIcon />}
+                action={
+                  <button type="button" className="text-sm font-bold text-sss-brand" onClick={() => setTab(4)}>
+                    Modifier
+                  </button>
+                }
+              >
+                <Row label="Étape actuelle" value={STAGE_LABELS[situation.stage] || situation.stage} icon={<FlagIcon />} tone={SSS_COLORS.brand} />
+                <Row label="Étape calculée" value={STAGE_LABELS[situation.stageSuggested] || situation.stageSuggested} icon={<AutoAwesomeIcon />} />
+                <Row label="Depuis le" value={formatDateFr(situation.stageEnteredAt)} icon={<AccessTimeIcon />} />
+                <Row label="Inscrit(e) le" value={formatDateFr(situation.signupDate)} icon={<PersonAddIcon />} />
+                <Row label="Dernier calcul" value={formatDateFr(situation.lastComputedAt)} icon={<RefreshIcon />} />
+              </SectionCard>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <SectionCard title="Engagement" hint="Activité et contacts récents" icon={<PeopleAltIcon />} tone={SSS_COLORS.info}>
+                <Row label="Dernière activité" value={formatDateFr(engagement.lastActivityAt)} icon={<AccessTimeIcon />} />
+                <Row
+                  label="Jours sans activité"
+                  value={engagement.daysSinceLastActivity != null ? `${engagement.daysSinceLastActivity} j` : '—'}
+                  icon={<ScheduleIcon />}
+                  tone={engagement.daysSinceLastActivity > 7 ? SSS_COLORS.warning : undefined}
+                />
+                <Row label="Dernier contact" value={formatDateFr(engagement.lastContactedAt)} icon={<PhoneIcon />} />
+                <Row label="Dernière action" value={ACTION_LABELS[engagement.lastContactAction] || '—'} icon={<CheckCircleIcon />} />
+                <Row
+                  label="Parrainages"
+                  value={`${engagement.activeReferralCount || 0} actifs / ${engagement.referralCount || 0}`}
+                  icon={<PeopleAltIcon />}
+                />
+              </SectionCard>
+            </Grid>
+          </Grid>
+        </TabPanel>
+
+        {/* Épargne */}
+        <TabPanel value={tab} index={1}>
+          <Grid container spacing={2.5}>
+            <Grid item xs={12} md={4}>
+              <SectionCard title="Dépôts" icon={<WalletIcon />} tone={SSS_COLORS.success}>
+                <Row label="Validés" value={deposits.validatedDepositCount || 0} icon={<CheckCircleIcon />} />
+                <Row
+                  label="En attente"
+                  value={deposits.pendingDepositCount || 0}
+                  icon={<ScheduleIcon />}
+                  tone={deposits.pendingDepositCount > 0 ? SSS_COLORS.warning : undefined}
+                />
+                <Row label="Premier dépôt" value={formatDateFr(deposits.firstDepositAt)} icon={<AccessTimeIcon />} />
+                <Row label="Dernier dépôt" value={formatDateFr(deposits.lastDepositAt)} icon={<AccessTimeIcon />} />
+                <Row label="Total déposé" value={formatMoney(deposits.totalDepositedUsd)} icon={<TrendingUpIcon />} tone={SSS_COLORS.success} />
+                <Row label="Semaines d’affilée" value={deposits.streakWeeks || 0} icon={<TrendingUpIcon />} />
+              </SectionCard>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <SectionCard title="Plans d’épargne" icon={<SavingsIcon />} tone={SSS_COLORS.info}>
+                <Row label="Plans actifs" value={savings.activePlanCount || 0} icon={<CheckCircleIcon />} />
+                <Row label="Plans créés" value={savings.everPlanCount || 0} icon={<AddIcon />} />
+                <Row label="Capital en cours" value={formatMoney(savings.totalSavedCapitalUsd)} icon={<SavingsIcon />} />
+                <Row label="Total avec intérêts" value={formatMoney(savings.totalSaveSumUsd)} icon={<TrendingUpIcon />} tone={SSS_COLORS.success} />
+                <Row label="Plans terminés" value={savings.plansMaturedCount || 0} icon={<CheckCircleIcon />} />
+                <Row
+                  label="Retraits anticipés"
+                  value={savings.earlyWithdrawCount || 0}
+                  icon={<WarningIcon />}
+                  tone={savings.earlyWithdrawCount > 0 ? SSS_COLORS.warning : undefined}
+                />
+              </SectionCard>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <SectionCard title="Solde disponible" icon={<WalletIcon />} tone={SSS_COLORS.brand}>
+                <Row label="Argent non placé" value={formatMoney(balance.idleBalanceUsd)} icon={<WalletIcon />} />
+                <Row label="Depuis (jours)" value={balance.idleBalanceDays || 0} icon={<AccessTimeIcon />} />
+                <Row label="Retraits wallet" value={engagement.withdrawCount || 0} icon={<TrendingDownIcon />} />
+                <Row label="Dernier retrait" value={formatDateFr(engagement.lastWithdrawAt)} icon={<AccessTimeIcon />} />
+              </SectionCard>
+            </Grid>
+          </Grid>
+        </TabPanel>
+
+        {/* Notes & actions */}
+        <TabPanel value={tab} index={2}>
+          <Grid container spacing={2.5}>
+            <Grid item xs={12} md={6}>
+              <SectionCard title="Notes" hint="Capturer le contexte utile pour le prochain contact" icon={<AddIcon />}>
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  placeholder="Ex. : Attend son salaire vendredi. Relancer samedi matin."
+                  value={noteBody}
+                  onChange={(e) => setNoteBody(e.target.value)}
+                  sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+                <PrimaryButton startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />} onClick={handleAddNote} disabled={saving || !noteBody.trim()}>
+                  Enregistrer la note
+                </PrimaryButton>
+
+                <Divider sx={{ my: 2.5 }} />
+
+                <Typography variant="subtitle2" fontWeight={800} gutterBottom>
+                  Notes précédentes
+                </Typography>
+                <div className="flex flex-col gap-2.5">
+                  {(fiche.notes || []).length === 0 ? (
+                    <p className="sss-muted m-0 py-4 text-center text-sm">Aucune note pour l’instant.</p>
+                  ) : (
+                    (fiche.notes || []).map((note) => (
+                      <NoteItem key={note._id} note={note} onDelete={handleDeleteNote} />
+                    ))
+                  )}
+                </div>
+              </SectionCard>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <SectionCard title="Dernières actions" hint="Historique récent des tâches SSS" icon={<HistoryIcon />} tone={SSS_COLORS.info}>
+                {(fiche.tasks || []).length === 0 ? (
+                  <p className="sss-muted m-0 py-6 text-center text-sm">Aucune action planifiée.</p>
+                ) : (
+                  <div className="flex flex-col gap-2.5">
                     {(fiche.tasks || []).slice(0, 12).map((task) => (
                       <TaskItem key={task._id} task={task} />
-                  ))}
-                </Stack>
-              )}
-            </InfoCard>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+            </Grid>
           </Grid>
-        </Grid>
-      </TabPanel>
+        </TabPanel>
 
-      {/* Onglet 3: Historique */}
-      <TabPanel value={tab} index={3}>
-        <InfoCard
-          title="Historique d'accompagnement"
-          icon={<TimelineIcon />}
-          color={theme.palette.info.main}
-        >
-          {(fiche.timeline || []).length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-              Aucun événement encore.
-            </Typography>
-          ) : (
-              <Stack spacing={1.5}>
+        {/* Timeline */}
+        <TabPanel value={tab} index={3}>
+          <SectionCard title="Historique d’accompagnement" hint="Événements système et actions admin" icon={<TimelineIcon />} tone={SSS_COLORS.info}>
+            {(fiche.timeline || []).length === 0 ? (
+              <p className="sss-muted m-0 py-8 text-center text-sm">Aucun événement encore.</p>
+            ) : (
+              <div className="relative space-y-3 before:absolute before:bottom-2 before:left-[11px] before:top-2 before:w-px before:bg-sss-border">
                 {(fiche.timeline || []).map((ev) => (
-                  <Paper
-                    key={ev._id}
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: alpha(theme.palette.background.default, 0.3),
-                      border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                      display: 'flex',
-                      gap: 2,
-                      alignItems: 'flex-start'
-                    }}
-                  >
-                    <Chip
-                      size="small"
-                      label={ev.source === 'admin' ? 'Vous' : 'Système'}
-                      color={ev.source === 'admin' ? 'primary' : 'default'}
-                      sx={{ flexShrink: 0 }}
+                  <div key={ev._id} className="relative flex gap-3 pl-1">
+                    <span
+                      className={`relative z-10 mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-4 ring-white ${
+                        ev.source === 'admin' ? 'bg-sss-brand' : 'bg-sss-neutral'
+                      }`}
                     />
-                    <Box flex={1}>
-                    <Typography variant="body2">{ev.message || ev.type}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatDateFr(ev.createdAt)}
-                    </Typography>
-                  </Box>
-                </Paper>
-              ))}
-            </Stack>
-          )}
-        </InfoCard>
-      </TabPanel>
-
-      {/* Onglet 4: Modifier */}
-      <TabPanel value={tab} index={4}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <InfoCard
-              title="Changer l'étape"
-              icon={<FlagIcon />}
-              color={theme.palette.primary.main}
-            >
-              <TextField
-                select
-                fullWidth
-                label="Nouvelle étape"
-                value={stageDraft}
-                onChange={(e) => setStageDraft(e.target.value)}
-                sx={{ mb: 1.5 }}
-                SelectProps={{ sx: { borderRadius: 2 } }}
-              >
-                {STAGE_OPTIONS.map((o) => (
-                  <MenuItem key={o.value} value={o.value}>
-                    {o.label}
-                  </MenuItem>
+                    <div className="min-w-0 flex-1 rounded-2xl border border-sss-border bg-white p-3.5">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <Chip
+                          size="small"
+                          label={ev.source === 'admin' ? 'Vous' : 'Système'}
+                          color={ev.source === 'admin' ? 'primary' : 'default'}
+                          sx={{ fontWeight: 700, height: 22 }}
+                        />
+                        <span className="text-xs text-sss-muted">{formatDateFr(ev.createdAt)}</span>
+                      </div>
+                      <p className="m-0 text-sm leading-relaxed text-sss-text">{ev.message || ev.type}</p>
+                    </div>
+                  </div>
                 ))}
-              </TextField>
-              <TextField
-                fullWidth
-                label="Pourquoi ? (recommandé)"
-                value={stageReason}
-                onChange={(e) => setStageReason(e.target.value)}
-                sx={{ mb: 1.5 }}
-                InputProps={{ sx: { borderRadius: 2 } }}
-              />
-              <Button
-                variant="contained"
-                onClick={handleSaveStage}
-                disabled={saving || !stageDraft}
-                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
-              >
-                {saving ? <CircularProgress size={20} /> : 'Enregistrer l’étape'}
-              </Button>
-            </InfoCard>
+              </div>
+            )}
+          </SectionCard>
+        </TabPanel>
+
+        {/* Modifier */}
+        <TabPanel value={tab} index={4}>
+          <Grid container spacing={2.5}>
+            <Grid item xs={12} md={4}>
+              <SectionCard title="Changer l’étape" icon={<FlagIcon />}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Nouvelle étape"
+                  value={stageDraft}
+                  onChange={(e) => setStageDraft(e.target.value)}
+                  sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                >
+                  {STAGE_OPTIONS.map((o) => (
+                    <MenuItem key={o.value} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  fullWidth
+                  label="Pourquoi ? (recommandé)"
+                  value={stageReason}
+                  onChange={(e) => setStageReason(e.target.value)}
+                  sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+                <PrimaryButton onClick={handleSaveStage} disabled={saving || !stageDraft} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}>
+                  Enregistrer l’étape
+                </PrimaryButton>
+              </SectionCard>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <SectionCard title="Forcer l’action conseillée" icon={<SettingsIcon />} tone={SSS_COLORS.info}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Action"
+                  value={nbaDraft}
+                  onChange={(e) => setNbaDraft(e.target.value)}
+                  sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                >
+                  <MenuItem value="">Automatique (système)</MenuItem>
+                  {ACTION_OPTIONS.map((o) => (
+                    <MenuItem key={o.value} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <PrimaryButton onClick={handleSaveNba} disabled={saving} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}>
+                  Enregistrer l’action
+                </PrimaryButton>
+              </SectionCard>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <SectionCard title="Pause de contact" hint="Utile si la personne a demandé un rappel plus tard" icon={<ScheduleIcon />} tone={SSS_COLORS.warning}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Nombre de jours"
+                  value={snoozeDays}
+                  onChange={(e) => setSnoozeDays(e.target.value)}
+                  sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  inputProps={{ min: 1, max: 90 }}
+                />
+                <GhostButton onClick={handleSnooze} disabled={saving} startIcon={<ScheduleIcon />}>
+                  Mettre en pause
+                </GhostButton>
+              </SectionCard>
+            </Grid>
           </Grid>
+        </TabPanel>
 
-          <Grid item xs={12} md={4}>
-            <InfoCard
-              title="Forcer l'action conseillée"
-              icon={<SettingsIcon />}
-              color={theme.palette.secondary.main}
-            >
-              <TextField
-                select
+        {/* Mobile sticky contact bar */}
+        {identity.phone && (
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-sss-border bg-white/95 p-3 backdrop-blur md:hidden">
+            <div className="mx-auto flex max-w-lg gap-2">
+              <GhostButton fullWidth startIcon={<PhoneIcon />} href={telHref(identity.phone)} component="a">
+                Appeler
+              </GhostButton>
+              <PrimaryButton
                 fullWidth
-                label="Action"
-                value={nbaDraft}
-                onChange={(e) => setNbaDraft(e.target.value)}
-                sx={{ mb: 1.5 }}
-                SelectProps={{ sx: { borderRadius: 2 } }}
+                startIcon={<WhatsAppIcon />}
+                href={whatsappHref(identity.phone)}
+                component="a"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <MenuItem value="">Automatique (laisser le système décider)</MenuItem>
-                {ACTION_OPTIONS.map((o) => (
-                  <MenuItem key={o.value} value={o.value}>
-                    {o.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <Button
-                variant="contained"
-                onClick={handleSaveNba}
-                disabled={saving}
-                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
-              >
-                {saving ? <CircularProgress size={20} /> : 'Enregistrer l’action'}
-              </Button>
-            </InfoCard>
-          </Grid>
+                WhatsApp
+              </PrimaryButton>
+            </div>
+          </div>
+        )}
 
-          <Grid item xs={12} md={4}>
-            <InfoCard
-              title="Pause de contact"
-              icon={<ScheduleIcon />}
-              color={theme.palette.warning.main}
-            >
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Utile si la personne a dit « rappelez-moi plus tard ».
-              </Typography>
-              <TextField
-                fullWidth
-                type="number"
-                label="Nombre de jours"
-                value={snoozeDays}
-                onChange={(e) => setSnoozeDays(e.target.value)}
-                sx={{ mb: 1.5 }}
-                InputProps={{
-                  sx: { borderRadius: 2 },
-                  inputProps: { min: 1, max: 90 }
-                }}
-              />
-              <Button
-                variant="outlined"
-                onClick={handleSnooze}
-                disabled={saving}
-                sx={{ borderRadius: 2 }}
-              >
-                {saving ? <CircularProgress size={20} /> : 'Mettre en pause'}
-              </Button>
-            </InfoCard>
-          </Grid>
-        </Grid>
-      </TabPanel>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-
-      {/* Speed Dial */}
-      <SpeedDial
-        ariaLabel="Actions rapides"
-        sx={{ position: 'fixed', bottom: 24, right: 24 }}
-        icon={<SpeedDialIcon />}
-        direction="up"
-      >
-        <SpeedDialAction
-          icon={<RefreshIcon />}
-          tooltipTitle="Recalculer"
-          onClick={handleRecompute}
-        />
-        <SpeedDialAction
-          icon={<PhoneIcon />}
-          tooltipTitle="Appeler"
-          onClick={() => window.location.href = telHref(identity.phone)}
-          disabled={!identity.phone}
-        />
-        <SpeedDialAction
-          icon={<WhatsAppIcon />}
-          tooltipTitle="WhatsApp"
-          onClick={() => window.open(whatsappHref(identity.phone), '_blank', 'noopener')}
-          disabled={!identity.phone}
-        />
-        <SpeedDialAction
-          icon={<SettingsIcon />}
-          tooltipTitle="Modifier"
-          onClick={() => setTab(4)}
-        />
-      </SpeedDial>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </div>
     </MainCard>
   );
 };
-
-// Composant TabPanel amélioré
-function TabPanel({ children, value, index }) {
-  return (
-    <Fade in={value === index} timeout={300}>
-      <Box sx={{ pt: 2 }}>
-        {value === index && children}
-      </Box>
-    </Fade>
-  );
-}
 
 export default PersonFichePage;

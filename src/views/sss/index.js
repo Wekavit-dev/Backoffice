@@ -1,21 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Button,
-  Grid,
-  Stack,
-  Typography,
-  LinearProgress,
-  Alert,
-  Divider,
-  useMediaQuery,
-  Avatar,
-  Paper,
-  Fade,
-  alpha,
-  useTheme
-} from '@mui/material';
+import { useMediaQuery, useTheme } from '@mui/material';
 import {
   Refresh as RefreshIcon,
   PlaylistAddCheck as GenerateIcon,
@@ -23,7 +8,7 @@ import {
   Phone as PhoneIcon,
   Favorite as HeartIcon,
   PersonAdd as NewIcon,
-  EmojiEvents as TrophyIcon,
+  Settings as SettingsIcon,
   Groups as GroupsIcon,
   TrendingUp as TrendingUpIcon,
   MonitorHeart as MonitorHeartIcon,
@@ -35,16 +20,15 @@ import {
   Star as StarIcon,
   RecordVoiceOver as RecordVoiceOverIcon,
   Dashboard as DashboardIcon,
-  PeopleAlt as PeopleAltIcon,
-  Settings as SettingsIcon,
   Today as TodayIcon,
-  AutoAwesome as AutoAwesomeIcon
+  AutoAwesome as AutoAwesomeIcon,
+  ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
 import MainCard from 'ui-component/cards/MainCard';
 import SssApi from 'api/sss/sss';
-import { PageToolbar, KpiCard, InfoBanner, PrimaryButton, GhostButton, SSS_COLORS } from './components/SssLayout';
+import { PageToolbar, KpiCard, PriorityCard, PrimaryButton, GhostButton, QuickNav, ViewAllPeopleButton, SSS_COLORS } from './components/SssLayout';
 
 const DashboardPage = () => {
   const { globalState } = useContext(AppContext);
@@ -59,27 +43,31 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async (showLoading = true) => {
-    if (!globalState?.key) return;
-    if (showLoading) setLoading(true);
-    else setRefreshing(true);
-    setError(null);
-    try {
-      const [metricsRes, boardRes] = await Promise.all([
-        SssApi.getMetrics(globalState.key),
-        SssApi.getBoard({}, globalState.key)
-      ]);
-      if (metricsRes?.status === 200) setMetrics(metricsRes.data?.data || null);
-      if (boardRes?.status === 200) {
-        setBoardSummary(boardRes.data?.summary || null);
+  const load = useCallback(
+    async (showLoading = true) => {
+      if (!globalState?.key) return;
+      if (showLoading) setLoading(true);
+      else setRefreshing(true);
+      setError(null);
+      try {
+        const [metricsRes, boardRes] = await Promise.all([
+          SssApi.getMetrics(globalState.key),
+          SssApi.getBoard({}, globalState.key)
+        ]);
+        if (metricsRes?.status === 200) setMetrics(metricsRes.data?.data || metricsRes.data || null);
+        if (boardRes?.status === 200) {
+          const payload = boardRes.data?.data && !Array.isArray(boardRes.data.data) ? boardRes.data.data : boardRes.data || {};
+          setBoardSummary(payload.summary || boardRes.data?.summary || null);
+        }
+      } catch (err) {
+        setError(err?.data?.message || err?.message || 'Impossible de charger la vue du jour');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (err) {
-      setError(err?.data?.message || err?.message || 'Impossible de charger la vue du jour');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [globalState?.key]);
+    },
+    [globalState?.key]
+  );
 
   useEffect(() => {
     load();
@@ -112,35 +100,9 @@ const DashboardPage = () => {
   const cats = metrics?.dashboardCategories || {};
   const base = metrics?.base || {};
   const tasks = metrics?.tasks || {};
-
-  const quickActions = [
-    {
-      icon: <PhoneIcon />,
-      label: 'Actions du jour',
-      path: '/wekavit/sss/today',
-      color: 'primary',
-      count: boardSummary?.open || tasks.todayTotal || 0
-    },
-    {
-      icon: <WarningIcon />,
-      label: 'Retards',
-      path: '/wekavit/sss/overdue',
-      color: 'warning',
-      count: tasks.overdueOpen || 0
-    },
-    {
-      icon: <NewIcon />,
-      label: 'Personnes',
-      path: '/wekavit/sss/people',
-      color: 'info'
-    },
-    {
-      icon: <TrophyIcon />,
-      label: 'Réglages',
-      path: '/wekavit/sss/settings',
-      color: 'secondary'
-    }
-  ];
+  const openCount = boardSummary?.open || tasks.todayTotal || 0;
+  const overdueCount = tasks.overdueOpen || 0;
+  const hasData = metrics || boardSummary;
 
   const categories = [
     {
@@ -193,84 +155,109 @@ const DashboardPage = () => {
     }
   ];
 
-  const hasData = metrics || boardSummary;
+  const quickActions = [
+    {
+      icon: <PhoneIcon />,
+      label: 'Actions du jour',
+      description: 'Traitez les contacts prioritaires de aujourd’hui',
+      color: SSS_COLORS.brand,
+      count: openCount,
+      onClick: () => navigate('/wekavit/sss/today')
+    },
+    {
+      icon: <WarningIcon />,
+      label: 'Retards',
+      description: 'Rattrapez les actions non terminées',
+      color: SSS_COLORS.warning,
+      count: overdueCount,
+      onClick: () => navigate('/wekavit/sss/overdue')
+    },
+    {
+      icon: <NewIcon />,
+      label: 'Personnes',
+      description: 'Parcourez et filtrez le portefeuille suivi',
+      color: SSS_COLORS.info,
+      count: base.totalProfiles,
+      onClick: () => navigate('/wekavit/sss/people')
+    },
+    {
+      icon: <SettingsIcon />,
+      label: 'Réglages',
+      description: 'Configurez les règles d’accompagnement',
+      color: SSS_COLORS.neutral,
+      onClick: () => navigate('/wekavit/sss/settings')
+    }
+  ];
 
   return (
-    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5, md: 3 }, bgcolor: 'background.paper' }}>
-      <PageToolbar
-        icon={<HeartIcon />}
-        title="Vue du jour"
-        subtitle="Qui a besoin d'attention aujourd'hui ? Cliquez sur une carte pour agir."
-        actions={
-          <>
-            <GhostButton startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading || refreshing}>
-              {refreshing ? 'Actualisation...' : 'Actualiser'}
-            </GhostButton>
-            <PrimaryButton startIcon={<GenerateIcon />} onClick={handleGenerate} disabled={generating || loading}>
-              {generating ? 'Préparation...' : isXs ? 'Préparer' : 'Préparer la journée'}
-            </PrimaryButton>
-          </>
-        }
-      />
+    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5, md: 3 }, bgcolor: SSS_COLORS.pageBg }}>
+      <div className="sss-page">
+        <PageToolbar
+          icon={<HeartIcon />}
+          title="Vue du jour"
+          subtitle="Qui a besoin d'attention aujourd'hui ? Cliquez sur une carte pour agir."
+          actions={
+            <>
+              <GhostButton startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading || refreshing}>
+                {refreshing ? 'Actualisation...' : 'Actualiser'}
+              </GhostButton>
+              <PrimaryButton startIcon={<GenerateIcon />} onClick={handleGenerate} disabled={generating || loading}>
+                {generating ? 'Préparation...' : isXs ? 'Préparer' : 'Préparer la journée'}
+              </PrimaryButton>
+            </>
+          }
+        />
 
-      {loading && (
-        <Box sx={{ mb: 3 }}>
-          <LinearProgress sx={{ borderRadius: 2, height: 6 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Chargement des données...
-          </Typography>
-        </Box>
-      )}
+        {loading && (
+          <div className="mb-6 animate-sss-fade-up">
+            <div className="h-1.5 overflow-hidden rounded-full bg-sss-brand-soft">
+              <div className="h-full w-1/3 animate-sss-shimmer rounded-full bg-sss-brand" />
+            </div>
+            <p className="sss-muted mt-2 text-xs">Chargement des données...</p>
+          </div>
+        )}
 
-      {error && (
-        <Fade in>
-          <Alert
-            severity="error"
-            sx={{ mb: 3, borderRadius: 2 }}
-            action={
-              <Button color="inherit" size="small" onClick={handleRefresh}>
-                Réessayer
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
-        </Fade>
-      )}
+        {error && (
+          <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-sss-error/20 bg-sss-error-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between animate-sss-fade-up">
+            <p className="m-0 text-sm font-medium text-sss-error">{error}</p>
+            <button type="button" onClick={handleRefresh} className="sss-btn-soft !min-h-9 !px-3 text-sss-error">
+              Réessayer
+            </button>
+          </div>
+        )}
 
-      {hasData && !loading && (
-        <Fade in>
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 2.5 },
-              mb: 3,
-              borderRadius: 2.5,
-              bgcolor: SSS_COLORS.brandSoft,
-              border: `1px solid ${SSS_COLORS.brandBorder}`
-            }}
-          >
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-              <AutoAwesomeIcon sx={{ fontSize: 32, color: SSS_COLORS.brand }} />
-              <Box flex={1}>
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Prêt pour aujourd'hui ?
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Vous avez {boardSummary?.open || tasks.todayTotal || 0} actions à réaliser aujourd'hui.
-                  {tasks.overdueOpen > 0 && ` Dont ${tasks.overdueOpen} en retard.`}
-                </Typography>
-              </Box>
-              <PrimaryButton startIcon={<TodayIcon />} onClick={() => navigate('/wekavit/sss/today')} sx={{ flexShrink: 0 }}>
+        {hasData && !loading && (
+          <div className="sss-surface-soft mb-6 overflow-hidden p-4 sm:p-5 animate-sss-fade-up">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-sss-brand shadow-sss-sm">
+                <AutoAwesomeIcon />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="m-0 text-base font-bold text-sss-text sm:text-lg">Prêt pour aujourd&apos;hui ?</h2>
+                <p className="sss-muted mt-1 m-0 leading-relaxed">
+                  Vous avez <span className="font-semibold text-sss-brand">{openCount}</span> actions à réaliser
+                  aujourd&apos;hui.
+                  {overdueCount > 0 && (
+                    <>
+                      {' '}
+                      Dont <span className="font-semibold text-sss-error">{overdueCount}</span> en retard.
+                    </>
+                  )}
+                </p>
+              </div>
+              <PrimaryButton
+                startIcon={<TodayIcon />}
+                endIcon={<ArrowForwardIcon />}
+                onClick={() => navigate('/wekavit/sss/today')}
+                className="!shrink-0"
+              >
                 Voir les actions
               </PrimaryButton>
-            </Stack>
-          </Paper>
-        </Fade>
-      )}
+            </div>
+          </div>
+        )}
 
-      <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 3.5 }}>
-        <Grid item xs={6} sm={6} md={3}>
+        <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             title="Personnes suivies"
             value={base.totalProfiles}
@@ -279,9 +266,8 @@ const DashboardPage = () => {
             color={SSS_COLORS.brand}
             onClick={() => navigate('/wekavit/sss/people')}
             loading={loading}
+            variant="dark"
           />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
           <KpiCard
             title="Taux de conversion"
             value={base.conversionInscriptionToDepositPct != null ? `${base.conversionInscriptionToDepositPct}%` : '—'}
@@ -289,9 +275,8 @@ const DashboardPage = () => {
             icon={<TrendingUpIcon />}
             color={SSS_COLORS.success}
             loading={loading}
+            variant="dark"
           />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
           <KpiCard
             title="Santé moyenne"
             value={base.avgHealthScore ?? '—'}
@@ -299,139 +284,79 @@ const DashboardPage = () => {
             icon={<MonitorHeartIcon />}
             color={SSS_COLORS.info}
             loading={loading}
+            variant="dark"
           />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
           <KpiCard
             title="Actions du jour"
             value={boardSummary?.open ?? tasks.todayTotal ?? '—'}
-            hint={`${boardSummary?.done ?? tasks.todayDone ?? 0} terminées · ${tasks.overdueOpen ?? 0} en retard`}
+            hint={`${boardSummary?.done ?? tasks.todayDone ?? 0} terminées · ${overdueCount} en retard`}
             icon={<AssignmentLateIcon />}
             color={SSS_COLORS.warning}
             onClick={() => navigate('/wekavit/sss/today')}
             loading={loading}
+            variant="dark"
           />
-        </Grid>
-      </Grid>
+        </div>
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Qui contacter en priorité ?
-        </Typography>
-        <Button
-          size="small"
-          startIcon={<PeopleAltIcon />}
-          onClick={() => navigate('/wekavit/sss/people')}
-          sx={{ textTransform: 'none', fontWeight: 600, color: SSS_COLORS.brand }}
-        >
-          Voir toutes les personnes
-        </Button>
-      </Stack>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="sss-section-title m-0">Qui contacter en priorité ?</h2>
+            <p className="sss-muted m-0 mt-1">Cliquez une carte pour ouvrir la liste filtrée correspondante.</p>
+          </div>
+          <ViewAllPeopleButton
+            onClick={() => navigate('/wekavit/sss/people')}
+            count={base.totalProfiles}
+          />
+        </div>
 
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        {categories.map((cat) => (
-          <Grid item key={cat.title} xs={12} sm={6} md={4}>
-            <KpiCard
-              title={cat.title}
-              value={cat.value ?? 0}
-              hint={cat.hint}
-              icon={cat.icon}
-              color={cat.color}
-              onClick={cat.onClick}
-              loading={loading}
-              variant="soft"
-            />
-          </Grid>
-        ))}
-      </Grid>
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((cat, index) => (
+            <div key={cat.title} className="animate-sss-fade-up h-full" style={{ animationDelay: `${index * 40}ms` }}>
+              <PriorityCard
+                title={cat.title}
+                value={cat.value ?? 0}
+                hint={cat.hint}
+                icon={cat.icon}
+                color={cat.color}
+                onClick={cat.onClick}
+                loading={loading}
+              />
+            </div>
+          ))}
+        </div>
 
-      <Divider sx={{ my: 3 }} />
+        <div className="sss-surface mb-2 overflow-hidden p-4 sm:p-5">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="sss-section-title m-0">Navigation rapide</h2>
+              <p className="sss-muted m-0 mt-1">Quatre raccourcis pour enchaîner sans perdre le fil.</p>
+            </div>
+          </div>
+          <QuickNav items={quickActions} />
+        </div>
 
-      <Grid container spacing={2}>
-        {quickActions.map((action) => (
-          <Grid item key={action.label} xs={12} sm={6} md={3}>
-            <Button
-              fullWidth
-              variant="outlined"
-              color={action.color}
-              startIcon={action.icon}
-              onClick={() => navigate(action.path)}
-              sx={{
-                py: 1.5,
-                borderRadius: 2,
-                justifyContent: 'center',
-                textTransform: 'none',
-                fontWeight: 600,
-                borderColor: alpha(theme.palette[action.color].main, 0.3),
-                '&:hover': {
-                  borderColor: theme.palette[action.color].main,
-                  bgcolor: alpha(theme.palette[action.color].main, 0.04)
-                },
-                position: 'relative'
-              }}
-            >
-              {action.label}
-              {action.count > 0 && (
-                <Box
-                  component="span"
-                  sx={{
-                    position: 'absolute',
-                    top: -8,
-                    right: -8,
-                    height: 20,
-                    minWidth: 20,
-                    px: 0.5,
-                    borderRadius: 10,
-                    bgcolor: SSS_COLORS.error,
-                    color: '#fff',
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  {action.count}
-                </Box>
-              )}
-            </Button>
-          </Grid>
-        ))}
-      </Grid>
-
-      {!loading && !metrics && !error && (
-        <Fade in>
-          <Box mt={4}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 5,
-                textAlign: 'center',
-                borderRadius: 3,
-                border: `2px dashed ${alpha(theme.palette.divider, 0.5)}`
-              }}
-            >
-              <Avatar sx={{ width: 64, height: 64, bgcolor: SSS_COLORS.brandSoft, color: SSS_COLORS.brand, mx: 'auto', mb: 2 }}>
-                <DashboardIcon sx={{ fontSize: 32 }} />
-              </Avatar>
-              <Typography variant="h5" fontWeight={600} gutterBottom>
-                Bienvenue dans votre tableau de bord
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto', mb: 3 }}>
-                Préparez d'abord les profils, puis générez la liste du jour pour commencer à accompagner vos clients.
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+        {!loading && !metrics && !error && (
+          <div className="mt-8 animate-sss-fade-up">
+            <div className="rounded-sss border-2 border-dashed border-sss-border bg-white px-6 py-12 text-center sm:px-10">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sss-brand-soft text-sss-brand">
+                <DashboardIcon style={{ fontSize: 32 }} />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-sss-text">Bienvenue dans votre tableau de bord</h3>
+              <p className="sss-muted mx-auto mb-6 max-w-md leading-relaxed">
+                Préparez d&apos;abord les profils, puis générez la liste du jour pour commencer à accompagner vos clients.
+              </p>
+              <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
                 <PrimaryButton startIcon={<SettingsIcon />} onClick={() => navigate('/wekavit/sss/settings')}>
                   Aller aux réglages
                 </PrimaryButton>
-                <Button variant="outlined" startIcon={<GenerateIcon />} onClick={handleGenerate} disabled={generating}>
+                <GhostButton startIcon={<GenerateIcon />} onClick={handleGenerate} disabled={generating}>
                   {generating ? 'Préparation...' : 'Préparer la journée'}
-                </Button>
-              </Stack>
-            </Paper>
-          </Box>
-        </Fade>
-      )}
+                </GhostButton>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </MainCard>
   );
 };

@@ -1,31 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Avatar,
-  Chip,
-  Stack,
-  Typography,
-  Box,
-  Paper,
-  alpha,
-  useTheme,
-  IconButton,
-  Tooltip,
-  Badge,
-  Zoom,
-  Grow,
-  Fade,
-  Skeleton,
-  LinearProgress,
-  Card,
-  CardContent,
-  Divider,
-  Button,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Collapse
-} from '@mui/material';
+import { Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import {
   STAGE_LABELS,
   URGENCY_LABELS,
@@ -36,177 +10,106 @@ import {
   ACTION_LABELS,
   TASK_STATUS_LABELS,
   TASK_STATUS_COLORS,
-  URGENCY_BG,
   initials,
   avatarColor,
   displayName
 } from '../labels';
 import { SSS_COLORS, toneColor } from './SssLayout';
-
-// Import des icônes
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   TrendingFlat as TrendingFlatIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
-  Schedule as ScheduleIcon,
   Star as StarIcon,
   EmojiEvents as TrophyIcon,
   MoreVert as MoreVertIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
   Chat as ChatIcon,
-  Favorite as FavoriteIcon,
-  Share as ShareIcon,
-  Bookmark as BookmarkIcon,
-  Flag as FlagIcon,
-  PriorityHigh as PriorityHighIcon,
-  NotificationsActive as NotificationIcon
+  Schedule as ScheduleIcon
 } from '@mui/icons-material';
 
-// ==================== COMPOSANTS AMÉLIORÉS ====================
+const cn = (...parts) => parts.filter(Boolean).join(' ');
 
-/**
- * StageChip - Version améliorée avec icône et animation
- */
-export const StageChip = ({ stage, size = 'small', showIcon = true, onClick }) => {
-  const theme = useTheme();
-  const tone = SSS_COLORS.brand;
-
+const ChipBase = ({ children, className = '', style, onClick, title }) => {
+  const Comp = onClick ? 'button' : 'span';
   return (
-    <Chip
-      size={size}
-      label={STAGE_LABELS[stage] || stage || '—'}
+    <Comp
+      type={onClick ? 'button' : undefined}
       onClick={onClick}
-      sx={{
-        fontWeight: 600,
-        fontSize: size === 'small' ? '0.7rem' : '0.75rem',
-        height: size === 'small' ? 24 : 28,
-        borderRadius: 2,
-        bgcolor: alpha(tone, 0.1),
-        color: tone,
-        border: 'none',
-        cursor: onClick ? 'pointer' : 'default',
-        '& .MuiChip-label': { px: 1.25 },
-        '&:hover': onClick ? { bgcolor: alpha(tone, 0.16) } : undefined
-      }}
-    />
+      title={title}
+      className={cn('sss-chip', onClick && 'cursor-pointer hover:brightness-95', className)}
+      style={style}
+    >
+      {children}
+    </Comp>
   );
 };
 
-/**
- * UrgencyChip - Version améliorée avec indicateur visuel
- */
-export const UrgencyChip = ({ urgency, size = 'small', showDot = true }) => {
-  const theme = useTheme();
-  const label = URGENCY_LABELS[urgency] || urgency || '—';
-  const paletteKey = URGENCY_COLORS[urgency] || 'default';
-  const tone = toneColor(paletteKey);
-
+export const StageChip = ({ stage, size = 'small', onClick }) => {
+  const tone = SSS_COLORS.brand;
   return (
-    <Chip
-      size={size}
-      label={label}
-      sx={{
-        fontWeight: 600,
-        fontSize: size === 'small' ? '0.7rem' : '0.75rem',
-        height: size === 'small' ? 24 : 28,
-        borderRadius: 2,
-        bgcolor: alpha(tone, 0.12),
-        color: tone,
-        border: 'none',
-        '& .MuiChip-label': { px: 1.25 }
-      }}
-    />
+    <ChipBase
+      onClick={onClick}
+      className={size === 'small' ? 'h-6' : 'h-7'}
+      style={{ backgroundColor: `${tone}1a`, color: tone }}
+    >
+      {STAGE_LABELS[stage] || stage || '—'}
+    </ChipBase>
   );
 };
 
-/**
- * HealthChip - Version améliorée avec score visuel
- */
+export const UrgencyChip = ({ urgency, size = 'small' }) => {
+  const label = URGENCY_LABELS[urgency] || urgency || '—';
+  const tone = toneColor(URGENCY_COLORS[urgency] || 'default');
+  return (
+    <ChipBase className={size === 'small' ? 'h-6' : 'h-7'} style={{ backgroundColor: `${tone}1f`, color: tone }}>
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tone }} />
+      {label}
+    </ChipBase>
+  );
+};
+
 export const HealthChip = ({ level, score, size = 'small', showProgress = false }) => {
-  const theme = useTheme();
   const color = toneColor(HEALTH_COLORS[level] || 'default');
-  const label = score != null
-    ? `${HEALTH_LABELS[level] || level || '—'} ${score}%`
-    : HEALTH_LABELS[level] || level || '—';
+  const label =
+    score != null ? `${HEALTH_LABELS[level] || level || '—'} ${score}%` : HEALTH_LABELS[level] || level || '—';
 
   const healthIcons = {
-    excellent: <StarIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    good: <TrendingUpIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    fair: <TrendingFlatIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />,
-    poor: <TrendingDownIcon style={{ fontSize: size === 'small' ? 14 : 18 }} />
+    excellent: <StarIcon style={{ fontSize: 14 }} />,
+    good: <TrendingUpIcon style={{ fontSize: 14 }} />,
+    fair: <TrendingFlatIcon style={{ fontSize: 14 }} />,
+    poor: <TrendingDownIcon style={{ fontSize: 14 }} />
   };
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center">
-      <Chip
-        size={size}
-        label={label}
-        icon={healthIcons[level]}
-        sx={{
-          bgcolor: alpha(color, 0.1),
-          color: color,
-          borderColor: alpha(color, 0.2),
-          fontWeight: 600,
-          '& .MuiChip-icon': { color: color }
-        }}
-      />
+    <div className="inline-flex items-center gap-2">
+      <ChipBase className={size === 'small' ? 'h-6' : 'h-7'} style={{ backgroundColor: `${color}1a`, color }}>
+        {healthIcons[level]}
+        {label}
+      </ChipBase>
       {showProgress && score != null && (
-        <Box sx={{ width: 60 }}>
-          <LinearProgress
-            variant="determinate"
-            value={score}
-            sx={{
-              height: 4,
-              borderRadius: 2,
-              bgcolor: alpha(color, 0.1),
-              '& .MuiLinearProgress-bar': { bgcolor: color }
-            }}
-          />
-        </Box>
+        <div className="h-1 w-14 overflow-hidden rounded-full" style={{ backgroundColor: `${color}1a` }}>
+          <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: color }} />
+        </div>
       )}
-    </Stack>
+    </div>
   );
 };
 
-/**
- * StatusChip - Version améliorée avec icône
- */
-export const StatusChip = ({ status, size = 'small', showIcon = true }) => {
-  const theme = useTheme();
-  const paletteKey = TASK_STATUS_COLORS[status] || 'default';
+export const StatusChip = ({ status, size = 'small' }) => {
+  const tone = toneColor(TASK_STATUS_COLORS[status] || 'default');
   const label = TASK_STATUS_LABELS[status] || status || '—';
-  const tone = toneColor(paletteKey);
-
   return (
-    <Chip
-      size={size}
-      label={label}
-      sx={{
-        fontWeight: 600,
-        fontSize: size === 'small' ? '0.7rem' : '0.75rem',
-        height: size === 'small' ? 24 : 28,
-        borderRadius: 2,
-        bgcolor: alpha(tone, 0.12),
-        color: tone,
-        border: 'none',
-        '& .MuiChip-label': { px: 1.25 }
-      }}
-    />
+    <ChipBase className={size === 'small' ? 'h-6' : 'h-7'} style={{ backgroundColor: `${tone}1f`, color: tone }}>
+      {label}
+    </ChipBase>
   );
 };
 
-/**
- * ActionLabel - Version améliorée avec icône
- */
 export const ActionLabel = ({ action, showIcon = true, size = 'medium' }) => {
-  const theme = useTheme();
   const label = ACTION_LABELS[action] || action || '—';
-
   const actionIcons = {
     call: <PhoneIcon style={{ fontSize: 16 }} />,
     email: <EmailIcon style={{ fontSize: 16 }} />,
@@ -215,572 +118,228 @@ export const ActionLabel = ({ action, showIcon = true, size = 'medium' }) => {
   };
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center">
-      {showIcon && actionIcons[action] && (
-        <Box sx={{ color: theme.palette.primary.main }}>
-          {actionIcons[action]}
-        </Box>
-      )}
-      <Typography variant={size === 'medium' ? 'body2' : 'caption'} fontWeight={600}>
-        {label}
-      </Typography>
-    </Stack>
+    <span className="inline-flex items-center gap-2">
+      {showIcon && actionIcons[action] && <span className="text-sss-brand">{actionIcons[action]}</span>}
+      <span className={cn('font-semibold text-sss-text', size === 'medium' ? 'text-sm' : 'text-xs')}>{label}</span>
+    </span>
   );
 };
 
-/**
- * AlertChips - Version améliorée avec interaction
- */
 export const AlertChips = ({ alerts = [], max = 3, onAlertClick }) => {
   const [expanded, setExpanded] = useState(false);
-  const theme = useTheme();
+  const list = Array.isArray(alerts) ? alerts : [];
 
-  if (!alerts.length) {
+  if (!list.length) {
     return (
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <CheckCircleIcon style={{ fontSize: 14, color: theme.palette.success.main }} />
+      <span className="inline-flex items-center gap-1 text-xs text-sss-muted">
+        <CheckCircleIcon style={{ fontSize: 14, color: SSS_COLORS.success }} />
         Aucune alerte
-      </Typography>
+      </span>
     );
   }
 
-  const shown = alerts.slice(0, max);
-  const rest = alerts.length - shown.length;
+  const shown = list.slice(0, max);
+  const rest = list.length - shown.length;
 
   return (
-    <Stack spacing={0.5}>
-      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap gap-1.5">
         {shown.map((a) => (
-          <Chip
+          <ChipBase
             key={a}
-            size="small"
-            label={ALERT_LABELS[a] || a}
-            icon={<WarningIcon style={{ fontSize: 14 }} />}
-            color="warning"
-            variant="outlined"
-            onClick={() => onAlertClick?.(a)}
-            sx={{
-              cursor: onAlertClick ? 'pointer' : 'default',
-              transition: 'all 0.2s ease',
-              '&:hover': onAlertClick ? {
-                transform: 'translateY(-2px)',
-                boxShadow: theme.shadows[2]
-              } : undefined
-            }}
-          />
+            onClick={onAlertClick ? () => onAlertClick(a) : undefined}
+            style={{ backgroundColor: SSS_COLORS.warningSoft, color: SSS_COLORS.warning }}
+          >
+            <WarningIcon style={{ fontSize: 14 }} />
+            {ALERT_LABELS[a] || a}
+          </ChipBase>
         ))}
         {rest > 0 && (
-          <Chip
-            size="small"
-            label={`+${rest}`}
-            onClick={() => setExpanded(!expanded)}
-            sx={{
-              fontWeight: 600,
-              cursor: 'pointer',
-              bgcolor: theme.palette.grey[100],
-              '&:hover': {
-                bgcolor: theme.palette.grey[200]
-              }
-            }}
-          />
+          <ChipBase onClick={() => setExpanded(!expanded)} style={{ backgroundColor: SSS_COLORS.neutralSoft, color: SSS_COLORS.muted }}>
+            +{rest}
+          </ChipBase>
         )}
-      </Stack>
+      </div>
       {expanded && rest > 0 && (
-        <Collapse in={expanded}>
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
-            {alerts.slice(max).map((a) => (
-              <Chip
-                key={a}
-                size="small"
-                label={ALERT_LABELS[a] || a}
-                color="warning"
-                variant="outlined"
-                onClick={() => onAlertClick?.(a)}
-                sx={{ cursor: onAlertClick ? 'pointer' : 'default' }}
-              />
-            ))}
-          </Stack>
-        </Collapse>
+        <div className="flex flex-wrap gap-1.5">
+          {list.slice(max).map((a) => (
+            <ChipBase
+              key={a}
+              onClick={onAlertClick ? () => onAlertClick(a) : undefined}
+              style={{ backgroundColor: SSS_COLORS.warningSoft, color: SSS_COLORS.warning }}
+            >
+              {ALERT_LABELS[a] || a}
+            </ChipBase>
+          ))}
+        </div>
       )}
-    </Stack>
+    </div>
   );
 };
 
-/**
- * EmptyState - Version améliorée avec animations
- */
 export const EmptyState = ({ title, subtitle, action, icon, loading = false }) => {
-  const theme = useTheme();
-
   if (loading) {
     return (
-      <Box sx={{ py: 6, px: 3 }}>
-        <Stack spacing={2} alignItems="center">
-          <Skeleton variant="circular" width={64} height={64} />
-          <Skeleton variant="text" width={200} height={32} />
-          <Skeleton variant="text" width={300} height={20} />
-          <Skeleton variant="rectangular" width={200} height={36} sx={{ borderRadius: 2 }} />
-        </Stack>
-      </Box>
+      <div className="flex flex-col items-center gap-3 px-6 py-12">
+        <div className="sss-skeleton h-16 w-16 rounded-full" />
+        <div className="sss-skeleton h-8 w-48" />
+        <div className="sss-skeleton h-5 w-72" />
+        <div className="sss-skeleton h-9 w-48" />
+      </div>
     );
   }
 
   return (
-    <Fade in>
-      <Box
-        sx={{
-          py: { xs: 6, sm: 8 },
-          px: { xs: 2.5, sm: 4 },
-          textAlign: 'center',
-          bgcolor: alpha(theme.palette.grey[50], 0.6),
-          borderRadius: 3,
-          border: '2px dashed',
-          borderColor: alpha(theme.palette.divider, 0.35),
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            borderColor: alpha(SSS_COLORS.brand, 0.35),
-            bgcolor: alpha(SSS_COLORS.brand, 0.02),
-          }
-        }}
-      >
-        {icon && (
-          <Box sx={{
-            mb: 3,
-            display: 'inline-flex',
-            position: 'relative',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              inset: -8,
-              borderRadius: '50%',
-              border: `2px dashed ${alpha(SSS_COLORS.brand, 0.2)}`,
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              inset: -4,
-              borderRadius: '50%',
-              bgcolor: alpha(SSS_COLORS.brand, 0.06),
-            }
-          }}>
-            <Box sx={{
-              position: 'relative',
-              p: 2.5,
-              borderRadius: '50%',
-              bgcolor: alpha(SSS_COLORS.brand, 0.1),
-              color: SSS_COLORS.brand,
-              boxShadow: `0 4px 20px ${alpha(SSS_COLORS.brand, 0.15)}`,
-              '& svg': { fontSize: 40 }
-            }}>
-              {icon}
-            </Box>
-          </Box>
-        )}
-        <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mb: 1 }}>
-          {title}
-        </Typography>
-        {subtitle && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 440, mx: 'auto', lineHeight: 1.6 }}>
-            {subtitle}
-          </Typography>
-        )}
-        {action && (
-          <Zoom in>
-            <Box>{action}</Box>
-          </Zoom>
-        )}
-      </Box>
-    </Fade>
-  );
-};
-
-/**
- * StatCard - Aligné sur le style KpiCard de référence : fond teinté,
- * icône en haut à gauche, gros chiffre en haut à droite, libellé + hint.
- */
-export const StatCard = ({
-  title,
-  value,
-  hint,
-  color = 'primary.main',
-  icon,
-  onClick,
-  trend,
-  trendValue,
-  loading = false,
-  badge,
-  subtitle
-}) => {
-  const theme = useTheme();
-
-  const resolvedColor = typeof color === 'string' && color.includes('.')
-    ? theme.palette[color.split('.')[0]]?.[color.split('.')[1]] || theme.palette.primary.main
-    : color;
-
-  if (loading) {
-    return (
-      <Card elevation={0} sx={{ borderRadius: 2.5, border: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
-        <CardContent>
-          <Stack spacing={1}>
-            <Skeleton variant="text" width={100} />
-            <Skeleton variant="text" width={80} height={40} />
-            <Skeleton variant="text" width={150} />
-          </Stack>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const TrendIcon = {
-    up: TrendingUpIcon,
-    down: TrendingDownIcon,
-    flat: TrendingFlatIcon
-  }[trend];
-
-  return (
-    <Card
-      elevation={0}
-      onClick={onClick}
-      sx={{
-        borderRadius: 2.5,
-        border: `1px solid ${alpha(resolvedColor, 0.18)}`,
-        bgcolor: alpha(resolvedColor, 0.1),
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease',
-        position: 'relative',
-        '&:hover': onClick
-          ? {
-              boxShadow: `0 6px 18px ${alpha(resolvedColor, 0.18)}`,
-              transform: 'translateY(-2px)',
-              borderColor: resolvedColor
-            }
-          : undefined
-      }}
-    >
-      {badge && (
-        <Badge
-          badgeContent={badge}
-          color="error"
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            '& .MuiBadge-badge': {
-              fontSize: 10,
-              height: 20,
-              minWidth: 20,
-              fontWeight: 700
-            }
-          }}
-        />
+    <div className="animate-sss-fade-up rounded-sss border-2 border-dashed border-sss-border bg-sss-page/60 px-6 py-12 text-center transition-colors hover:border-sss-brand/40 hover:bg-sss-brand/[0.02] sm:px-10 sm:py-16">
+      {icon && (
+        <div className="relative mx-auto mb-5 inline-flex">
+          <div className="absolute -inset-2 rounded-full border border-dashed border-sss-brand/25" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-sss-brand-soft text-sss-brand shadow-sss-md [&>svg]:text-[2rem]">
+            {icon}
+          </div>
+        </div>
       )}
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1.25 }}>
-          {icon && (
-            <Box sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: alpha(resolvedColor, 0.16),
-              color: resolvedColor,
-              '& svg': { fontSize: 20 }
-            }}>
-              {icon}
-            </Box>
-          )}
-          <Typography sx={{
-            fontWeight: 800,
-            fontSize: '1.75rem',
-            lineHeight: 1,
-            color: 'text.primary',
-            letterSpacing: '-0.02em'
-          }}>
-            {value ?? '—'}
-          </Typography>
-        </Stack>
-
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.25 }}>
-          {title}
-        </Typography>
-        {subtitle && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-            {subtitle}
-          </Typography>
-        )}
-
-        {hint && (
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-            {TrendIcon && trendValue && (
-              <Chip
-                size="small"
-                icon={<TrendIcon style={{ fontSize: 14 }} />}
-                label={trendValue}
-                color={trend === 'up' ? 'success' : trend === 'down' ? 'error' : 'default'}
-                variant="outlined"
-                sx={{ height: 20, '& .MuiChip-label': { fontSize: '0.65rem' } }}
-              />
-            )}
-            <Typography variant="caption" color="text.secondary">
-              {hint}
-            </Typography>
-          </Stack>
-        )}
-      </CardContent>
-    </Card>
+      <h3 className="mb-2 text-xl font-bold text-sss-text">{title}</h3>
+      {subtitle && <p className="sss-muted mx-auto mb-5 max-w-md leading-relaxed">{subtitle}</p>}
+      {action && <div>{action}</div>}
+    </div>
   );
 };
 
-/**
- * PersonAvatar - Version améliorée avec statut en ligne
- */
-export const PersonAvatar = ({
-  user,
-  size = 32,
-  showStatus = false,
-  status,
-  onClick
-}) => {
-  const theme = useTheme();
-  const [menuAnchor, setMenuAnchor] = useState(null);
+export const StatCard = ({ title, value, hint, color = SSS_COLORS.brand, icon, onClick, loading = false, subtitle }) => {
+  const resolved = typeof color === 'string' && !color.startsWith('#') ? SSS_COLORS.brand : color;
 
-  const handleClick = (event) => {
-    if (onClick) {
-      event.stopPropagation();
-      setMenuAnchor(event.currentTarget);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="sss-kpi">
+        <div className="sss-skeleton h-5 w-24" />
+        <div className="sss-skeleton mt-3 h-9 w-20" />
+        <div className="sss-skeleton mt-2 h-4 w-32" />
+      </div>
+    );
+  }
 
-  const handleClose = () => {
-    setMenuAnchor(null);
-  };
-
-  const statusColors = {
-    online: '#4caf50',
-    away: '#ff9800',
-    busy: '#f44336',
-    offline: '#9e9e9e'
-  };
+  const Comp = onClick ? 'button' : 'div';
 
   return (
-    <Box sx={{ position: 'relative', display: 'inline-block' }}>
-      <Avatar
+    <Comp
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+      className={cn('sss-kpi text-left', onClick && 'sss-kpi-clickable')}
+      style={{ backgroundColor: `${resolved}1a`, borderColor: `${resolved}2e` }}
+    >
+      <div className="mb-3 flex items-start justify-between">
+        {icon && (
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-xl [&>svg]:text-[1.25rem]"
+            style={{ backgroundColor: `${resolved}29`, color: resolved }}
+          >
+            {icon}
+          </div>
+        )}
+        <div className="text-3xl font-extrabold leading-none tracking-tight text-sss-text">{value ?? '—'}</div>
+      </div>
+      <div className="text-sm font-bold text-sss-text">{title}</div>
+      {subtitle && <div className="sss-muted mt-0.5 text-xs">{subtitle}</div>}
+      {hint && <div className="sss-muted mt-1 text-xs">{hint}</div>}
+    </Comp>
+  );
+};
+
+export const PersonAvatar = ({ user, size = 32, showStatus = false, status, onClick }) => {
+  const statusColors = { online: '#4caf50', away: '#ff9800', busy: '#f44336', offline: '#9e9e9e' };
+  const Comp = onClick ? 'button' : 'div';
+
+  return (
+    <div className="relative inline-block">
+      <Comp
+        type={onClick ? 'button' : undefined}
         onClick={onClick}
-        sx={{
+        className={cn(
+          'inline-flex items-center justify-center rounded-full font-bold text-white transition-transform',
+          onClick && 'cursor-pointer hover:scale-110 border-0'
+        )}
+        style={{
           width: size,
           height: size,
           fontSize: size * 0.42,
-          bgcolor: avatarColor(user),
-          fontWeight: 700,
-          cursor: onClick ? 'pointer' : 'default',
-          transition: 'all 0.3s ease',
-          '&:hover': onClick ? {
-            transform: 'scale(1.1)',
-            boxShadow: theme.shadows[4]
-          } : undefined
+          backgroundColor: avatarColor(user)
         }}
       >
         {initials(user)}
-      </Avatar>
-
+      </Comp>
       {showStatus && status && (
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: -2,
-            right: -2,
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            bgcolor: statusColors[status] || statusColors.offline,
-            border: `2px solid ${theme.palette.background.paper}`,
-            boxShadow: theme.shadows[1]
-          }}
+        <span
+          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white"
+          style={{ backgroundColor: statusColors[status] || statusColors.offline }}
         />
       )}
-
-      {/* Menu d'actions rapides */}
-      {onClick && (
-        <Menu
-          anchorEl={menuAnchor}
-          open={Boolean(menuAnchor)}
-          onClose={handleClose}
-          PaperProps={{
-            sx: {
-              borderRadius: 2,
-              minWidth: 180,
-              boxShadow: theme.shadows[8]
-            }
-          }}
-        >
-          <MenuItem onClick={handleClose}>
-            <ListItemIcon><PhoneIcon fontSize="small" /></ListItemIcon>
-            <ListItemText>Appeler</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={handleClose}>
-            <ListItemIcon><EmailIcon fontSize="small" /></ListItemIcon>
-            <ListItemText>Envoyer un email</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={handleClose}>
-            <ListItemIcon><ChatIcon fontSize="small" /></ListItemIcon>
-            <ListItemText>Discuter</ListItemText>
-          </MenuItem>
-        </Menu>
-      )}
-    </Box>
+    </div>
   );
 };
 
-/**
- * RankBadge - Version améliorée avec effet de trophée
- */
 export const RankBadge = ({ rank, urgency, size = 28, showTrophy = false }) => {
-  const theme = useTheme();
-
   if (showTrophy && rank === 1) {
     return (
-      <Box sx={{ position: 'relative' }}>
-        <Avatar
-          sx={{
-            width: size,
-            height: size,
-            bgcolor: alpha(theme.palette.warning.main, 0.15),
-            color: theme.palette.warning.main,
-            fontSize: size * 0.5,
-            fontWeight: 700,
-            border: `2px solid ${theme.palette.warning.main}`,
-            animation: 'pulse 2s infinite',
-            '@keyframes pulse': {
-              '0%': { transform: 'scale(1)' },
-              '50%': { transform: 'scale(1.1)' },
-              '100%': { transform: 'scale(1)' }
-            }
-          }}
-        >
-          <TrophyIcon style={{ fontSize: size * 0.6 }} />
-        </Avatar>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -4,
-            right: -4,
-            fontSize: 10,
-            fontWeight: 700,
-            color: theme.palette.warning.main
-          }}
-        >
-          🏆
-        </Box>
-      </Box>
+      <div
+        className="relative inline-flex items-center justify-center rounded-full border-2 border-sss-warning bg-sss-warning-soft font-bold text-sss-warning animate-sss-pulse-soft"
+        style={{ width: size, height: size, fontSize: size * 0.5 }}
+      >
+        <TrophyIcon style={{ fontSize: size * 0.6 }} />
+      </div>
     );
   }
 
   return (
-    <Avatar
-      sx={{
+    <div
+      className="inline-flex items-center justify-center rounded-full font-bold text-white transition-transform hover:scale-110"
+      style={{
         width: size,
         height: size,
         fontSize: size * 0.45,
-        fontWeight: 700,
-        bgcolor: urgency ? toneColor(URGENCY_COLORS[urgency]) : SSS_COLORS.neutral,
-        color: '#fff',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'scale(1.1)',
-          boxShadow: theme.shadows[4]
-        }
+        backgroundColor: urgency ? toneColor(URGENCY_COLORS[urgency]) : SSS_COLORS.neutral
       }}
     >
       {rank}
-    </Avatar>
+    </div>
   );
 };
 
-/**
- * PersonCell - Version améliorée avec informations enrichies
- */
-export const PersonCell = ({
-  user,
-  phone,
-  email,
-  showStatus = false,
-  status,
-  rank,
-  urgency,
-  onAction,
-  actions = []
-}) => {
-  const theme = useTheme();
+export const PersonCell = ({ user, phone, email, showStatus = false, status, rank, urgency, onAction, actions = [] }) => {
   const [menuAnchor, setMenuAnchor] = useState(null);
-
-  const handleActionClick = (action) => {
-    onAction?.(action);
-    setMenuAnchor(null);
-  };
+  const safeUser = user && typeof user === 'object' ? user : null;
 
   return (
-    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ py: 0.5 }}>
-      <PersonAvatar
-        user={user}
-        size={40}
-        showStatus={showStatus}
-        status={status}
-        onClick={(e) => setMenuAnchor(e.currentTarget)}
-      />
-
-      <Box flex={1}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="subtitle2" fontWeight={600}>
-            {displayName(user)}
-          </Typography>
-          {rank && (
-            <RankBadge rank={rank} urgency={urgency} size={20} />
-          )}
-        </Stack>
-
-        <Stack direction="row" spacing={2} alignItems="center">
-          {phone && (
-            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-              {phone}
-            </Typography>
-          )}
-          {email && (
-            <Typography variant="caption" color="text.secondary">
-              {email}
-            </Typography>
-          )}
-        </Stack>
-      </Box>
-
+    <div className="flex items-center gap-3 py-1">
+      <PersonAvatar user={safeUser} size={40} showStatus={showStatus} status={status} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-sss-text">{displayName(safeUser)}</span>
+          {rank && <RankBadge rank={rank} urgency={urgency} size={20} />}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+          {phone && <span className="font-mono text-xs text-sss-muted">{phone}</span>}
+          {email && <span className="truncate text-xs text-sss-muted">{email}</span>}
+        </div>
+      </div>
       {actions.length > 0 && (
         <>
-          <IconButton
-            size="small"
+          <button
+            type="button"
+            className="rounded-lg p-1.5 text-sss-muted opacity-70 transition hover:bg-sss-neutral-soft hover:opacity-100"
             onClick={(e) => setMenuAnchor(e.currentTarget)}
-            sx={{
-              opacity: 0.7,
-              '&:hover': { opacity: 1 }
-            }}
           >
             <MoreVertIcon fontSize="small" />
-          </IconButton>
-
-          <Menu
-            anchorEl={menuAnchor}
-            open={Boolean(menuAnchor)}
-            onClose={() => setMenuAnchor(null)}
-            PaperProps={{
-              sx: {
-                borderRadius: 2,
-                minWidth: 180,
-                boxShadow: theme.shadows[8]
-              }
-            }}
-          >
+          </button>
+          <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
             {actions.map((action) => (
-              <MenuItem key={action.id} onClick={() => handleActionClick(action)}>
+              <MenuItem
+                key={action.id}
+                onClick={() => {
+                  onAction?.(action);
+                  setMenuAnchor(null);
+                }}
+              >
                 <ListItemIcon>{action.icon}</ListItemIcon>
                 <ListItemText>{action.label}</ListItemText>
               </MenuItem>
@@ -788,97 +347,46 @@ export const PersonCell = ({
           </Menu>
         </>
       )}
-    </Stack>
+    </div>
   );
 };
 
-/**
- * MetricsCard - Nouveau composant pour les métriques avancées
- */
-export const MetricsCard = ({
-  title,
-  value,
-  change,
-  changeType = 'neutral',
-  data = [],
-  color = 'primary',
-  icon,
-  loading = false
-}) => {
-  const theme = useTheme();
+export const MetricsCard = ({ title, value, change, changeType = 'neutral', color = 'primary', icon, loading = false }) => {
+  const colorMap = {
+    primary: SSS_COLORS.brand,
+    success: SSS_COLORS.success,
+    warning: SSS_COLORS.warning,
+    error: SSS_COLORS.error,
+    info: SSS_COLORS.info
+  };
+  const tone = colorMap[color] || SSS_COLORS.brand;
+  const ChangeIcon = { up: TrendingUpIcon, down: TrendingDownIcon, neutral: TrendingFlatIcon }[changeType];
 
   if (loading) {
     return (
-      <Card elevation={0} sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
-        <CardContent>
-          <Stack spacing={1}>
-            <Skeleton variant="text" width={120} />
-            <Skeleton variant="text" width={100} height={40} />
-            <Skeleton variant="text" width={80} />
-          </Stack>
-        </CardContent>
-      </Card>
+      <div className="sss-kpi">
+        <div className="sss-skeleton h-4 w-28" />
+        <div className="sss-skeleton mt-3 h-9 w-24" />
+      </div>
     );
   }
 
-  const colorMap = {
-    primary: theme.palette.primary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main
-  };
-
-  const ChangeIcon = {
-    up: TrendingUpIcon,
-    down: TrendingDownIcon,
-    neutral: TrendingFlatIcon
-  }[changeType];
-
   return (
-    <Card
-      elevation={0}
-      sx={{
-        borderRadius: 3,
-        border: `1px solid ${alpha(colorMap[color], 0.15)}`,
-        bgcolor: alpha(colorMap[color], 0.03),
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: theme.shadows[4]
-        }
-      }}
-    >
-      <CardContent>
-        <Stack spacing={2}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary" fontWeight={600} textTransform="uppercase">
-              {title}
-            </Typography>
-            {icon && (
-              <Box sx={{ color: colorMap[color] }}>
-                {icon}
-              </Box>
-            )}
-          </Stack>
-
-          <Typography variant="h3" fontWeight={700} color={colorMap[color]}>
-            {value}
-          </Typography>
-
-          <Stack direction="row" spacing={1} alignItems="center">
-            {change && (
-              <>
-                <ChangeIcon style={{ fontSize: 16, color: colorMap[color] }} />
-                <Typography variant="caption" fontWeight={600} color={colorMap[color]}>
-                  {change}
-                </Typography>
-              </>
-            )}
-          </Stack>
-        </Stack>
-      </CardContent>
-    </Card>
+    <div className="sss-kpi hover:-translate-y-1" style={{ backgroundColor: `${tone}08`, borderColor: `${tone}26` }}>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[0.7rem] font-bold uppercase tracking-wider text-sss-muted">{title}</span>
+        {icon && <span style={{ color: tone }}>{icon}</span>}
+      </div>
+      <div className="text-3xl font-extrabold" style={{ color: tone }}>
+        {value}
+      </div>
+      {change && (
+        <div className="mt-2 flex items-center gap-1 text-xs font-semibold" style={{ color: tone }}>
+          {ChangeIcon && <ChangeIcon style={{ fontSize: 16 }} />}
+          {change}
+        </div>
+      )}
+    </div>
   );
 };
 

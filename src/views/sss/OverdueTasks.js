@@ -37,14 +37,12 @@ import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
 import MainCard from 'ui-component/cards/MainCard';
 import SssApi from 'api/sss/sss';
-import { maskPhone, telHref, whatsappHref } from './labels';
+import { maskPhone, telHref, whatsappHref, displayName } from './labels';
 import {
   ActionLabel,
   EmptyState,
-  PersonCell,
+  PersonAvatar,
   RankBadge,
-  StageChip,
-  StatusChip,
   UrgencyChip
 } from './components/Chips';
 import TaskCard from './components/TaskCard';
@@ -84,13 +82,20 @@ const OverdueTasksPage = () => {
     try {
       const res = await SssApi.getOverdueTasks(globalState.key);
       if (res?.status === 200) {
-        const data = res.data?.data || [];
+        const payload = res.data?.data ?? res.data ?? [];
+        const data = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.tasks)
+            ? payload.tasks
+            : Array.isArray(payload.data)
+              ? payload.data
+              : [];
         setTasks(data);
         setStats({
           total: data.length,
           urgent: data.filter((t) => t.urgency === 'critical' || t.urgency === 'high').length,
-          overdue: data.filter((t) => new Date(t.date) < new Date()).length,
-          carried: data.filter((t) => t.carryCount > 0).length
+          overdue: data.filter((t) => t.date && new Date(t.date) < new Date()).length,
+          carried: data.filter((t) => (t.carryCount || 0) > 0).length
         });
       }
     } catch (err) {
@@ -106,16 +111,19 @@ const OverdueTasksPage = () => {
   }, [load]);
 
   const filtered = useMemo(() => {
-    let result = [...tasks];
+    let result = Array.isArray(tasks) ? [...tasks] : [];
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (task) =>
-          task.idUser?.name?.toLowerCase().includes(term) ||
-          task.idUser?.phone?.includes(term) ||
-          task.actionType?.toLowerCase().includes(term) ||
-          task.stageSnapshot?.toLowerCase().includes(term)
-      );
+      result = result.filter((task) => {
+        const user = task.idUser || {};
+        const name = `${user.prenom || ''} ${user.nom || ''} ${user.name || ''}`.toLowerCase();
+        return (
+          name.includes(term) ||
+          String(user.phone || '').includes(term) ||
+          String(task.actionType || '').toLowerCase().includes(term) ||
+          String(task.stageSnapshot || '').toLowerCase().includes(term)
+        );
+      });
     }
     const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     result.sort((a, b) => (urgencyOrder[a.urgency] ?? 4) - (urgencyOrder[b.urgency] ?? 4));
@@ -185,76 +193,67 @@ const OverdueTasksPage = () => {
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell width={44} sx={tableHeadCellSx}>#</TableCell>
-            <TableCell sx={tableHeadCellSx}>Jour prévu</TableCell>
+            <TableCell width={48} sx={tableHeadCellSx}>#</TableCell>
             <TableCell sx={tableHeadCellSx}>Personne</TableCell>
-            <TableCell sx={tableHeadCellSx}>Action</TableCell>
-            <TableCell sx={tableHeadCellSx}>Étape</TableCell>
+            <TableCell sx={tableHeadCellSx}>À faire</TableCell>
             <TableCell sx={tableHeadCellSx}>Urgence</TableCell>
-            <TableCell sx={tableHeadCellSx}>État</TableCell>
-            <TableCell align="center" sx={tableHeadCellSx}>Reports</TableCell>
-            <TableCell align="right" sx={tableHeadCellSx}>Actions</TableCell>
+            <TableCell align="right" sx={tableHeadCellSx}>Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {filtered.map((task, idx) => {
-            const phone = task.idUser?.phone;
-
-            return (
-              <TableRow key={task._id} hover>
-                <TableCell sx={tableBodyCellSx}>
-                  <RankBadge rank={idx + 1} urgency={task.urgency} />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <Stack spacing={0.5}>
-                    <Typography variant="body2" fontWeight={new Date(task.date) < new Date() ? 600 : 400}>
-                      {task.date}
-                    </Typography>
-                    {task.originDate && task.originDate !== task.date && (
-                      <Typography variant="caption" color="text.secondary">
-                        depuis {task.originDate}
-                      </Typography>
+          {filtered.map((task, idx) => (
+            <TableRow
+              key={task._id}
+              hover
+              onClick={() => {
+                setSelected(task);
+                setDialogOpen(true);
+              }}
+              sx={{ cursor: 'pointer' }}
+            >
+              <TableCell sx={tableBodyCellSx}>
+                <RankBadge rank={idx + 1} urgency={task.urgency} />
+              </TableCell>
+              <TableCell sx={tableBodyCellSx}>
+                <div className="flex items-center gap-2.5">
+                  <PersonAvatar user={task.idUser} size={32} />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-sss-text">{displayName(task.idUser)}</div>
+                    {task.date && (
+                      <div className="text-xs text-sss-error">Prévu le {task.date}</div>
                     )}
-                  </Stack>
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <PersonCell user={task.idUser} phone={maskPhone(phone)} />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <ActionLabel action={task.actionType} />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <StageChip stage={task.stageSnapshot} size="small" />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <UrgencyChip urgency={task.urgency} size="small" />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <StatusChip status={task.status} size="small" />
-                </TableCell>
-                <TableCell align="center" sx={tableBodyCellSx}>
-                  <Badge badgeContent={task.carryCount || 0} color="warning">
-                    <CarryIcon fontSize="small" color="action" />
-                  </Badge>
-                </TableCell>
-                <TableCell align="right" sx={tableBodyCellSx}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<ViewIcon fontSize="small" />}
-                    onClick={() => { setSelected(task); setDialogOpen(true); }}
-                    sx={viewButtonSx}
-                  >
-                    Voir
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell sx={tableBodyCellSx}>
+                <ActionLabel action={task.actionType} />
+              </TableCell>
+              <TableCell sx={tableBodyCellSx}>
+                <UrgencyChip urgency={task.urgency} size="small" />
+              </TableCell>
+              <TableCell
+                align="right"
+                sx={tableBodyCellSx}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => {
+                    setSelected(task);
+                    setDialogOpen(true);
+                  }}
+                  sx={viewButtonSx}
+                >
+                  Traiter
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
 
           {filtered.length === 0 && !loading && (
             <TableRow>
-              <TableCell colSpan={9} align="center" sx={{ py: 6, border: 0 }}>
+              <TableCell colSpan={5} align="center" sx={{ py: 6, border: 0 }}>
                 <EmptyState
                   icon={<HistoryIcon />}
                   title="Aucune tâche en retard"
@@ -274,17 +273,17 @@ const OverdueTasksPage = () => {
   );
 
   const renderCards = () => (
-    <Stack spacing={2}>
+    <>
       {filtered.map((task, idx) => (
         <TaskCard
           key={task._id}
           task={task}
           rank={idx + 1}
           showDate
-          onOpen={(t) => { setSelected(t); setDialogOpen(true); }}
-          onCarry={handleCarry}
-          onView={(t) => navigate(`/wekavit/sss/people/${t.idUser?._id || t.idUser}`)}
-          variant="default"
+          onOpen={(t) => {
+            setSelected(t);
+            setDialogOpen(true);
+          }}
           animated
         />
       ))}
@@ -301,96 +300,93 @@ const OverdueTasksPage = () => {
           }
         />
       )}
-    </Stack>
+    </>
   );
 
   return (
-    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}>
-      <PageToolbar
-        icon={<HistoryIcon />}
-        title="Actions en retard"
-        subtitle="Ces actions n'ont pas été terminées les jours précédents. Traitez-les maintenant ou reportez-les au prochain jour ouvré."
-        color={SSS_COLORS.error}
-        actions={
-          <>
-            <GhostButton startIcon={<DownloadIcon />} onClick={handleExport} disabled={filtered.length === 0}>
-              Exporter
-            </GhostButton>
-            <PrimaryButton startIcon={<PeopleIcon />} onClick={() => navigate('/wekavit/sss/people')}>
-              Voir les personnes
-            </PrimaryButton>
-            <Tooltip title="Actualiser">
-              <IconButton
-                onClick={load}
-                disabled={loading}
-                sx={{ border: `1px solid ${SSS_COLORS.cardBorder}`, borderRadius: 2, bgcolor: 'background.paper' }}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </>
-        }
-      />
+    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: SSS_COLORS.pageBg }}>
+      <div className="sss-page">
+        <PageToolbar
+          icon={<HistoryIcon />}
+          title="Actions en retard"
+          subtitle="Ces actions n'ont pas été terminées les jours précédents. Traitez-les maintenant ou reportez-les au prochain jour ouvré."
+          color={SSS_COLORS.error}
+          actions={
+            <>
+              <GhostButton startIcon={<DownloadIcon />} onClick={handleExport} disabled={filtered.length === 0}>
+                Exporter
+              </GhostButton>
+              <PrimaryButton startIcon={<PeopleIcon />} onClick={() => navigate('/wekavit/sss/people')}>
+                Voir les personnes
+              </PrimaryButton>
+              <Tooltip title="Actualiser">
+                <IconButton
+                  onClick={load}
+                  disabled={loading}
+                  className="!rounded-xl !border !border-sss-border !bg-white"
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+            </>
+          }
+        />
 
-      {loading && (
-        <Box sx={{ mb: 2 }}>
-          <LinearProgress sx={{ borderRadius: 2, height: 6 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Chargement des tâches en retard...
-          </Typography>
+        {loading && (
+          <div className="mb-4">
+            <div className="h-1.5 overflow-hidden rounded-full bg-sss-error-soft">
+              <div className="h-full w-1/3 animate-sss-shimmer rounded-full bg-sss-error" />
+            </div>
+            <p className="sss-muted mt-2 text-xs">Chargement des tâches en retard...</p>
+          </div>
+        )}
+
+        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard title="Total des retards" value={stats.total} hint="À traiter" icon={<HistoryIcon />} color={SSS_COLORS.error} loading={loading} variant="dark" />
+          <KpiCard title="Urgents" value={stats.urgent} hint="Critique ou élevée" icon={<WarningIcon />} color={SSS_COLORS.error} loading={loading} variant="dark" />
+          <KpiCard title="En retard" value={stats.overdue} hint="Échéance dépassée" icon={<AccessTimeIcon />} color={SSS_COLORS.warning} loading={loading} variant="dark" />
+          <KpiCard title="Reportés" value={stats.carried} hint="Déjà reportés" icon={<CarryIcon />} color={SSS_COLORS.brand} loading={loading} variant="dark" />
+        </div>
+
+        <InfoBanner icon={<InfoIcon />} color={SSS_COLORS.error}>
+          Astuce : commencez par les lignes <strong>« Urgent »</strong> puis reportez celles qui ne peuvent pas être
+          traitées aujourd&apos;hui.
+        </InfoBanner>
+
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Nom, téléphone ou action..."
+          onRefresh={load}
+          refreshing={loading}
+        />
+
+        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+          <div className="flex flex-col gap-3">{renderCards()}</div>
         </Box>
-      )}
+        <Box sx={{ display: { xs: 'none', md: 'block' } }}>{renderTable()}</Box>
 
-      <Grid container spacing={{ xs: 1.25, sm: 2 }} sx={{ mb: 2 }}>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Total des retards" value={stats.total} hint="À traiter" icon={<HistoryIcon />} color={SSS_COLORS.error} loading={loading} />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Urgents" value={stats.urgent} hint="Critique ou élevée" icon={<WarningIcon />} color={SSS_COLORS.error} loading={loading} />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="En retard" value={stats.overdue} hint="Échéance dépassée" icon={<AccessTimeIcon />} color={SSS_COLORS.warning} loading={loading} />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Reportés" value={stats.carried} hint="Déjà reportés" icon={<CarryIcon />} color={SSS_COLORS.brand} loading={loading} />
-        </Grid>
-      </Grid>
+        <TaskActionDialog
+          open={dialogOpen}
+          task={selected}
+          onClose={() => setDialogOpen(false)}
+          onSave={handleSave}
+          saving={saving}
+          showStepper
+          enableSnooze
+        />
 
-      <InfoBanner icon={<InfoIcon />} color={SSS_COLORS.error}>
-        Astuce : commencez par les lignes <strong>« Urgent »</strong> puis reportez celles qui ne peuvent pas être traitées aujourd'hui.
-      </InfoBanner>
-
-      <FilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Nom, téléphone ou action..."
-        onRefresh={load}
-        refreshing={loading}
-      />
-
-      <Box sx={{ display: { xs: 'block', md: 'none' } }}>{renderCards()}</Box>
-      <Box sx={{ display: { xs: 'none', md: 'block' } }}>{renderTable()}</Box>
-
-      <TaskActionDialog
-        open={dialogOpen}
-        task={selected}
-        onClose={() => setDialogOpen(false)}
-        onSave={handleSave}
-        saving={saving}
-        showStepper
-        enableSnooze
-      />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </div>
     </MainCard>
   );
 };

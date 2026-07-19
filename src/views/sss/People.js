@@ -47,17 +47,16 @@ import {
   COHORT_LABELS,
   formatDateFr,
   URGENCY_LABELS,
-  STAGE_LABELS
+  STAGE_LABELS,
+  displayName
 } from './labels';
 import {
-  AlertChips,
   EmptyState,
-  PersonCell,
-  StageChip,
+  PersonAvatar,
   UrgencyChip
 } from './components/Chips';
-import HealthMeter from './components/HealthMeter';
 import PersonCard from './components/PersonCard';
+import PersonPreviewDialog from './components/PersonPreviewDialog';
 import {
   PageToolbar,
   KpiCard,
@@ -93,6 +92,7 @@ const PeoplePage = () => {
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [exporting, setExporting] = useState(false);
+  const [preview, setPreview] = useState(null);
 
   const stats = useMemo(() => {
     if (!rows.length) return { total: 0, urgent: 0, new: 0, healthy: 0 };
@@ -119,8 +119,16 @@ const PeoplePage = () => {
 
       const res = await SssApi.listUsers(params, globalState.key);
       if (res?.status === 200) {
-        setRows(res.data?.data || []);
-        setTotal(res.data?.total || 0);
+        const payload = res.data?.data ?? res.data ?? [];
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.users)
+            ? payload.users
+            : Array.isArray(payload.data)
+              ? payload.data
+              : [];
+        setRows(list);
+        setTotal(res.data?.total ?? payload.total ?? list.length ?? 0);
       }
     } catch (err) {
       toast.error(err?.data?.message || 'Impossible de charger les personnes');
@@ -198,51 +206,33 @@ const PeoplePage = () => {
         <TableHead>
           <TableRow>
             <TableCell sx={tableHeadCellSx}>Personne</TableCell>
-            <TableCell sx={tableHeadCellSx}>Étape</TableCell>
-            <TableCell sx={tableHeadCellSx}>Santé</TableCell>
             <TableCell sx={tableHeadCellSx}>Urgence</TableCell>
-            <TableCell sx={tableHeadCellSx}>Alertes</TableCell>
-            <TableCell sx={tableHeadCellSx}>Dernière activité</TableCell>
-            <TableCell align="right" sx={tableHeadCellSx}>Actions</TableCell>
+            <TableCell align="right" sx={tableHeadCellSx}>Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {rows.map((profile) => {
             const user = profile.idUser || {};
-            const userId = user._id || profile.idUser;
-            const phone = user.phone;
 
             return (
-              <TableRow key={profile._id} hover>
+              <TableRow
+                key={profile._id}
+                hover
+                onClick={() => setPreview(profile)}
+                sx={{ cursor: 'pointer' }}
+              >
                 <TableCell sx={tableBodyCellSx}>
-                  <PersonCell user={user} phone={maskPhone(phone)} />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <StageChip stage={profile.stage} size="small" />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <HealthMeter level={profile.healthLevel} score={profile.healthScore} dense />
+                  <div className="flex items-center gap-2.5">
+                    <PersonAvatar user={user} size={32} />
+                    <span className="text-sm font-semibold text-sss-text">{displayName(user)}</span>
+                  </div>
                 </TableCell>
                 <TableCell sx={tableBodyCellSx}>
                   <UrgencyChip urgency={profile.urgency} size="small" />
                 </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <AlertChips alerts={profile.alerts} max={2} />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <Typography variant="body2">
-                    {formatDateFr(profile.ledgerSnapshot?.lastActivityAt)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right" sx={tableBodyCellSx}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<ViewIcon fontSize="small" />}
-                    onClick={() => navigate(`/wekavit/sss/people/${userId}`)}
-                    sx={viewButtonSx}
-                  >
-                    Voir
+                <TableCell align="right" sx={tableBodyCellSx} onClick={(e) => e.stopPropagation()}>
+                  <Button size="small" variant="outlined" onClick={() => setPreview(profile)} sx={viewButtonSx}>
+                    Détails
                   </Button>
                 </TableCell>
               </TableRow>
@@ -251,7 +241,7 @@ const PeoplePage = () => {
 
           {rows.length === 0 && !loading && (
             <TableRow>
-              <TableCell colSpan={7} align="center" sx={{ py: 6, border: 0 }}>
+              <TableCell colSpan={3} align="center" sx={{ py: 6, border: 0 }}>
                 <EmptyState
                   icon={<PeopleAltIcon />}
                   title="Aucune personne trouvée"
@@ -271,38 +261,36 @@ const PeoplePage = () => {
   );
 
   return (
-    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}>
-      <PageToolbar
-        icon={<GroupsIcon />}
-        title="Personnes à accompagner"
-        subtitle="Cherchez quelqu'un, filtrez par étape ou urgence, puis ouvrez sa fiche pour noter, changer l'étape ou l'action conseillée."
-        color={SSS_COLORS.info}
-        actions={
-          <>
-            <GhostButton startIcon={<DownloadIcon />} onClick={handleExport} disabled={exporting || rows.length === 0}>
-              {exporting ? 'Export...' : 'Exporter'}
-            </GhostButton>
-            <PrimaryButton startIcon={<RefreshIcon />} onClick={load} disabled={loading}>
-              Actualiser
-            </PrimaryButton>
-          </>
-        }
-      />
+    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: SSS_COLORS.pageBg }}>
+      <div className="sss-page">
+        <PageToolbar
+          icon={<GroupsIcon />}
+          title="Personnes à accompagner"
+          subtitle="Cherchez quelqu'un, filtrez par étape ou urgence, puis ouvrez sa fiche pour noter, changer l'étape ou l'action conseillée."
+          color={SSS_COLORS.info}
+          actions={
+            <>
+              <GhostButton startIcon={<DownloadIcon />} onClick={handleExport} disabled={exporting || rows.length === 0}>
+                {exporting ? 'Export...' : 'Exporter'}
+              </GhostButton>
+              <PrimaryButton startIcon={<RefreshIcon />} onClick={load} disabled={loading}>
+                Actualiser
+              </PrimaryButton>
+            </>
+          }
+        />
 
-      {loading && (
-        <Box sx={{ mb: 2 }}>
-          <LinearProgress sx={{ borderRadius: 2, height: 6 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Chargement des personnes...
-          </Typography>
-        </Box>
-      )}
+        {loading && (
+          <div className="mb-4">
+            <div className="h-1.5 overflow-hidden rounded-full bg-sss-info-soft">
+              <div className="h-full w-1/3 animate-sss-shimmer rounded-full bg-sss-info" />
+            </div>
+            <p className="sss-muted mt-2 text-xs">Chargement des personnes...</p>
+          </div>
+        )}
 
-      <Grid container spacing={{ xs: 1.25, sm: 2 }} sx={{ mb: 2 }}>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Total" value={stats.total} hint="Personnes suivies" icon={<GroupsIcon />} color={SSS_COLORS.brand} loading={loading} />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
+        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard title="Total" value={stats.total} hint="Personnes suivies" icon={<GroupsIcon />} color={SSS_COLORS.brand} loading={loading} variant="dark" />
           <KpiCard
             title="Urgents"
             value={stats.urgent}
@@ -311,9 +299,8 @@ const PeoplePage = () => {
             color={SSS_COLORS.error}
             loading={loading}
             onClick={() => handleFilterChange('urgency', 'critical')}
+            variant="dark"
           />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
           <KpiCard
             title="Nouveaux"
             value={stats.new}
@@ -322,138 +309,140 @@ const PeoplePage = () => {
             color={SSS_COLORS.info}
             loading={loading}
             onClick={() => handleFilterChange('cohort', 'new')}
+            variant="dark"
           />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Bonne santé" value={stats.healthy} hint="Excellente ou bonne" icon={<CheckCircleIcon />} color={SSS_COLORS.success} loading={loading} />
-        </Grid>
-      </Grid>
+          <KpiCard title="Bonne santé" value={stats.healthy} hint="Excellente ou bonne" icon={<CheckCircleIcon />} color={SSS_COLORS.success} loading={loading} variant="dark" />
+        </div>
 
-      <InfoBanner icon={<InfoIcon />}>
-        Astuce : combinez les filtres d'étape et d'urgence pour cibler les personnes à contacter en priorité.
-      </InfoBanner>
+        <InfoBanner icon={<InfoIcon />}>
+          Astuce : combinez les filtres d&apos;étape et d&apos;urgence pour cibler les personnes à contacter en priorité.
+        </InfoBanner>
 
-      <FilterBar
-        searchValue={search}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Nom, prénom ou téléphone..."
-        onRefresh={load}
-        refreshing={loading}
-      >
-        <TextField
-          select
-          size="small"
-          label="Étape"
-          value={filters.stage}
-          onChange={(e) => handleFilterChange('stage', e.target.value)}
-          sx={filterFieldSx}
+        <FilterBar
+          searchValue={search}
+          onSearchChange={handleSearchChange}
+          searchPlaceholder="Nom, prénom ou téléphone..."
+          onRefresh={load}
+          refreshing={loading}
         >
-          <MenuItem value="">Toutes</MenuItem>
-          {STAGE_OPTIONS.map((o) => (
-            <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label="Urgence"
-          value={filters.urgency}
-          onChange={(e) => handleFilterChange('urgency', e.target.value)}
-          sx={filterFieldSx}
-        >
-          <MenuItem value="">Toutes</MenuItem>
-          <MenuItem value="critical">Critique</MenuItem>
-          <MenuItem value="high">Élevée</MenuItem>
-          <MenuItem value="medium">Moyenne</MenuItem>
-          <MenuItem value="low">Basse</MenuItem>
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label="Groupe"
-          value={filters.cohort}
-          onChange={(e) => handleFilterChange('cohort', e.target.value)}
-          sx={filterFieldSx}
-        >
-          <MenuItem value="">Tous</MenuItem>
-          {Object.entries(COHORT_LABELS).map(([value, label]) => (
-            <MenuItem key={value} value={value}>{label}</MenuItem>
-          ))}
-        </TextField>
-      </FilterBar>
+          <TextField
+            select
+            size="small"
+            label="Étape"
+            value={filters.stage}
+            onChange={(e) => handleFilterChange('stage', e.target.value)}
+            sx={filterFieldSx}
+          >
+            <MenuItem value="">Toutes</MenuItem>
+            {STAGE_OPTIONS.map((o) => (
+              <MenuItem key={o.value} value={o.value}>
+                {o.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="Urgence"
+            value={filters.urgency}
+            onChange={(e) => handleFilterChange('urgency', e.target.value)}
+            sx={filterFieldSx}
+          >
+            <MenuItem value="">Toutes</MenuItem>
+            <MenuItem value="critical">Critique</MenuItem>
+            <MenuItem value="high">Élevée</MenuItem>
+            <MenuItem value="medium">Moyenne</MenuItem>
+            <MenuItem value="low">Basse</MenuItem>
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="Groupe"
+            value={filters.cohort}
+            onChange={(e) => handleFilterChange('cohort', e.target.value)}
+            sx={filterFieldSx}
+          >
+            <MenuItem value="">Tous</MenuItem>
+            {Object.entries(COHORT_LABELS).map(([value, label]) => (
+              <MenuItem key={value} value={value}>
+                {label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </FilterBar>
 
-      {!loading && rows.length === 0 ? (
-        <EmptyState
-          icon={<PeopleAltIcon />}
-          title="Aucune personne trouvée"
-          subtitle="Essayez d'autres filtres, ou initialisez les profils dans Réglages."
-          action={
-            <Stack direction="row" spacing={2}>
-              <PrimaryButton onClick={handleClearFilters}>Réinitialiser les filtres</PrimaryButton>
-              <Button variant="outlined" onClick={() => navigate('/wekavit/sss/settings')}>
-                Aller aux réglages
-              </Button>
-            </Stack>
-          }
-        />
-      ) : (
-        <>
-          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-            <Stack spacing={2}>
-              {rows.map((profile) => {
-                const userId = profile.idUser?._id || profile.idUser;
-                return (
+        {!loading && rows.length === 0 ? (
+          <EmptyState
+            icon={<PeopleAltIcon />}
+            title="Aucune personne trouvée"
+            subtitle="Essayez d'autres filtres, ou initialisez les profils dans Réglages."
+            action={
+              <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row">
+                <PrimaryButton onClick={handleClearFilters}>Réinitialiser les filtres</PrimaryButton>
+                <GhostButton onClick={() => navigate('/wekavit/sss/settings')}>Aller aux réglages</GhostButton>
+              </div>
+            }
+          />
+        ) : (
+          <>
+            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+              <div className="flex flex-col gap-3">
+                {rows.map((profile) => (
                   <PersonCard
                     key={profile._id}
                     profile={profile}
-                    onOpen={() => navigate(`/wekavit/sss/people/${userId}`)}
-                    variant="default"
+                    onOpen={() => setPreview(profile)}
                     animated
                   />
-                );
-              })}
-            </Stack>
-          </Box>
+                ))}
+              </div>
+            </Box>
 
-          <Box sx={{ display: { xs: 'none', md: 'block' } }}>{renderTable()}</Box>
+            <Box sx={{ display: { xs: 'none', md: 'block' } }}>{renderTable()}</Box>
 
-          {rows.length > 0 && (
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mt: 3 }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {total} personne{total > 1 ? 's' : ''}
-                {total > 40 && ` · Page ${page} sur ${pageCount}`}
-              </Typography>
-              <Pagination
-                count={pageCount}
-                page={page}
-                onChange={(_, p) => setPage(p)}
-                color="primary"
-                size={isMobile ? 'small' : 'medium'}
-                showFirstButton
-                showLastButton
-                sx={{ '& .MuiPaginationItem-root': { borderRadius: 2 } }}
-              />
-            </Stack>
-          )}
-        </>
-      )}
+            {rows.length > 0 && (
+              <div className="mt-5 flex flex-col items-center justify-between gap-3 sm:flex-row">
+                <p className="sss-muted m-0 text-xs">
+                  {total} personne{total > 1 ? 's' : ''}
+                  {total > 40 && ` · Page ${page} sur ${pageCount}`}
+                </p>
+                <Pagination
+                  count={pageCount}
+                  page={page}
+                  onChange={(_, p) => setPage(p)}
+                  color="primary"
+                  size={isMobile ? 'small' : 'medium'}
+                  showFirstButton
+                  showLastButton
+                  sx={{ '& .MuiPaginationItem-root': { borderRadius: 2 } }}
+                />
+              </div>
+            )}
+          </>
+        )}
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        <PersonPreviewDialog
+          open={Boolean(preview)}
+          profile={preview}
+          onClose={() => setPreview(null)}
+          onOpenFiche={() => {
+            const userId = preview?.idUser?._id || preview?.idUser;
+            setPreview(null);
+            if (userId) navigate(`/wekavit/sss/people/${userId}`);
+          }}
+        />
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </div>
     </MainCard>
   );
 };

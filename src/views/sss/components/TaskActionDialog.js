@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogTitle,
@@ -11,28 +12,21 @@ import {
   Typography,
   Box,
   Slider,
-  Divider,
   Alert,
   useMediaQuery,
   Chip,
-  Avatar,
   IconButton,
   Paper,
   alpha,
   useTheme,
   Fade,
   Grow,
-  Zoom,
-  LinearProgress,
   CircularProgress,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
-  Snackbar,
   Tooltip,
-  Badge,
-  Collapse
+  Snackbar,
+  Collapse,
+  Grid,
+  Divider
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -40,109 +34,110 @@ import {
   Schedule as ScheduleIcon,
   Warning as WarningIcon,
   Info as InfoIcon,
-  Phone as PhoneIcon,
   Message as MessageIcon,
-  ThumbUp as ThumbUpIcon,
-  ThumbDown as ThumbDownIcon,
-  Flag as FlagIcon,
-  Star as StarIcon,
-  EmojiEmotions as EmojiIcon,
-  Assignment as AssignmentIcon,
   AccessTime as AccessTimeIcon,
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  NotificationsActive as NotificationIcon,
   Edit as EditIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  Send as SendIcon,
   ContentCopy as ContentCopyIcon,
-  Share as ShareIcon,
-  Archive as ArchiveIcon,
-  MoreVert as MoreVertIcon,
-  DoneAll as DoneAllIcon,
-  RemoveCircle as RemoveCircleIcon
+  RemoveCircle as RemoveCircleIcon,
+  OpenInNew as OpenInNewIcon,
+  PersonSearch as PersonSearchIcon,
+  Call as CallIcon,
+  WhatsApp as WhatsAppIcon,
+  Assignment as AssignmentIcon
 } from '@mui/icons-material';
-import { ACTION_LABELS, OUTCOME_OPTIONS, TASK_STATUS_LABELS, displayName } from '../labels';
-import { ActionLabel, PersonAvatar, UrgencyChip, StageChip } from './Chips';
-import PhoneAction from './PhoneAction';
-import { SSS_COLORS } from './SssLayout';
+import {
+  ACTION_LABELS,
+  OUTCOME_OPTIONS,
+  TASK_STATUS_LABELS,
+  STAGE_LABELS,
+  displayName,
+  maskPhone,
+  telHref,
+  whatsappHref
+} from '../labels';
+import { AlertChips, PersonAvatar, UrgencyChip, StageChip, StatusChip } from './Chips';
+import { GhostButton, PrimaryButton, SSS_COLORS } from './SssLayout';
 
-// Options de statut enrichies
 const STATUS_CHOICES = [
   {
     value: 'in_progress',
     label: 'En cours',
-    icon: <TrendingUpIcon />,
-    color: 'info',
-    description: 'Je commence à travailler sur cette action'
+    icon: <TrendingUpIcon fontSize="small" />,
+    color: SSS_COLORS.info,
+    description: 'Vous démarrez ou poursuivez cette action.'
   },
   {
     value: 'done',
     label: 'Terminé',
-    icon: <CheckCircleIcon />,
-    color: 'success',
-    description: 'Action complétée avec succès'
+    icon: <CheckCircleIcon fontSize="small" />,
+    color: SSS_COLORS.success,
+    description: 'L’action est complètement réalisée.'
   },
   {
     value: 'partial',
-    label: 'Partiel (à reprendre)',
-    icon: <WarningIcon />,
-    color: 'warning',
-    description: 'Avancement partiel, nécessite une suite'
+    label: 'Partiel',
+    icon: <WarningIcon fontSize="small" />,
+    color: SSS_COLORS.warning,
+    description: 'Avancement partiel : une suite sera nécessaire.'
   },
   {
     value: 'blocked',
     label: 'Bloqué',
-    icon: <CancelIcon />,
-    color: 'error',
-    description: 'Action bloquée, nécessite une intervention'
+    icon: <CancelIcon fontSize="small" />,
+    color: SSS_COLORS.error,
+    description: 'Impossible de continuer sans intervention.'
   },
   {
     value: 'skipped',
     label: 'Ignorer',
-    icon: <RemoveCircleIcon />,
-    color: 'default',
-    description: 'Action à ignorer pour le moment'
+    icon: <RemoveCircleIcon fontSize="small" />,
+    color: SSS_COLORS.neutral,
+    description: 'Cette action n’est pas pertinente pour le moment.'
   }
 ];
 
-// Composant de progression étape par étape
-const StepProgress = ({ currentStep, steps }) => {
-  const theme = useTheme();
+const Section = ({ title, subtitle, children, action }) => (
+  <Box>
+    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} mb={1.5}>
+      <Box>
+        <Typography variant="subtitle1" fontWeight={700} color={SSS_COLORS.text}>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, lineHeight: 1.5 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+      {action}
+    </Stack>
+    {children}
+  </Box>
+);
 
-  return (
-    <Box sx={{ width: '100%', mb: 2 }}>
-      <Stepper activeStep={currentStep} orientation="vertical" sx={{ '& .MuiStepConnector-line': { minHeight: 20 } }}>
-        {steps.map((step, index) => (
-          <Step key={index}>
-            <StepLabel
-              StepIconProps={{
-                sx: {
-                  '& .MuiStepIcon-root': {
-                    color: index <= currentStep ? SSS_COLORS.brand : theme.palette.grey[400],
-                  }
-                }
-              }}
-            >
-              <Typography variant="body2" fontWeight={index === currentStep ? 600 : 400}>
-                {step.label}
-              </Typography>
-            </StepLabel>
-            <StepContent>
-              <Typography variant="caption" color="text.secondary">
-                {step.description}
-              </Typography>
-            </StepContent>
-          </Step>
-        ))}
-      </Stepper>
-    </Box>
-  );
-};
+const InfoRow = ({ label, children }) => (
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', sm: '140px 1fr' },
+      gap: { xs: 0.5, sm: 2 },
+      alignItems: 'start',
+      py: 1.1,
+      borderBottom: `1px solid ${SSS_COLORS.cardBorder}`
+    }}
+  >
+    <Typography variant="body2" fontWeight={700} color="text.secondary">
+      {label}
+    </Typography>
+    <Box sx={{ minWidth: 0 }}>{children}</Box>
+  </Box>
+);
 
 /**
- * TaskActionDialog amélioré avec design moderne et UX enrichie
+ * Modal d’action SSS — large, lisible, avec accès fiche avant traitement.
  */
 const TaskActionDialog = ({
   open,
@@ -150,85 +145,70 @@ const TaskActionDialog = ({
   onClose,
   onSave,
   saving,
-  variant = 'default', // 'default' | 'step-by-step' | 'quick'
-  showStepper = false,
   enableSnooze = true,
   showSuggestions = true,
   onCopyMessage,
-  onShare
+  onViewFiche
 }) => {
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  // États du formulaire
   const [status, setStatus] = useState('done');
   const [completionDegree, setCompletionDegree] = useState(100);
   const [outcome, setOutcome] = useState('reached');
   const [adminNotes, setAdminNotes] = useState('');
   const [snoozeDays, setSnoozeDays] = useState('');
   const [snoozeReason, setSnoozeReason] = useState('');
-  const [activeStep, setActiveStep] = useState(0);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showSnooze, setShowSnooze] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [copied, setCopied] = useState(false);
-  const [showSuggestionsPanel, setShowSuggestionsPanel] = useState(true);
 
-  // Refs
-  const messageInputRef = useRef(null);
-  const submitButtonRef = useRef(null);
-
-  // Initialisation du formulaire
   useEffect(() => {
     if (open && task) {
-      setStatus(task.status === 'todo' || task.status === 'carried_over' ? 'done' : task.status);
-      setCompletionDegree(task.completionDegree || 100);
+      setStatus(task.status === 'todo' || task.status === 'carried_over' ? 'done' : task.status || 'done');
+      setCompletionDegree(task.completionDegree ?? 100);
       setOutcome(task.outcome || 'reached');
       setAdminNotes(task.adminNotes || '');
       setSnoozeDays('');
       setSnoozeReason('');
-      setActiveStep(0);
+      setShowSnooze(false);
       setHasError(false);
       setErrorMessage('');
-      setShowAdvanced(false);
-      setShowSuggestionsPanel(true);
     }
   }, [open, task]);
 
   if (!task) return null;
 
-  const person = displayName(task.idUser);
-  const message = task.templateSnapshot;
+  const user = task.idUser && typeof task.idUser === 'object' ? task.idUser : null;
+  const userId = user?._id || (typeof task.idUser === 'string' ? task.idUser : null);
+  const person = displayName(user);
+  const phone = user?.phone;
+  const message =
+    typeof task.templateSnapshot === 'string'
+      ? task.templateSnapshot
+      : task.templateSnapshot?.message || task.templateSnapshot?.suggestedMessage || '';
   const isUrgent = task.urgency === 'critical' || task.urgency === 'high';
+  const selectedStatus = STATUS_CHOICES.find((s) => s.value === status);
+  const fichePath = userId ? `/wekavit/sss/people/${userId}` : null;
 
-  // Étape actuelle du stepper
-  const steps = [
-    { label: 'Vérifier les informations', description: 'Confirmez les détails de la personne et du contexte' },
-    { label: 'Effectuer l\'action', description: 'Réalisez l\'action comme indiqué ci-dessus' },
-    { label: 'Enregistrer le résultat', description: 'Documentez ce qui a été fait et le résultat obtenu' }
-  ];
-
-  // Validation
   const validateForm = () => {
     if (!status) {
       setHasError(true);
-      setErrorMessage('Veuillez sélectionner un statut');
+      setErrorMessage('Veuillez sélectionner un statut.');
       return false;
     }
-
     if (status === 'done' && completionDegree < 100) {
       setHasError(true);
-      setErrorMessage('Pour marquer comme terminé, l\'avancement doit être à 100%');
+      setErrorMessage('Pour marquer comme terminé, l’avancement doit être à 100 %.');
       return false;
     }
-
-    if (snoozeDays && (parseInt(snoozeDays) < 1 || parseInt(snoozeDays) > 90)) {
+    if (snoozeDays && (Number(snoozeDays) < 1 || Number(snoozeDays) > 90)) {
       setHasError(true);
-      setErrorMessage('La période de report doit être entre 1 et 90 jours');
+      setErrorMessage('La période de report doit être entre 1 et 90 jours.');
       return false;
     }
-
     setHasError(false);
     setErrorMessage('');
     return true;
@@ -236,212 +216,43 @@ const TaskActionDialog = ({
 
   const handleSubmit = () => {
     if (!validateForm()) return;
-
     const payload = {
       status,
       completionDegree: Number(completionDegree),
       outcome: status === 'skipped' || status === 'blocked' ? null : outcome,
       adminNotes: adminNotes.trim() || undefined
     };
-
-    if (snoozeDays && parseInt(snoozeDays) > 0) {
+    if (snoozeDays && Number(snoozeDays) > 0) {
       payload.snoozeDays = Number(snoozeDays);
       payload.snoozeReason = snoozeReason.trim() || undefined;
     }
-
     onSave(payload);
   };
 
-  const handleCopyMessage = () => {
-    if (message) {
-      navigator.clipboard.writeText(message).then(() => {
-        setCopied(true);
-        if (onCopyMessage) onCopyMessage(message);
-        setTimeout(() => setCopied(false), 2000);
-      });
+  const handleCopyMessage = async () => {
+    if (!message) return;
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopied(true);
+      onCopyMessage?.(message);
+    } catch {
+      setHasError(true);
+      setErrorMessage('Impossible de copier le message.');
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleSubmit();
+  const handleOpenFiche = (mode = 'tab') => {
+    if (!fichePath) return;
+    if (onViewFiche) {
+      onViewFiche(task, { mode });
+      return;
     }
-  };
-
-  const renderStatusChips = () => (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-      {STATUS_CHOICES.map((option) => {
-        const isSelected = status === option.value;
-        const paletteColor = theme.palette[option.color]?.main || theme.palette.grey[500];
-        return (
-          <Chip
-            key={option.value}
-            label={option.label}
-            icon={option.icon}
-            onClick={() => setStatus(option.value)}
-            color={isSelected ? option.color : 'default'}
-            variant={isSelected ? 'filled' : 'outlined'}
-            sx={{
-              transition: 'all 0.2s ease',
-              fontWeight: isSelected ? 600 : 400,
-              transform: isSelected ? 'scale(1.03)' : 'scale(1)',
-              boxShadow: isSelected ? `0 2px 8px ${alpha(paletteColor, 0.25)}` : 'none',
-              borderWidth: isSelected ? 0 : 1,
-              borderColor: isSelected ? 'transparent' : alpha(paletteColor, 0.3),
-              '&:hover': {
-                transform: 'scale(1.02)',
-                borderColor: alpha(paletteColor, 0.5),
-                bgcolor: isSelected ? undefined : alpha(paletteColor, 0.06)
-              },
-              '& .MuiChip-icon': {
-                fontSize: 16
-              }
-            }}
-          />
-        );
-      })}
-    </Box>
-  );
-
-  const renderProgressSection = () => (
-    <Box sx={{ my: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-        <Typography variant="body2" fontWeight={600}>
-          Avancement
-        </Typography>
-        <Chip
-          label={`${completionDegree}%`}
-          size="small"
-          color={completionDegree === 100 ? 'success' : completionDegree >= 50 ? 'warning' : 'error'}
-          sx={{ fontWeight: 600 }}
-        />
-      </Stack>
-      <Slider
-        value={completionDegree}
-        onChange={(_, v) => setCompletionDegree(v)}
-        step={5}
-        marks={[
-          { value: 0, label: '0%' },
-          { value: 50, label: '50%' },
-          { value: 100, label: '100%' }
-        ]}
-        min={0}
-        max={100}
-        valueLabelDisplay="auto"
-        sx={{
-          '& .MuiSlider-track': {
-            background: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.success.main})`,
-          }
-        }}
-      />
-    </Box>
-  );
-
-  const renderMessageTemplate = () => {
-    if (!message || !showSuggestions) return null;
-
-    return (
-      <Collapse in={showSuggestionsPanel}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            borderRadius: 2,
-            bgcolor: alpha(theme.palette.info.main, 0.04),
-            border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
-            position: 'relative'
-          }}
-        >
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
-            <Typography variant="subtitle2" fontWeight={600} color="info.main">
-              <InfoIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
-              Message suggéré
-            </Typography>
-            <Stack direction="row" spacing={0.5}>
-              <Tooltip title="Copier le message">
-                <IconButton size="small" onClick={handleCopyMessage}>
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              {onShare && (
-                <Tooltip title="Partager">
-                  <IconButton size="small" onClick={() => onShare(message)}>
-                    <ShareIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Stack>
-          </Stack>
-          <Typography
-            variant="body2"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              bgcolor: 'background.paper',
-              p: 1.5,
-              borderRadius: 1,
-              fontStyle: 'italic'
-            }}
-          >
-            {message}
-          </Typography>
-          {copied && (
-            <Chip
-              icon={<CheckCircleIcon />}
-              label="Copié !"
-              size="small"
-              color="success"
-              sx={{ mt: 1 }}
-            />
-          )}
-        </Paper>
-      </Collapse>
-    );
-  };
-
-  const renderSnoozeSection = () => {
-    if (!enableSnooze) return null;
-
-    return (
-      <Box sx={{ mt: 2 }}>
-        <Divider sx={{ mb: 2 }}>
-          <Chip
-            label="Report"
-            size="small"
-            icon={<ScheduleIcon />}
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            sx={{ cursor: 'pointer' }}
-          />
-        </Divider>
-        <Collapse in={showAdvanced}>
-          <Stack spacing={2}>
-            <TextField
-              label="Ne plus contacter pendant (jours)"
-              type="number"
-              value={snoozeDays}
-              onChange={(e) => setSnoozeDays(e.target.value)}
-              fullWidth
-              size="small"
-              helperText="Laissez vide si vous voulez pouvoir le recontacter demain"
-              inputProps={{ min: 1, max: 90 }}
-              InputProps={{
-                startAdornment: <ScheduleIcon sx={{ color: 'text.secondary', mr: 1 }} />
-              }}
-            />
-            {snoozeDays && (
-              <TextField
-                label="Raison du report (optionnel)"
-                value={snoozeReason}
-                onChange={(e) => setSnoozeReason(e.target.value)}
-                fullWidth
-                size="small"
-                placeholder="Ex. : Attendre la paie du mois prochain"
-              />
-            )}
-          </Stack>
-        </Collapse>
-      </Box>
-    );
+    if (mode === 'tab') {
+      window.open(fichePath, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    onClose?.();
+    navigate(fichePath);
   };
 
   return (
@@ -450,27 +261,33 @@ const TaskActionDialog = ({
         open={open}
         onClose={onClose}
         fullWidth
-        maxWidth="sm"
+        maxWidth={false}
         fullScreen={fullScreen}
         TransitionComponent={Grow}
-        TransitionProps={{ timeout: 300 }}
+        TransitionProps={{ timeout: 280 }}
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            handleSubmit();
+          }
+        }}
         PaperProps={{
           sx: {
-            borderRadius: { xs: 0, sm: 3 },
-            maxHeight: '90vh',
-            overflow: 'hidden'
+            width: { xs: '100%', md: 'min(1100px, 96vw)' },
+            maxWidth: { xs: '100%', md: 1100 },
+            borderRadius: { xs: 0, md: 3 },
+            maxHeight: { xs: '100%', md: '92vh' },
+            overflow: 'hidden',
+            m: { xs: 0, md: 2 }
           }
         }}
       >
-        {/* En-tête */}
         <DialogTitle
           sx={{
-            p: 3,
-            bgcolor: alpha(SSS_COLORS.brand, 0.03),
-            borderBottom: `1px solid ${alpha(SSS_COLORS.brand, 0.1)}`,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            px: { xs: 2.5, md: 3.5 },
+            py: 2.5,
+            bgcolor: alpha(SSS_COLORS.brand, 0.04),
+            borderBottom: `1px solid ${SSS_COLORS.brandBorder}`,
             position: 'relative',
             '&::before': {
               content: '""',
@@ -478,220 +295,487 @@ const TaskActionDialog = ({
               top: 0,
               left: 0,
               right: 0,
-              height: 3,
-              background: `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`
+              height: 4,
+              background: isUrgent
+                ? `linear-gradient(90deg, ${SSS_COLORS.error}, ${SSS_COLORS.warning})`
+                : `linear-gradient(90deg, ${SSS_COLORS.brand}, ${SSS_COLORS.brandDark})`
             }
           }}
         >
-          <Stack spacing={0.5}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="h6" fontWeight={700}>
-                Mettre à jour l'action
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+            <Box minWidth={0}>
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap mb={0.5}>
+                <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: '1.2rem', md: '1.45rem' } }}>
+                  Traiter l’action
+                </Typography>
+                {isUrgent && (
+                  <Chip icon={<WarningIcon />} label="Prioritaire" size="small" color="error" sx={{ fontWeight: 700 }} />
+                )}
+              </Stack>
+              <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                <strong>{ACTION_LABELS[task.actionType] || task.actionType || 'Action'}</strong>
+                {' · '}
+                {person}
               </Typography>
-              {isUrgent && (
-                <Chip
-                  icon={<WarningIcon />}
-                  label="Urgent"
-                  size="small"
-                  color="error"
-                  sx={{ fontWeight: 600 }}
-                />
-              )}
-            </Stack>
-            <Typography variant="caption" color="text.secondary">
-              {ACTION_LABELS[task.actionType] || 'Action'}
-            </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Consultez d’abord la fiche si besoin, puis enregistrez le résultat du contact.
+              </Typography>
+            </Box>
+            <IconButton onClick={onClose} size="small" sx={{ bgcolor: 'background.paper', border: `1px solid ${SSS_COLORS.cardBorder}` }}>
+              <CloseIcon />
+            </IconButton>
           </Stack>
-          <IconButton onClick={onClose} size="small">
-            <CloseIcon />
-          </IconButton>
         </DialogTitle>
 
-        {/* Contenu */}
         <DialogContent
           dividers
           sx={{
-            p: 3,
-            overflowY: 'auto',
-            '&::-webkit-scrollbar': {
-              width: 6,
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: alpha(SSS_COLORS.brand, 0.2),
-              borderRadius: 3,
-            }
+            p: { xs: 2, md: 3.5 },
+            bgcolor: SSS_COLORS.pageBg,
+            overflowY: 'auto'
           }}
         >
-          <Stack spacing={3}>
-            {/* Erreur */}
-            {hasError && (
-              <Fade in={hasError}>
-                <Alert severity="error" onClose={() => setHasError(false)}>
-                  {errorMessage}
-                </Alert>
-              </Fade>
-            )}
+          {hasError && (
+            <Fade in>
+              <Alert severity="error" onClose={() => setHasError(false)} sx={{ mb: 2.5, borderRadius: 2 }}>
+                {errorMessage}
+              </Alert>
+            </Fade>
+          )}
 
-            {/* Informations sur la personne */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.background.default, 0.5),
-                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
-              }}
-            >
-              <Stack direction="row" spacing={2} alignItems="center">
-                <PersonAvatar user={task.idUser} size={48} />
-                <Box flex={1}>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    {person}
-                  </Typography>
-                  <PhoneAction phone={task.idUser?.phone} size="small" allowReveal={false} />
-                </Box>
-                <Stack direction="row" spacing={1}>
-                  <UrgencyChip urgency={task.urgency} size="small" />
-                  <StageChip stage={task.stageSnapshot} size="small" />
-                </Stack>
-              </Stack>
-            </Paper>
+          <Grid container spacing={3}>
+            {/* Colonne contexte */}
+            <Grid item xs={12} md={5}>
+              <Stack spacing={2.5}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    border: `1px solid ${SSS_COLORS.cardBorder}`,
+                    bgcolor: '#fff'
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <PersonAvatar user={user} size={56} />
+                      <Box minWidth={0} flex={1}>
+                        <Typography variant="h6" fontWeight={800} noWrap>
+                          {person}
+                        </Typography>
+                        {phone ? (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', mt: 0.25 }}>
+                            {maskPhone(phone)}
+                          </Typography>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Téléphone non renseigné
+                          </Typography>
+                        )}
+                      </Box>
+                    </Stack>
 
-            {/* Stepper (optionnel) */}
-            {showStepper && (
-              <StepProgress currentStep={activeStep} steps={steps} />
-            )}
+                    <Alert
+                      severity="info"
+                      icon={<PersonSearchIcon />}
+                      sx={{ borderRadius: 2, alignItems: 'center' }}
+                      action={
+                        fichePath ? (
+                          <Button
+                            color="inherit"
+                            size="small"
+                            endIcon={<OpenInNewIcon />}
+                            onClick={() => handleOpenFiche('tab')}
+                            sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}
+                          >
+                            Ouvrir
+                          </Button>
+                        ) : null
+                      }
+                    >
+                      <Typography variant="body2" fontWeight={600}>
+                        Voir la fiche avant de commencer
+                      </Typography>
+                      <Typography variant="caption" display="block" sx={{ opacity: 0.9 }}>
+                        Historique, épargne et notes s’ouvrent dans un nouvel onglet. Ce formulaire reste ouvert.
+                      </Typography>
+                    </Alert>
 
-            {/* Statut */}
-            <Box>
-              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                Où en êtes-vous ?
-              </Typography>
-              {renderStatusChips()}
-              <Typography variant="caption" color="text.secondary">
-                {STATUS_CHOICES.find(s => s.value === status)?.description}
-              </Typography>
-            </Box>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                      <PrimaryButton
+                        fullWidth
+                        startIcon={<PersonSearchIcon />}
+                        endIcon={<OpenInNewIcon />}
+                        onClick={() => handleOpenFiche('tab')}
+                        disabled={!fichePath}
+                      >
+                        Consulter la fiche
+                      </PrimaryButton>
+                      <GhostButton
+                        fullWidth
+                        onClick={() => handleOpenFiche('navigate')}
+                        disabled={!fichePath}
+                      >
+                        Aller à la fiche
+                      </GhostButton>
+                    </Stack>
 
-            {/* Progression */}
-            {status !== 'skipped' && renderProgressSection()}
+                    {phone && (
+                      <Stack direction="row" spacing={1}>
+                        <GhostButton fullWidth startIcon={<CallIcon />} href={telHref(phone)} component="a">
+                          Appeler
+                        </GhostButton>
+                        <GhostButton
+                          fullWidth
+                          startIcon={<WhatsAppIcon />}
+                          href={whatsappHref(phone)}
+                          component="a"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          WhatsApp
+                        </GhostButton>
+                      </Stack>
+                    )}
+                  </Stack>
+                </Paper>
 
-            {/* Résultat */}
-            {status !== 'skipped' && status !== 'blocked' && (
-              <TextField
-                select
-                label="Résultat du contact"
-                value={outcome}
-                onChange={(e) => setOutcome(e.target.value)}
-                fullWidth
-                size="small"
-                SelectProps={{
-                  startAdornment: (
-                    <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-                      {outcome === 'reached' && <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />}
-                      {outcome === 'not_reached' && <CancelIcon sx={{ fontSize: 18, color: 'error.main' }} />}
-                      {outcome === 'partial' && <WarningIcon sx={{ fontSize: 18, color: 'warning.main' }} />}
-                      {outcome === 'voicemail' && <MessageIcon sx={{ fontSize: 18, color: 'info.main' }} />}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    border: `1px solid ${SSS_COLORS.cardBorder}`,
+                    bgcolor: '#fff'
+                  }}
+                >
+                  <Section title="Contexte de l’action" subtitle="Tout ce qu’il faut savoir avant de contacter.">
+                    <Box>
+                      <InfoRow label="Action">
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <AssignmentIcon sx={{ fontSize: 18, color: SSS_COLORS.brand }} />
+                          <Typography variant="body2" fontWeight={700}>
+                            {ACTION_LABELS[task.actionType] || task.actionType || '—'}
+                          </Typography>
+                        </Stack>
+                      </InfoRow>
+                      <InfoRow label="Urgence">
+                        <UrgencyChip urgency={task.urgency} />
+                      </InfoRow>
+                      <InfoRow label="Étape">
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                          <StageChip stage={task.stageSnapshot} />
+                          <Typography variant="caption" color="text.secondary">
+                            {STAGE_LABELS[task.stageSnapshot] || task.stageSnapshot || '—'}
+                          </Typography>
+                        </Stack>
+                      </InfoRow>
+                      <InfoRow label="État actuel">
+                        <StatusChip status={task.status} />
+                      </InfoRow>
+                      <InfoRow label="Échéance">
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <AccessTimeIcon sx={{ fontSize: 16, color: SSS_COLORS.muted }} />
+                          <Typography variant="body2" fontWeight={600}>
+                            {task.date || 'Non définie'}
+                          </Typography>
+                        </Stack>
+                      </InfoRow>
+                      {(task.carryCount || 0) > 0 && (
+                        <InfoRow label="Reports">
+                          <Chip
+                            size="small"
+                            color="warning"
+                            icon={<ScheduleIcon sx={{ fontSize: 14 }} />}
+                            label={`Reporté ${task.carryCount}×`}
+                            sx={{ fontWeight: 700 }}
+                          />
+                        </InfoRow>
+                      )}
+                      <InfoRow label="Alertes">
+                        <AlertChips alerts={task.alertsSnapshot} max={5} />
+                      </InfoRow>
                     </Box>
-                  )
+                  </Section>
+                </Paper>
+
+                {showSuggestions && message && (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2.5,
+                      borderRadius: 3,
+                      border: `1px solid ${alpha(SSS_COLORS.info, 0.25)}`,
+                      bgcolor: SSS_COLORS.infoSoft
+                    }}
+                  >
+                    <Section
+                      title="Message suggéré"
+                      subtitle="Copiez puis adaptez avant d’envoyer."
+                      action={
+                        <Tooltip title="Copier">
+                          <IconButton size="small" onClick={handleCopyMessage} sx={{ bgcolor: '#fff' }}>
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      }
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          whiteSpace: 'pre-wrap',
+                          bgcolor: '#fff',
+                          borderRadius: 2,
+                          p: 2,
+                          lineHeight: 1.6,
+                          border: `1px solid ${SSS_COLORS.cardBorder}`
+                        }}
+                      >
+                        {message}
+                      </Typography>
+                      {copied && (
+                        <Chip
+                          icon={<CheckCircleIcon />}
+                          label="Message copié"
+                          size="small"
+                          color="success"
+                          sx={{ mt: 1.5, fontWeight: 600 }}
+                        />
+                      )}
+                    </Section>
+                  </Paper>
+                )}
+              </Stack>
+            </Grid>
+
+            {/* Colonne formulaire */}
+            <Grid item xs={12} md={7}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: { xs: 2.5, md: 3 },
+                  borderRadius: 3,
+                  border: `1px solid ${SSS_COLORS.cardBorder}`,
+                  bgcolor: '#fff',
+                  height: '100%'
                 }}
               >
-                {OUTCOME_OPTIONS.map((o) => (
-                  <MenuItem key={o.value} value={o.value}>
-                    {o.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
+                <Stack spacing={3}>
+                  <Section title="1. Où en êtes-vous ?" subtitle="Choisissez le statut qui décrit le mieux cette action.">
+                    <Grid container spacing={1.25}>
+                      {STATUS_CHOICES.map((option) => {
+                        const selected = status === option.value;
+                        return (
+                          <Grid item xs={12} sm={6} key={option.value}>
+                            <Box
+                              component="button"
+                              type="button"
+                              onClick={() => setStatus(option.value)}
+                              sx={{
+                                width: '100%',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                borderRadius: 2.5,
+                                p: 1.75,
+                                border: `2px solid ${selected ? option.color : SSS_COLORS.cardBorder}`,
+                                bgcolor: selected ? alpha(option.color, 0.08) : '#fff',
+                                transition: 'all 0.15s ease',
+                                '&:hover': {
+                                  borderColor: option.color,
+                                  bgcolor: alpha(option.color, 0.06)
+                                }
+                              }}
+                            >
+                              <Stack direction="row" spacing={1.25} alignItems="flex-start">
+                                <Box sx={{ color: option.color, mt: 0.15 }}>{option.icon}</Box>
+                                <Box>
+                                  <Typography variant="body2" fontWeight={800} color={SSS_COLORS.text}>
+                                    {option.label}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.35, lineHeight: 1.4 }}>
+                                    {option.description}
+                                  </Typography>
+                                </Box>
+                              </Stack>
+                            </Box>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                    {selectedStatus && (
+                      <Alert severity="info" icon={<InfoIcon />} sx={{ mt: 1.5, borderRadius: 2 }}>
+                        {selectedStatus.description}
+                      </Alert>
+                    )}
+                  </Section>
 
-            {/* Message template */}
-            {renderMessageTemplate()}
+                  <Divider />
 
-            {/* Notes */}
-            <TextField
-              label="Note rapide (optionnel)"
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-              fullWidth
-              multiline
-              minRows={2}
-              maxRows={4}
-              placeholder="Ex. : Rappeler samedi après son salaire"
-              InputProps={{
-                startAdornment: (
-                  <EditIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 18 }} />
-                )
-              }}
-              onKeyDown={handleKeyDown}
-            />
+                  {status !== 'skipped' && (
+                    <Section title="2. Avancement" subtitle="Indiquez à quel point l’action est réalisée.">
+                      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Typography variant="body2" fontWeight={600}>
+                          Progression
+                        </Typography>
+                        <Chip
+                          label={`${completionDegree} %`}
+                          size="small"
+                          color={completionDegree === 100 ? 'success' : completionDegree >= 50 ? 'warning' : 'default'}
+                          sx={{ fontWeight: 800 }}
+                        />
+                      </Stack>
+                      <Slider
+                        value={completionDegree}
+                        onChange={(_, v) => setCompletionDegree(v)}
+                        step={5}
+                        marks={[
+                          { value: 0, label: '0%' },
+                          { value: 50, label: '50%' },
+                          { value: 100, label: '100%' }
+                        ]}
+                        min={0}
+                        max={100}
+                        valueLabelDisplay="auto"
+                        sx={{
+                          color: SSS_COLORS.brand,
+                          '& .MuiSlider-markLabel': { fontSize: '0.7rem' }
+                        }}
+                      />
+                    </Section>
+                  )}
 
-            {/* Snooze */}
-            {renderSnoozeSection()}
+                  {status !== 'skipped' && status !== 'blocked' && (
+                    <Section title="3. Résultat du contact" subtitle="Que s’est-il passé lors de l’échange ?">
+                      <TextField
+                        select
+                        label="Résultat"
+                        value={outcome}
+                        onChange={(e) => setOutcome(e.target.value)}
+                        fullWidth
+                        helperText="Ce champ aide à suivre la qualité des contacts."
+                      >
+                        {OUTCOME_OPTIONS.map((o) => (
+                          <MenuItem key={o.value} value={o.value}>
+                            {o.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Section>
+                  )}
 
-            {/* Informations de statut */}
-            <Box sx={{
-              p: 1.5,
-              borderRadius: 1,
-              bgcolor: alpha(theme.palette.grey[100], 0.5),
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1
-            }}>
-              <Chip
-                label={`Statut actuel: ${TASK_STATUS_LABELS[task.status] || task.status}`}
-                size="small"
-                variant="outlined"
-              />
-              <Chip
-                label={`Action: ${ACTION_LABELS[task.actionType] || task.actionType}`}
-                size="small"
-                variant="outlined"
-              />
-            </Box>
-          </Stack>
+                  <Section title="4. Note" subtitle="Ajoutez un rappel utile pour la prochaine fois (optionnel).">
+                    <TextField
+                      label="Note rapide"
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      maxRows={6}
+                      placeholder="Ex. : Rappeler samedi après son salaire · A promis un dépôt lundi"
+                      InputProps={{
+                        startAdornment: <EditIcon sx={{ color: 'text.secondary', mr: 1, mt: 1.5, alignSelf: 'flex-start' }} />
+                      }}
+                    />
+                  </Section>
+
+                  {enableSnooze && (
+                    <Section
+                      title="5. Pause de contact"
+                      subtitle="Masquez temporairement cette personne de la liste du jour."
+                      action={
+                        <Button size="small" onClick={() => setShowSnooze((v) => !v)} startIcon={<ScheduleIcon />} sx={{ textTransform: 'none', fontWeight: 700 }}>
+                          {showSnooze ? 'Masquer' : 'Configurer'}
+                        </Button>
+                      }
+                    >
+                      <Collapse in={showSnooze}>
+                        <Stack spacing={2} sx={{ pt: 0.5 }}>
+                          <TextField
+                            label="Ne plus contacter pendant (jours)"
+                            type="number"
+                            value={snoozeDays}
+                            onChange={(e) => setSnoozeDays(e.target.value)}
+                            fullWidth
+                            helperText="Laissez vide pour pouvoir la recontacter dès demain."
+                            inputProps={{ min: 1, max: 90 }}
+                          />
+                          {snoozeDays && (
+                            <TextField
+                              label="Raison du report (optionnel)"
+                              value={snoozeReason}
+                              onChange={(e) => setSnoozeReason(e.target.value)}
+                              fullWidth
+                              placeholder="Ex. : Attendre la paie du mois prochain"
+                            />
+                          )}
+                        </Stack>
+                      </Collapse>
+                      {!showSnooze && (
+                        <Typography variant="body2" color="text.secondary">
+                          Aucune pause configurée.
+                        </Typography>
+                      )}
+                    </Section>
+                  )}
+
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: alpha(SSS_COLORS.brand, 0.04),
+                      border: `1px dashed ${SSS_COLORS.brandBorder}`
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55 }}>
+                      <MessageIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5, color: SSS_COLORS.brand }} />
+                      Astuce : ouvrez la fiche, vérifiez le contexte, contactez, puis revenez ici pour enregistrer le
+                      résultat. Raccourci : <strong>Ctrl/Cmd + Entrée</strong> pour sauvegarder.
+                    </Typography>
+                  </Paper>
+                </Stack>
+              </Paper>
+            </Grid>
+          </Grid>
         </DialogContent>
 
-        {/* Actions */}
         <DialogActions
           sx={{
-            p: 3,
+            px: { xs: 2, md: 3.5 },
+            py: 2,
             gap: 1,
             flexWrap: 'wrap',
-            borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            bgcolor: alpha(theme.palette.background.default, 0.3)
+            borderTop: `1px solid ${SSS_COLORS.cardBorder}`,
+            bgcolor: '#fff'
           }}
         >
-          <Button
-            onClick={onClose}
-            disabled={saving}
-            startIcon={<CancelIcon />}
-            sx={{ borderRadius: 2 }}
-          >
+          {fichePath && (
+            <GhostButton
+              startIcon={<OpenInNewIcon />}
+              onClick={() => handleOpenFiche('tab')}
+              sx={{ mr: { md: 'auto' } }}
+            >
+              Voir la fiche
+            </GhostButton>
+          )}
+          <Button onClick={onClose} disabled={saving} startIcon={<CancelIcon />} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}>
             Annuler
           </Button>
-          <Button
-            variant="contained"
+          <PrimaryButton
             onClick={handleSubmit}
             disabled={saving}
-            startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-            sx={{
-              borderRadius: 2,
-              minWidth: 120,
-              bgcolor: SSS_COLORS.brand,
-              boxShadow: 'none',
-              '&:hover': { bgcolor: SSS_COLORS.brandDark },
-              '&:disabled': {
-                opacity: 0.7
-              }
+            startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+            sx={{ minWidth: 160 }}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSubmit();
             }}
-            ref={submitButtonRef}
           >
-            {saving ? 'Enregistrement…' : 'Enregistrer'}
-          </Button>
+            {saving ? 'Enregistrement…' : 'Enregistrer le résultat'}
+          </PrimaryButton>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar pour les notifications */}
       <Snackbar
         open={copied}
         autoHideDuration={2000}
@@ -706,48 +790,10 @@ const TaskActionDialog = ({
   );
 };
 
-/**
- * TaskActionDialogQuick - Version rapide simplifiée
- */
 export const TaskActionDialogQuick = (props) => (
-  <TaskActionDialog
-    {...props}
-    variant="quick"
-    showStepper={false}
-    showSuggestions={false}
-    enableSnooze={false}
-  />
+  <TaskActionDialog {...props} showSuggestions={false} enableSnooze={false} />
 );
 
-/**
- * TaskActionDialogStepByStep - Version avec guide pas à pas
- */
-export const TaskActionDialogStepByStep = (props) => (
-  <TaskActionDialog
-    {...props}
-    variant="step-by-step"
-    showStepper={true}
-    showSuggestions={true}
-    enableSnooze={true}
-  />
-);
-
-/**
- * TaskActionDialogMobile - Version optimisée pour mobile
- */
-export const TaskActionDialogMobile = (props) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  return (
-    <TaskActionDialog
-      {...props}
-      variant="mobile"
-      fullScreen={isMobile}
-      showStepper={false}
-      showSuggestions={false}
-    />
-  );
-};
+export const TaskActionDialogStepByStep = (props) => <TaskActionDialog {...props} />;
 
 export default TaskActionDialog;

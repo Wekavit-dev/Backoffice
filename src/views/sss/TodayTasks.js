@@ -43,12 +43,9 @@ import SssApi from 'api/sss/sss';
 import { displayName, maskPhone, telHref, whatsappHref, ACTION_LABELS, URGENCY_LABELS } from './labels';
 import {
   ActionLabel,
-  AlertChips,
   EmptyState,
-  PersonCell,
+  PersonAvatar,
   RankBadge,
-  StageChip,
-  StatusChip,
   UrgencyChip
 } from './components/Chips';
 import TaskCard from './components/TaskCard';
@@ -93,9 +90,17 @@ const TodayTasksPage = () => {
     try {
       const res = await SssApi.getBoard({}, globalState.key);
       if (res?.status === 200) {
-        setBoard(res.data?.board || null);
-        setTasks(res.data?.tasks || []);
-        setSummary(res.data?.summary || null);
+        const payload = res.data?.data && !Array.isArray(res.data.data) ? res.data.data : res.data || {};
+        const taskList = Array.isArray(payload.tasks)
+          ? payload.tasks
+          : Array.isArray(res.data?.tasks)
+            ? res.data.tasks
+            : Array.isArray(res.data?.data)
+              ? res.data.data
+              : [];
+        setBoard(payload.board || res.data?.board || null);
+        setTasks(taskList);
+        setSummary(payload.summary || res.data?.summary || null);
       }
     } catch (err) {
       toast.error(err?.data?.message || 'Impossible de charger les actions du jour');
@@ -112,19 +117,20 @@ const TodayTasksPage = () => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    return tasks
+    const list = Array.isArray(tasks) ? tasks : [];
+
+    return list
       .filter((t) => {
-        if (filterStatus === 'open' && !['todo', 'in_progress', 'partial', 'blocked', 'carried_over'].includes(t.status)) {
-          return false;
-        }
-        if (filterStatus === 'done' && t.status !== 'done') return false;
-        if (filterStatus !== 'all' && filterStatus !== 'open' && filterStatus !== 'done' && t.status !== filterStatus) {
+        const status = t?.status || 'todo';
+        if (filterStatus === 'open' && (status === 'done' || status === 'skipped')) return false;
+        if (filterStatus === 'done' && status !== 'done') return false;
+        if (filterStatus !== 'all' && filterStatus !== 'open' && filterStatus !== 'done' && status !== filterStatus) {
           return false;
         }
         if (filterUrgency && t.urgency !== filterUrgency) return false;
         if (q) {
           const name = displayName(t.idUser).toLowerCase();
-          const action = (ACTION_LABELS[t.actionType] || '').toLowerCase();
+          const action = (ACTION_LABELS[t.actionType] || t.actionType || '').toLowerCase();
           if (!name.includes(q) && !action.includes(q)) return false;
         }
         return true;
@@ -237,73 +243,47 @@ const TodayTasksPage = () => {
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell width={44} sx={tableHeadCellSx}>#</TableCell>
+            <TableCell width={48} sx={tableHeadCellSx}>#</TableCell>
             <TableCell sx={tableHeadCellSx}>Personne</TableCell>
-            <TableCell sx={tableHeadCellSx}>Action</TableCell>
-            <TableCell sx={tableHeadCellSx}>Étape</TableCell>
+            <TableCell sx={tableHeadCellSx}>À faire</TableCell>
             <TableCell sx={tableHeadCellSx}>Urgence</TableCell>
-            <TableCell sx={tableHeadCellSx}>État</TableCell>
-            <TableCell sx={tableHeadCellSx}>Alertes</TableCell>
-            <TableCell align="right" sx={tableHeadCellSx}>Actions</TableCell>
+            <TableCell align="right" sx={tableHeadCellSx}>Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {filtered.map((task, idx) => {
-            const phone = task.idUser?.phone;
-
-            return (
-              <TableRow key={task._id} hover>
-                <TableCell sx={tableBodyCellSx}>
-                  <RankBadge rank={idx + 1} urgency={task.urgency} />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <PersonCell user={task.idUser} phone={maskPhone(phone)} />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <Stack spacing={0.5}>
-                    <ActionLabel action={task.actionType} />
-                    {task.carryCount > 0 && (
-                      <Chip
-                        icon={<ScheduleIcon sx={{ fontSize: 12 }} />}
-                        label={`Reporté ${task.carryCount}×`}
-                        size="small"
-                        color="warning"
-                        variant="outlined"
-                        sx={{ height: 20, fontSize: '0.6rem', width: 'fit-content' }}
-                      />
-                    )}
-                  </Stack>
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <StageChip stage={task.stageSnapshot} size="small" />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <UrgencyChip urgency={task.urgency} size="small" />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <StatusChip status={task.status} size="small" />
-                </TableCell>
-                <TableCell sx={tableBodyCellSx}>
-                  <AlertChips alerts={task.alertsSnapshot} max={2} />
-                </TableCell>
-                <TableCell align="right" sx={tableBodyCellSx}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<ViewIcon fontSize="small" />}
-                    onClick={() => openTask(task)}
-                    sx={viewButtonSx}
-                  >
-                    Voir
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {filtered.map((task, idx) => (
+            <TableRow
+              key={task._id}
+              hover
+              onClick={() => openTask(task)}
+              sx={{ cursor: 'pointer' }}
+            >
+              <TableCell sx={tableBodyCellSx}>
+                <RankBadge rank={idx + 1} urgency={task.urgency} />
+              </TableCell>
+              <TableCell sx={tableBodyCellSx}>
+                <div className="flex items-center gap-2.5">
+                  <PersonAvatar user={task.idUser} size={32} />
+                  <span className="text-sm font-semibold text-sss-text">{displayName(task.idUser)}</span>
+                </div>
+              </TableCell>
+              <TableCell sx={tableBodyCellSx}>
+                <ActionLabel action={task.actionType} />
+              </TableCell>
+              <TableCell sx={tableBodyCellSx}>
+                <UrgencyChip urgency={task.urgency} size="small" />
+              </TableCell>
+              <TableCell align="right" sx={tableBodyCellSx} onClick={(e) => e.stopPropagation()}>
+                <Button size="small" variant="outlined" onClick={() => openTask(task)} sx={viewButtonSx}>
+                  Traiter
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
 
           {filtered.length === 0 && !loading && (
             <TableRow>
-              <TableCell colSpan={8} align="center" sx={{ py: 6, border: 0 }}>
+              <TableCell colSpan={5} align="center" sx={{ py: 6, border: 0 }}>
                 <EmptyState
                   icon={<FactCheckIcon />}
                   title={hasActiveFilters ? 'Aucune tâche ne correspond aux filtres' : 'Toutes les tâches sont terminées !'}
@@ -325,19 +305,9 @@ const TodayTasksPage = () => {
   );
 
   const renderCards = () => (
-    <Stack spacing={2}>
+    <>
       {filtered.map((task, idx) => (
-        <TaskCard
-          key={task._id}
-          task={task}
-          rank={idx + 1}
-          onOpen={openTask}
-          onCarry={handleCarry}
-          onCopy={copyMessage}
-          onView={(t) => navigate(`/wekavit/sss/people/${t.idUser?._id || t.idUser}`)}
-          variant="default"
-          animated
-        />
+        <TaskCard key={task._id} task={task} rank={idx + 1} onOpen={openTask} animated />
       ))}
 
       {filtered.length === 0 && !loading && (
@@ -354,162 +324,149 @@ const TodayTasksPage = () => {
           }
         />
       )}
-    </Stack>
+    </>
   );
 
   if (!board && !loading) {
     return (
-      <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}>
-        <PageToolbar
-          icon={<FactCheckIcon />}
-          title="À faire aujourd'hui"
-          subtitle="Préparez d'abord la liste du jour"
-          color={SSS_COLORS.warning}
-        />
-        <Alert
-          severity="info"
-          sx={{ borderRadius: 2 }}
-          action={
-            <Button color="inherit" onClick={() => navigate('/wekavit/sss')} size="small">
-              Préparer
-            </Button>
-          }
-        >
-          Aucune liste générée pour aujourd'hui. Retournez à la vue du jour et cliquez sur « Préparer la journée ».
-        </Alert>
+      <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: SSS_COLORS.pageBg }}>
+        <div className="sss-page">
+          <PageToolbar
+            icon={<FactCheckIcon />}
+            title="À faire aujourd'hui"
+            subtitle="Préparez d'abord la liste du jour"
+            color={SSS_COLORS.warning}
+          />
+          <div className="sss-surface-soft flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="sss-muted m-0 leading-relaxed">
+              Aucune liste générée pour aujourd&apos;hui. Retournez à la vue du jour et cliquez sur « Préparer la journée ».
+            </p>
+            <PrimaryButton onClick={() => navigate('/wekavit/sss')}>Préparer</PrimaryButton>
+          </div>
+        </div>
       </MainCard>
     );
   }
 
   return (
-    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}>
-      <PageToolbar
-        icon={<FactCheckIcon />}
-        title="À faire aujourd'hui"
-        subtitle="Chaque ligne est une personne à contacter, classée de la plus urgente à la moins urgente."
-        actions={
-          <>
-            <GhostButton
-              startIcon={<DownloadIcon />}
-              onClick={handleExport}
-              disabled={exporting || filtered.length === 0}
-            >
-              {exporting ? 'Export...' : 'Exporter'}
-            </GhostButton>
-            <PrimaryButton
-              startIcon={<PeopleAltIcon />}
-              onClick={() => navigate('/wekavit/sss/people')}
-            >
-              Voir les personnes
-            </PrimaryButton>
-            <Tooltip title="Actualiser">
-              <IconButton
-                onClick={load}
-                disabled={loading}
-                sx={{
-                  border: `1px solid ${SSS_COLORS.cardBorder}`,
-                  borderRadius: 2,
-                  bgcolor: 'background.paper'
-                }}
+    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: SSS_COLORS.pageBg }}>
+      <div className="sss-page">
+        <PageToolbar
+          icon={<FactCheckIcon />}
+          title="À faire aujourd'hui"
+          subtitle="Chaque ligne est une personne à contacter, classée de la plus urgente à la moins urgente."
+          actions={
+            <>
+              <GhostButton
+                startIcon={<DownloadIcon />}
+                onClick={handleExport}
+                disabled={exporting || filtered.length === 0}
               >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </>
-        }
-      />
+                {exporting ? 'Export...' : 'Exporter'}
+              </GhostButton>
+              <PrimaryButton startIcon={<PeopleAltIcon />} onClick={() => navigate('/wekavit/sss/people')}>
+                Voir les personnes
+              </PrimaryButton>
+              <Tooltip title="Actualiser">
+                <IconButton
+                  onClick={load}
+                  disabled={loading}
+                  className="!rounded-xl !border !border-sss-border !bg-white"
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+            </>
+          }
+        />
 
-      {loading && (
-        <Box sx={{ mb: 2 }}>
-          <LinearProgress sx={{ borderRadius: 2, height: 6 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Chargement des tâches du jour...
-          </Typography>
+        {loading && (
+          <div className="mb-4">
+            <div className="h-1.5 overflow-hidden rounded-full bg-sss-brand-soft">
+              <div className="h-full w-1/3 animate-sss-shimmer rounded-full bg-sss-brand" />
+            </div>
+            <p className="sss-muted mt-2 text-xs">Chargement des tâches du jour...</p>
+          </div>
+        )}
+
+        <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard title="Total" value={stats.total} hint="Actions du jour" icon={<FactCheckIcon />} color={SSS_COLORS.brand} loading={loading} variant="dark" />
+          <KpiCard title="Restantes" value={stats.open} hint="À traiter" icon={<ScheduleIcon />} color={SSS_COLORS.warning} loading={loading} variant="dark" />
+          <KpiCard title="Terminées" value={stats.done} hint="Aujourd'hui" icon={<CheckCircleIcon />} color={SSS_COLORS.success} loading={loading} onClick={() => setFilterStatus('done')} variant="dark" />
+          <KpiCard title="Reports" value={stats.reports} hint="Reportées au moins 1×" icon={<CarryIcon />} color={SSS_COLORS.error} loading={loading} variant="dark" />
+        </div>
+
+        <InfoBanner icon={<InfoIcon />}>
+          Astuce : traitez d&apos;abord les lignes <strong>« Urgent »</strong>, puis <strong>« Prioritaire »</strong>. Les
+          reportées apparaissent en orange.
+        </InfoBanner>
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Rechercher une personne..."
+          onRefresh={load}
+          refreshing={loading}
+        >
+          <TextField
+            select
+            size="small"
+            label="État"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            sx={filterFieldSx}
+          >
+            <MenuItem value="open">À traiter</MenuItem>
+            <MenuItem value="done">Terminées</MenuItem>
+            <MenuItem value="all">Toutes</MenuItem>
+            <MenuItem value="todo">À faire</MenuItem>
+            <MenuItem value="in_progress">En cours</MenuItem>
+            <MenuItem value="partial">Partielles</MenuItem>
+            <MenuItem value="blocked">Bloquées</MenuItem>
+            <MenuItem value="carried_over">Reportées</MenuItem>
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="Urgence"
+            value={filterUrgency}
+            onChange={(e) => setFilterUrgency(e.target.value)}
+            sx={filterFieldSx}
+          >
+            <MenuItem value="">Toutes</MenuItem>
+            <MenuItem value="critical">Critique</MenuItem>
+            <MenuItem value="high">Élevée</MenuItem>
+            <MenuItem value="medium">Moyenne</MenuItem>
+            <MenuItem value="low">Basse</MenuItem>
+          </TextField>
+        </FilterBar>
+
+        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+          <div className="flex flex-col gap-3">{renderCards()}</div>
         </Box>
-      )}
+        <Box sx={{ display: { xs: 'none', md: 'block' } }}>{renderTable()}</Box>
 
-      <Grid container spacing={{ xs: 1.25, sm: 2 }} sx={{ mb: 2 }}>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Total" value={stats.total} hint="Actions du jour" icon={<FactCheckIcon />} color={SSS_COLORS.brand} loading={loading} />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Restantes" value={stats.open} hint="À traiter" icon={<ScheduleIcon />} color={SSS_COLORS.warning} loading={loading} />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Terminées" value={stats.done} hint="Aujourd'hui" icon={<CheckCircleIcon />} color={SSS_COLORS.success} loading={loading} onClick={() => setFilterStatus('done')} />
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <KpiCard title="Reports" value={stats.reports} hint="Reportées au moins 1×" icon={<CarryIcon />} color={SSS_COLORS.error} loading={loading} />
-        </Grid>
-      </Grid>
+        <TaskActionDialog
+          open={dialogOpen}
+          task={selected}
+          onClose={() => setDialogOpen(false)}
+          onSave={handleSave}
+          saving={saving}
+          showStepper
+          enableSnooze
+        />
 
-      <InfoBanner icon={<InfoIcon />}>
-        Astuce : traitez d'abord les lignes <strong>« Urgent »</strong>, puis <strong>« Prioritaire »</strong>. Les reportées apparaissent en orange.
-      </InfoBanner>
-
-      <FilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Rechercher une personne..."
-        onRefresh={load}
-        refreshing={loading}
-      >
-        <TextField
-          select
-          size="small"
-          label="État"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          sx={filterFieldSx}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         >
-          <MenuItem value="open">À traiter</MenuItem>
-          <MenuItem value="done">Terminées</MenuItem>
-          <MenuItem value="all">Toutes</MenuItem>
-          <MenuItem value="todo">À faire</MenuItem>
-          <MenuItem value="in_progress">En cours</MenuItem>
-          <MenuItem value="partial">Partielles</MenuItem>
-          <MenuItem value="blocked">Bloquées</MenuItem>
-          <MenuItem value="carried_over">Reportées</MenuItem>
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label="Urgence"
-          value={filterUrgency}
-          onChange={(e) => setFilterUrgency(e.target.value)}
-          sx={filterFieldSx}
-        >
-          <MenuItem value="">Toutes</MenuItem>
-          <MenuItem value="critical">Critique</MenuItem>
-          <MenuItem value="high">Élevée</MenuItem>
-          <MenuItem value="medium">Moyenne</MenuItem>
-          <MenuItem value="low">Basse</MenuItem>
-        </TextField>
-      </FilterBar>
-
-      <Box sx={{ display: { xs: 'block', md: 'none' } }}>{renderCards()}</Box>
-      <Box sx={{ display: { xs: 'none', md: 'block' } }}>{renderTable()}</Box>
-
-      <TaskActionDialog
-        open={dialogOpen}
-        task={selected}
-        onClose={() => setDialogOpen(false)}
-        onSave={handleSave}
-        saving={saving}
-        showStepper
-        enableSnooze
-      />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </div>
     </MainCard>
   );
 };

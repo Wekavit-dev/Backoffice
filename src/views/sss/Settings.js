@@ -1,47 +1,20 @@
-import React, { useCallback, useContext, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert,
-  Box,
-  Button,
+  Chip,
+  CircularProgress,
   Collapse,
-  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   Grid,
-  IconButton,
-  LinearProgress,
-  Paper,
-  Stack,
+  Snackbar,
   Switch,
   TextField,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-  alpha,
-  Fade,
-  Grow,
-  Zoom,
-  Card,
-  CardContent,
-  Chip,
-  Badge,
-  Snackbar,
-  CircularProgress,
-  SpeedDial,
-  SpeedDialAction,
-  SpeedDialIcon,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  ToggleButton,
-  ToggleButtonGroup,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
-  Skeleton,
-  MenuItem
+  Typography
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -55,23 +28,13 @@ import {
   Info as InfoIcon,
   Schedule as ScheduleIcon,
   PeopleAlt as PeopleAltIcon,
-  Settings as SettingsIcon,
   NotificationsActive as NotificationsActiveIcon,
-  NotificationsActive as NotificationIcon,
-  Security as SecurityIcon,
   Speed as SpeedIcon,
   Timer as TimerIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  PlayArrow as PlayArrowIcon,
-  Stop as StopIcon,
-  RestartAlt as RestartIcon,
-  Backup as BackupIcon,
   History as HistoryIcon,
-  DoneAll as DoneAllIcon,
-  Error as ErrorIcon,
   PowerSettingsNew as PowerSettingsNewIcon,
-  ArrowForward as ArrowForwardIcon
+  PlayArrow as RocketIcon,
+  Today as TodayIcon
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
@@ -79,317 +42,6 @@ import MainCard from 'ui-component/cards/MainCard';
 import SssApi from 'api/sss/sss';
 import { PageToolbar, PrimaryButton, GhostButton, SSS_COLORS } from './components/SssLayout';
 
-// Composant de carte de configuration
-const ConfigCard = ({ title, icon, children, color, badge, loading, onSave, saving }) => {
-  const theme = useTheme();
-
-  if (loading) {
-    return (
-      <Card elevation={0} sx={{ borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
-        <CardContent>
-          <Stack spacing={2}>
-            <Skeleton variant="text" width={200} />
-            <Skeleton variant="text" width="100%" />
-            <Skeleton variant="text" width="80%" />
-          </Stack>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        borderRadius: 3,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        bgcolor: alpha(color || SSS_COLORS.brand, 0.02),
-        transition: 'all 0.3s ease',
-        position: 'relative',
-        overflow: 'hidden',
-        '&:hover': {
-          borderColor: alpha(color || SSS_COLORS.brand, 0.3),
-          boxShadow: theme.shadows[4],
-          transform: 'translateY(-2px)'
-        },
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          background: `linear-gradient(90deg, ${color || SSS_COLORS.brand}, ${alpha(color || SSS_COLORS.brand, 0.3)})`,
-          opacity: 0.3,
-          transition: 'opacity 0.3s ease'
-        },
-        '&:hover::before': {
-          opacity: 1
-        }
-      }}
-    >
-      {badge && (
-        <Badge
-          badgeContent={badge}
-          color="error"
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            '& .MuiBadge-badge': {
-              fontSize: 10,
-              height: 20,
-              minWidth: 20,
-              fontWeight: 700
-            }
-          }}
-        />
-      )}
-      <CardContent>
-        <Stack spacing={2}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            {icon && (
-              <Box sx={{
-                color: color || SSS_COLORS.brand,
-                display: 'flex',
-                '& svg': { fontSize: 24 }
-              }}>
-                {icon}
-              </Box>
-            )}
-            <Typography variant="h6" fontWeight={600}>
-              {title}
-            </Typography>
-          </Stack>
-          <Divider sx={{ opacity: 0.3 }} />
-          {children}
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Composant d'option de configuration
-const ConfigOption = ({ label, description, value, onChange, type = 'text', options = [], ...props }) => {
-  const theme = useTheme();
-
-  return (
-    <Box sx={{ mb: 2 }}>
-      <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-        {label}
-      </Typography>
-      {description && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-          {description}
-        </Typography>
-      )}
-      {type === 'switch' ? (
-        <FormControlLabel
-          control={
-            <Switch
-              checked={Boolean(value)}
-              onChange={(e) => onChange(e.target.checked)}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: theme.palette.success.main,
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.success.main, 0.08),
-                  }
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: theme.palette.success.main,
-                }
-              }}
-            />
-          }
-          label={value ? 'Activé' : 'Désactivé'}
-          sx={{ mr: 0 }}
-        />
-      ) : type === 'number' ? (
-        <TextField
-          type="number"
-          size="small"
-          fullWidth
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          InputProps={{
-            sx: { borderRadius: 2 }
-          }}
-          {...props}
-        />
-      ) : type === 'time' ? (
-        <TextField
-          type="time"
-          size="small"
-          fullWidth
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          InputProps={{
-            sx: { borderRadius: 2 }
-          }}
-          {...props}
-        />
-      ) : type === 'select' ? (
-        <TextField
-          select
-          size="small"
-          fullWidth
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          SelectProps={{
-            sx: { borderRadius: 2 }
-          }}
-          {...props}
-        >
-          {options.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-      ) : (
-        <TextField
-          fullWidth
-          size="small"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          InputProps={{
-            sx: { borderRadius: 2 }
-          }}
-          {...props}
-        />
-      )}
-    </Box>
-  );
-};
-
-// Composant de guide d'initialisation
-const SetupGuide = ({ onBackfill, backfilling }) => {
-  const theme = useTheme();
-  const [activeStep, setActiveStep] = useState(0);
-
-  const steps = [
-    {
-      label: 'Initialiser les profils',
-      description: 'Créez le suivi pour toutes les personnes déjà inscrites',
-      icon: <PeopleAltIcon />,
-      action: 'Lancer l\'initialisation'
-    },
-    {
-      label: 'Configurer les réglages',
-      description: 'Ajustez les paramètres selon vos besoins',
-      icon: <SettingsIcon />,
-      action: 'Aller aux réglages'
-    },
-    {
-      label: 'Préparer la liste du jour',
-      description: 'Générez la liste des personnes à contacter',
-      icon: <ScheduleIcon />,
-      action: 'Préparer la journée'
-    }
-  ];
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3,
-        borderRadius: 3,
-        bgcolor: alpha(SSS_COLORS.brand, 0.02),
-        border: `1px solid ${alpha(SSS_COLORS.brand, 0.12)}`,
-        mb: 3
-      }}
-    >
-      <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-        <Box sx={{
-          p: 1,
-          borderRadius: 2,
-          bgcolor: alpha(SSS_COLORS.brand, 0.1),
-          color: SSS_COLORS.brandDark
-        }}>
-          <PlayArrowIcon />
-        </Box>
-        <Box flex={1}>
-          <Typography variant="h6" fontWeight={600}>
-            Guide de mise en route
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Suivez ces étapes pour configurer le module d'accompagnement
-          </Typography>
-        </Box>
-        <Chip
-          label="3 étapes"
-          size="small"
-          variant="outlined"
-          sx={{ borderColor: alpha(SSS_COLORS.brand, 0.3), color: SSS_COLORS.brandDark }}
-        />
-      </Stack>
-
-      <Stepper activeStep={activeStep} orientation="vertical" sx={{
-        '& .MuiStepConnector-line': { minHeight: 30 },
-        '& .MuiStepLabel-label': {
-          fontWeight: activeStep === 0 ? 600 : 400,
-          color: activeStep === 0 ? theme.palette.text.primary : theme.palette.text.secondary
-        }
-      }}>
-        {steps.map((step, index) => (
-          <Step key={index}>
-            <StepLabel
-              StepIconProps={{
-                sx: {
-                  '& .MuiStepIcon-root': {
-                    color: index === activeStep ? SSS_COLORS.brandDark : theme.palette.grey[400],
-                    fontSize: 28
-                  }
-                }
-              }}
-            >
-              <Typography variant="body2" fontWeight={index === activeStep ? 600 : 400}>
-                {step.label}
-              </Typography>
-            </StepLabel>
-            <StepContent>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                {step.description}
-              </Typography>
-              <Button
-                variant={index === 0 ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => {
-                  if (index === 0) {
-                    onBackfill();
-                  } else if (index === 1) {
-                    document.getElementById('settings-section')?.scrollIntoView({ behavior: 'smooth' });
-                  } else if (index === 2) {
-                    // Navigate to today page
-                  }
-                }}
-                disabled={index === 0 && backfilling}
-                startIcon={index === 0 ? <BackfillIcon /> : <ArrowForwardIcon />}
-                sx={{
-                  borderRadius: 2,
-                  ...(index === 0 ? {
-                    bgcolor: SSS_COLORS.brand,
-                    boxShadow: 'none',
-                    '&:hover': { bgcolor: SSS_COLORS.brandDark }
-                  } : {
-                    borderColor: alpha(SSS_COLORS.brand, 0.3),
-                    color: SSS_COLORS.brandDark
-                  })
-                }}
-              >
-                {index === 0 && backfilling ? 'Initialisation...' : step.action}
-              </Button>
-            </StepContent>
-          </Step>
-        ))}
-      </Stepper>
-    </Paper>
-  );
-};
-
-// Fonctions de conversion
 const cronToTime = (cron) => {
   const parts = String(cron || '').trim().split(/\s+/);
   if (parts.length >= 2) {
@@ -407,11 +59,62 @@ const timeToCron = (hhmm) => {
   return `${Number(minute) || 0} ${Number(hour) || 0} * * 1-5`;
 };
 
+const FIELD_LABELS = {
+  'flags.enabled': 'Module activé',
+  'flags.autoBoard': 'Liste automatique',
+  'flags.ignoreLost': 'Ignorer comptes perdus',
+  'board.cronExpression': 'Heure de préparation',
+  'board.timezone': 'Fuseau horaire',
+  'lifecycle.newAccountGraceDays': 'Compte inactif après',
+  'lifecycle.dormantMinDays': 'En pause après',
+  'lifecycle.reactivateMinDays': 'À réveiller après',
+  'lifecycle.neverDepositedAlertHours': 'Alerte jamais déposé',
+  'lifecycle.lostMinDays': 'Inactif longtemps après',
+  'board.maxTasksPerDay': 'Actions max / jour',
+  'board.maxCarry': 'Reports max',
+  'board.recentContactHours': 'Délai entre contacts',
+  'alerts.pendingDepositStuckHours': 'Dépôt en attente',
+  'alerts.idleBalanceMinDays': 'Argent qui dort',
+  'alerts.highValueMinUsd': 'Client important (USD)'
+};
+
+const SectionCard = ({ title, hint, icon, tone = SSS_COLORS.brand, children, badge }) => (
+  <section className="sss-surface relative h-full overflow-hidden">
+    <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${tone}, ${tone}66)` }} />
+    <div className="flex items-start justify-between gap-3 border-b border-sss-border px-4 py-3.5 sm:px-5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl [&>svg]:text-[1.15rem]"
+          style={{ backgroundColor: `${tone}1a`, color: tone }}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <h3 className="m-0 text-base font-bold text-sss-text">{title}</h3>
+          {hint && <p className="sss-muted m-0 mt-0.5 text-xs leading-relaxed">{hint}</p>}
+        </div>
+      </div>
+      {badge}
+    </div>
+    <div className="space-y-4 px-4 py-4 sm:px-5">{children}</div>
+  </section>
+);
+
+const Field = ({ label, description, children }) => (
+  <div>
+    <label className="mb-1 block text-sm font-bold text-sss-text">{label}</label>
+    {description && <p className="sss-muted m-0 mb-2 text-xs leading-relaxed">{description}</p>}
+    {children}
+  </div>
+);
+
+const fieldSx = {
+  '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' }
+};
+
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const { globalState } = useContext(AppContext);
-  const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -428,7 +131,7 @@ const SettingsPage = () => {
     try {
       const res = await SssApi.getConfig(globalState.key);
       if (res?.status === 200) {
-        setConfig(res.data?.data || null);
+        setConfig(res.data?.data || res.data || null);
         setModifiedFields([]);
       }
     } catch (err) {
@@ -450,16 +153,13 @@ const SettingsPage = () => {
       const parts = path.split('.');
       let cursor = next;
       for (let i = 0; i < parts.length - 1; i += 1) {
+        if (!cursor[parts[i]]) cursor[parts[i]] = {};
         cursor = cursor[parts[i]];
       }
       cursor[parts[parts.length - 1]] = value;
       return next;
     });
-
-    // Track modified fields
-    setModifiedFields(prev =>
-      prev.includes(path) ? prev : [...prev, path]
-    );
+    setModifiedFields((prev) => (prev.includes(path) ? prev : [...prev, path]));
   };
 
   const handleSave = async () => {
@@ -483,15 +183,15 @@ const SettingsPage = () => {
       };
       const res = await SssApi.updateConfig(payload, globalState.key);
       if (res?.status === 200) {
-        toast.success('Réglages enregistrés avec succès');
+        toast.success('Réglages enregistrés');
         setConfig(res.data?.data || config);
         setModifiedFields([]);
         setSaveDialogOpen(false);
         setSnackbar({ open: true, message: 'Réglages enregistrés', severity: 'success' });
       }
     } catch (err) {
-      toast.error(err?.data?.message || 'Échec de l\'enregistrement');
-      setSnackbar({ open: true, message: 'Erreur lors de l\'enregistrement', severity: 'error' });
+      toast.error(err?.data?.message || "Échec de l'enregistrement");
+      setSnackbar({ open: true, message: "Erreur lors de l'enregistrement", severity: 'error' });
     } finally {
       setSaving(false);
     }
@@ -503,11 +203,10 @@ const SettingsPage = () => {
     try {
       const res = await SssApi.runBackfill({ async: 'true' }, globalState.key);
       if (res?.status === 202 || res?.status === 200) {
-        toast.success(res.data?.message || 'Initialisation lancée en arrière-plan');
+        toast.success(res.data?.message || 'Initialisation lancée');
         setSnackbar({ open: true, message: 'Initialisation lancée', severity: 'success' });
       } else {
         toast.error(res?.data?.message || 'Échec');
-        setSnackbar({ open: true, message: 'Erreur lors de l\'initialisation', severity: 'error' });
       }
     } catch (err) {
       if (err?.status === 202) {
@@ -515,7 +214,7 @@ const SettingsPage = () => {
         setSnackbar({ open: true, message: 'Initialisation lancée', severity: 'success' });
       } else {
         toast.error(err?.data?.message || err?.message || 'Échec');
-        setSnackbar({ open: true, message: 'Erreur lors de l\'initialisation', severity: 'error' });
+        setSnackbar({ open: true, message: "Erreur lors de l'initialisation", severity: 'error' });
       }
     } finally {
       setBackfilling(false);
@@ -524,22 +223,30 @@ const SettingsPage = () => {
 
   if (loading) {
     return (
-      <MainCard title="Réglages d'accompagnement">
-        <Box sx={{ p: 3 }}>
-          <LinearProgress sx={{ borderRadius: 2, height: 6 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-            Chargement des réglages...
-          </Typography>
-        </Box>
+      <MainCard contentSX={{ p: { xs: 2, sm: 3 }, bgcolor: SSS_COLORS.pageBg }}>
+        <div className="sss-page">
+          <div className="h-1.5 overflow-hidden rounded-full bg-sss-brand-soft">
+            <div className="h-full w-1/3 animate-sss-shimmer rounded-full bg-sss-brand" />
+          </div>
+          <p className="sss-muted mt-3 text-sm">Chargement des réglages…</p>
+        </div>
       </MainCard>
     );
   }
 
   if (!config) {
     return (
-      <MainCard title="Réglages d'accompagnement">
-        <Alert severity="error" sx={{ borderRadius: 2 }}>
-          Réglages indisponibles. Veuillez réessayer.
+      <MainCard contentSX={{ p: { xs: 2, sm: 3 }, bgcolor: SSS_COLORS.pageBg }}>
+        <Alert
+          severity="error"
+          sx={{ borderRadius: 2 }}
+          action={
+            <GhostButton size="small" onClick={load}>
+              Réessayer
+            </GhostButton>
+          }
+        >
+          Réglages indisponibles.
         </Alert>
       </MainCard>
     );
@@ -547,437 +254,487 @@ const SettingsPage = () => {
 
   const prepTime = cronToTime(config.board?.cronExpression);
   const hasUnsavedChanges = modifiedFields.length > 0;
+  const moduleOn = Boolean(config.flags?.enabled);
 
   return (
-    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 }, bgcolor: 'background.paper' }}>
-      <PageToolbar
-        icon={<TuneIcon />}
-        title="Réglages"
-        subtitle="Ces réglages décident qui apparaît dans la liste du jour et à quel moment. Les valeurs par défaut conviennent déjà à Wekavit — changez-les seulement si nécessaire."
-        actions={
-          <>
-            <GhostButton startIcon={<RefreshIcon />} onClick={load}>
-              Actualiser
+    <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5, md: 3 }, bgcolor: SSS_COLORS.pageBg }}>
+      <div className="sss-page pb-24">
+        <PageToolbar
+          icon={<TuneIcon />}
+          title="Réglages"
+          subtitle="Pilotez qui apparaît dans la liste du jour, quand elle est préparée, et les seuils d’inactivité. Les valeurs par défaut conviennent déjà à Wekavit."
+          actions={
+            <>
+              <GhostButton startIcon={<RefreshIcon />} onClick={load} disabled={loading || saving}>
+                Actualiser
+              </GhostButton>
+              <PrimaryButton
+                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                onClick={() => setSaveDialogOpen(true)}
+                disabled={saving || !hasUnsavedChanges}
+              >
+                Enregistrer
+                {hasUnsavedChanges ? ` (${modifiedFields.length})` : ''}
+              </PrimaryButton>
+            </>
+          }
+        />
+
+        {/* Status strip */}
+        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="sss-surface flex items-center gap-3 p-4">
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-xl"
+              style={{
+                backgroundColor: moduleOn ? SSS_COLORS.successSoft : SSS_COLORS.errorSoft,
+                color: moduleOn ? SSS_COLORS.success : SSS_COLORS.error
+              }}
+            >
+              <PowerSettingsNewIcon />
+            </span>
+            <div>
+              <p className="m-0 text-xs font-bold uppercase tracking-wide text-sss-muted">Module</p>
+              <p className="m-0 text-sm font-extrabold text-sss-text">{moduleOn ? 'Activé' : 'Désactivé'}</p>
+            </div>
+          </div>
+          <div className="sss-surface flex items-center gap-3 p-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sss-info-soft text-sss-info">
+              <ScheduleIcon />
+            </span>
+            <div>
+              <p className="m-0 text-xs font-bold uppercase tracking-wide text-sss-muted">Préparation</p>
+              <p className="m-0 text-sm font-extrabold text-sss-text">
+                {prepTime} · {config.board?.timezone || 'Africa/Bujumbura'}
+              </p>
+            </div>
+          </div>
+          <div className="sss-surface flex items-center gap-3 p-4">
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-xl"
+              style={{
+                backgroundColor: hasUnsavedChanges ? SSS_COLORS.warningSoft : SSS_COLORS.successSoft,
+                color: hasUnsavedChanges ? SSS_COLORS.warning : SSS_COLORS.success
+              }}
+            >
+              {hasUnsavedChanges ? <WarningIcon /> : <CheckCircleIcon />}
+            </span>
+            <div>
+              <p className="m-0 text-xs font-bold uppercase tracking-wide text-sss-muted">État</p>
+              <p className="m-0 text-sm font-extrabold text-sss-text">
+                {hasUnsavedChanges ? `${modifiedFields.length} modif. en attente` : 'Tout est enregistré'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Getting started */}
+        <section className="sss-surface-soft mb-5 overflow-hidden p-4 sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sss-brand shadow-sss-sm">
+                <RocketIcon />
+              </span>
+              <div className="min-w-0">
+                <h2 className="m-0 text-base font-bold text-sss-text sm:text-lg">Mise en route</h2>
+                <p className="sss-muted m-0 mt-1 text-sm leading-relaxed">
+                  1) Initialisez les profils · 2) Vérifiez les réglages essentiels · 3) Préparez la liste du jour.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <PrimaryButton
+                startIcon={backfilling ? <CircularProgress size={16} color="inherit" /> : <BackfillIcon />}
+                onClick={handleBackfill}
+                disabled={backfilling}
+              >
+                {backfilling ? 'Initialisation…' : 'Initialiser les profils'}
+              </PrimaryButton>
+              <GhostButton startIcon={<TodayIcon />} onClick={() => navigate('/wekavit/sss')}>
+                Vue du jour
+              </GhostButton>
+            </div>
+          </div>
+        </section>
+
+        {/* Init detail */}
+        <section className="sss-surface mb-5 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sss-info-soft text-sss-info">
+                <PeopleAltIcon />
+              </span>
+              <div>
+                <h3 className="m-0 text-base font-bold text-sss-text">Initialiser toutes les personnes</h3>
+                <p className="sss-muted m-0 mt-1 max-w-2xl text-sm leading-relaxed">
+                  Crée le suivi SSS pour les comptes déjà inscrits. Peut prendre quelques minutes selon le volume.
+                </p>
+              </div>
+            </div>
+            <GhostButton startIcon={<BackfillIcon />} onClick={handleBackfill} disabled={backfilling}>
+              {backfilling ? 'En cours…' : 'Lancer'}
             </GhostButton>
-            <PrimaryButton
-              startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
-              onClick={() => setSaveDialogOpen(true)}
-              disabled={saving || !hasUnsavedChanges}
-            >
-              Enregistrer
-              {hasUnsavedChanges && (
-                <Chip
-                  label={modifiedFields.length}
-                  size="small"
-                  sx={{
-                    ml: 1,
-                    height: 18,
-                    bgcolor: alpha(theme.palette.common.white, 0.2),
-                    color: 'white',
-                    fontSize: '0.6rem'
-                  }}
-                />
-              )}
-            </PrimaryButton>
-          </>
-        }
-      />
+          </div>
+        </section>
 
-      {/* Guide de mise en route */}
-      <SetupGuide onBackfill={handleBackfill} backfilling={backfilling} />
+        {/* Essential settings */}
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="sss-section-title m-0">Réglages essentiels</h2>
+            <p className="sss-muted m-0 mt-1 text-sm">Les paramètres du quotidien, clairement groupés.</p>
+          </div>
+        </div>
 
-      {/* Section d'initialisation */}
-      <Paper
-        variant="outlined"
-        sx={{
-          p: { xs: 2, sm: 3 },
-          mb: 3,
-          borderRadius: 3,
-          borderColor: alpha(theme.palette.secondary.main, 0.2),
-          bgcolor: alpha(theme.palette.secondary.main, 0.02)
-        }}
-      >
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-          <Box flex={1}>
-            <Typography variant="h6" fontWeight={600} gutterBottom>
-              Initialiser les profils
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Créez le suivi de toutes les personnes déjà inscrites (anciennes et nouvelles).
-              Cela peut prendre quelques minutes selon le nombre de profils.
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<BackfillIcon />}
-            onClick={handleBackfill}
-            disabled={backfilling}
-            sx={{
-              borderRadius: 2,
-              minWidth: 180,
-              '&:hover': {
-                transform: 'scale(1.02)'
-              }
-            }}
-          >
-            {backfilling ? (
-              <Stack direction="row" spacing={1} alignItems="center">
-                <CircularProgress size={20} color="inherit" />
-                <Typography>Initialisation...</Typography>
-              </Stack>
-            ) : (
-              'Initialiser toutes les personnes'
-            )}
-          </Button>
-        </Stack>
-      </Paper>
-
-      {/* Section des réglages */}
-      <div id="settings-section">
-        <Grid container spacing={3}>
-          {/* Activation */}
+        <Grid container spacing={2.5} className="mb-5">
           <Grid item xs={12} md={4}>
-            <ConfigCard
+            <SectionCard
               title="Activation"
+              hint="Allumez ou éteignez le module et l’automatisation"
               icon={<PowerSettingsNewIcon />}
-              color={SSS_COLORS.brand}
+              tone={SSS_COLORS.brand}
             >
-              <ConfigOption
-                label="Module activé"
-                type="switch"
-                value={config.flags?.enabled}
-                onChange={(v) => patch('flags.enabled', v)}
-              />
-              <ConfigOption
-                label="Préparer la liste automatiquement"
-                type="switch"
-                value={config.flags?.autoBoard}
-                onChange={(v) => patch('flags.autoBoard', v)}
-                description="Chaque matin, la liste est préparée automatiquement"
-              />
-              <ConfigOption
-                label="Ignorer les comptes inactifs"
-                type="switch"
-                value={config.flags?.ignoreLost}
-                onChange={(v) => patch('flags.ignoreLost', v)}
-                description="Ignore les comptes inactifs depuis très longtemps"
-              />
-            </ConfigCard>
-          </Grid>
-
-          {/* Horaire de préparation */}
-          <Grid item xs={12} md={4}>
-            <ConfigCard
-              title="Horaire de préparation"
-              icon={<ScheduleIcon />}
-              color={theme.palette.info.main}
-            >
-              <ConfigOption
-                label="Heure de préparation"
-                type="time"
-                value={prepTime}
-                onChange={(v) => patch('board.cronExpression', timeToCron(v))}
-                description="Du lundi au vendredi à cette heure"
-              />
-              <ConfigOption
-                label="Fuseau horaire"
-                type="text"
-                value={config.board?.timezone || 'Africa/Bujumbura'}
-                onChange={(v) => patch('board.timezone', v)}
-              />
-              <Box sx={{ mt: 1 }}>
-                <Chip
-                  icon={<InfoIcon />}
-                  label="La liste est préparée automatiquement les jours ouvrés"
-                  size="small"
-                  color="info"
-                  variant="outlined"
+              <Field label="Module activé">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={Boolean(config.flags?.enabled)}
+                      onChange={(e) => patch('flags.enabled', e.target.checked)}
+                      color="success"
+                    />
+                  }
+                  label={config.flags?.enabled ? 'Activé' : 'Désactivé'}
                 />
-              </Box>
-            </ConfigCard>
+              </Field>
+              <Field
+                label="Préparer la liste automatiquement"
+                description="Chaque matin ouvré, la liste du jour est générée"
+              >
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={Boolean(config.flags?.autoBoard)}
+                      onChange={(e) => patch('flags.autoBoard', e.target.checked)}
+                    />
+                  }
+                  label={config.flags?.autoBoard ? 'Activé' : 'Désactivé'}
+                />
+              </Field>
+              <Field
+                label="Ignorer les comptes très inactifs"
+                description="Évite de remonter les profils perdus depuis longtemps"
+              >
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={Boolean(config.flags?.ignoreLost)}
+                      onChange={(e) => patch('flags.ignoreLost', e.target.checked)}
+                    />
+                  }
+                  label={config.flags?.ignoreLost ? 'Activé' : 'Désactivé'}
+                />
+              </Field>
+            </SectionCard>
           </Grid>
 
-          {/* Délais d'inactivité */}
           <Grid item xs={12} md={4}>
-            <ConfigCard
-              title="Délais d'inactivité"
-              icon={<TimerIcon />}
-              color={theme.palette.warning.main}
-              badge={config.lifecycle?.dormantMinDays > 14 ? 'Ajusté' : undefined}
+            <SectionCard
+              title="Horaire"
+              hint="Quand la liste du jour est préparée"
+              icon={<ScheduleIcon />}
+              tone={SSS_COLORS.info}
             >
-              <ConfigOption
-                label="Compte inactif après"
-                type="number"
-                value={config.lifecycle?.newAccountGraceDays ?? 7}
-                onChange={(v) => patch('lifecycle.newAccountGraceDays', v)}
-                description="Sans dépôt depuis l'inscription"
-                inputProps={{ min: 0, max: 30 }}
-              />
-              <ConfigOption
-                label="En pause après"
-                type="number"
-                value={config.lifecycle?.dormantMinDays ?? 14}
-                onChange={(v) => patch('lifecycle.dormantMinDays', v)}
-                description="Aucune activité récente"
-                inputProps={{ min: 0, max: 60 }}
-              />
-              <ConfigOption
-                label="À réveiller après"
-                type="number"
-                value={config.lifecycle?.reactivateMinDays ?? 30}
-                onChange={(v) => patch('lifecycle.reactivateMinDays', v)}
-                description="Inactif depuis plus de X jours"
-                inputProps={{ min: 0, max: 90 }}
-              />
-            </ConfigCard>
+              <Field label="Heure de préparation" description="Du lundi au vendredi">
+                <TextField
+                  type="time"
+                  size="small"
+                  fullWidth
+                  value={prepTime}
+                  onChange={(e) => patch('board.cronExpression', timeToCron(e.target.value))}
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldSx}
+                />
+              </Field>
+              <Field label="Fuseau horaire">
+                <TextField
+                  size="small"
+                  fullWidth
+                  value={config.board?.timezone || 'Africa/Bujumbura'}
+                  onChange={(e) => patch('board.timezone', e.target.value)}
+                  sx={fieldSx}
+                />
+              </Field>
+              <div className="rounded-xl border border-sss-info/20 bg-sss-info-soft/70 px-3 py-2 text-xs text-sss-text">
+                <InfoIcon sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5, color: SSS_COLORS.info }} />
+                Préparation automatique les jours ouvrés uniquement.
+              </div>
+            </SectionCard>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <SectionCard
+              title="Délais d’inactivité"
+              hint="Quand un profil change d’étape automatiquement"
+              icon={<TimerIcon />}
+              tone={SSS_COLORS.warning}
+              badge={
+                (config.lifecycle?.dormantMinDays ?? 14) > 14 ? (
+                  <Chip label="Ajusté" size="small" color="warning" sx={{ fontWeight: 700 }} />
+                ) : null
+              }
+            >
+              <Field label="Compte inactif après (jours)" description="Sans dépôt depuis l’inscription">
+                <TextField
+                  type="number"
+                  size="small"
+                  fullWidth
+                  value={config.lifecycle?.newAccountGraceDays ?? 7}
+                  onChange={(e) => patch('lifecycle.newAccountGraceDays', Number(e.target.value))}
+                  inputProps={{ min: 0, max: 30 }}
+                  sx={fieldSx}
+                />
+              </Field>
+              <Field label="En pause après (jours)" description="Aucune activité récente">
+                <TextField
+                  type="number"
+                  size="small"
+                  fullWidth
+                  value={config.lifecycle?.dormantMinDays ?? 14}
+                  onChange={(e) => patch('lifecycle.dormantMinDays', Number(e.target.value))}
+                  inputProps={{ min: 0, max: 60 }}
+                  sx={fieldSx}
+                />
+              </Field>
+              <Field label="À réveiller après (jours)" description="Inactif depuis trop longtemps">
+                <TextField
+                  type="number"
+                  size="small"
+                  fullWidth
+                  value={config.lifecycle?.reactivateMinDays ?? 30}
+                  onChange={(e) => patch('lifecycle.reactivateMinDays', Number(e.target.value))}
+                  inputProps={{ min: 0, max: 90 }}
+                  sx={fieldSx}
+                />
+              </Field>
+            </SectionCard>
           </Grid>
         </Grid>
-      </div>
 
-      {/* Section avancée */}
-      <Box mt={3}>
-        <Button
-          size="medium"
-          onClick={() => setAdvancedOpen((v) => !v)}
-          endIcon={advancedOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          sx={{
-            borderRadius: 2,
-            px: 2,
-            py: 1,
-            bgcolor: alpha(SSS_COLORS.brand, 0.04),
-            color: SSS_COLORS.brandDark,
-            '&:hover': {
-              bgcolor: alpha(SSS_COLORS.brand, 0.08),
-            }
-          }}
-        >
-          {advancedOpen ? 'Masquer' : 'Afficher'} les réglages avancés
-          {!advancedOpen && (
-            <Chip
-              label="8 paramètres"
-              size="small"
-              sx={{ ml: 1, height: 18, fontSize: '0.6rem' }}
-            />
-          )}
-        </Button>
+        {/* Advanced */}
+        <div className="mb-3">
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-full border border-sss-brand/20 bg-white px-4 py-2.5 text-sm font-bold text-sss-brand shadow-sss-sm transition hover:border-sss-brand hover:bg-sss-brand-soft"
+          >
+            {advancedOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            {advancedOpen ? 'Masquer' : 'Afficher'} les réglages avancés
+            <Chip label="8 paramètres" size="small" sx={{ height: 20, fontWeight: 700, ml: 0.5 }} />
+          </button>
+        </div>
 
         <Collapse in={advancedOpen} timeout="auto">
-          <Grid container spacing={3} sx={{ mt: 0.5 }}>
+          <Grid container spacing={2.5} className="mb-5">
             <Grid item xs={12} md={4}>
-              <ConfigCard
-                title="Limites de la liste"
-                icon={<SpeedIcon />}
-                color={SSS_COLORS.brand}
-              >
-                <ConfigOption
-                  label="Actions max par jour"
-                  type="number"
-                  value={config.board?.maxTasksPerDay ?? 40}
-                  onChange={(v) => patch('board.maxTasksPerDay', v)}
-                  description="Nombre maximum de personnes à contacter par jour"
-                  inputProps={{ min: 1, max: 100 }}
-                />
-                <ConfigOption
-                  label="Reports max avant abandon"
-                  type="number"
-                  value={config.board?.maxCarry ?? 5}
-                  onChange={(v) => patch('board.maxCarry', v)}
-                  description="Nombre de reports avant de laisser tomber"
-                  inputProps={{ min: 1, max: 20 }}
-                />
-                <ConfigOption
-                  label="Délai entre deux contacts"
-                  type="number"
-                  value={config.board?.recentContactHours ?? 48}
-                  onChange={(v) => patch('board.recentContactHours', v)}
-                  description="Ne pas recontacter avant X heures"
-                  inputProps={{ min: 1, max: 168 }}
-                />
-              </ConfigCard>
+              <SectionCard title="Limites de la liste" icon={<SpeedIcon />} tone={SSS_COLORS.brand}>
+                <Field label="Actions max par jour" description="Cap de contacts quotidiens">
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.board?.maxTasksPerDay ?? 40}
+                    onChange={(e) => patch('board.maxTasksPerDay', Number(e.target.value))}
+                    inputProps={{ min: 1, max: 100 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+                <Field label="Reports max avant abandon" description="Combien de reports avant d’abandonner">
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.board?.maxCarry ?? 5}
+                    onChange={(e) => patch('board.maxCarry', Number(e.target.value))}
+                    inputProps={{ min: 1, max: 20 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+                <Field label="Délai entre deux contacts (h)" description="Ne pas recontacter trop tôt">
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.board?.recentContactHours ?? 48}
+                    onChange={(e) => patch('board.recentContactHours', Number(e.target.value))}
+                    inputProps={{ min: 1, max: 168 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+              </SectionCard>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <ConfigCard
-                title="Seuils d'alerte"
-                icon={<NotificationsActiveIcon />}
-                color={theme.palette.warning.main}
-              >
-                <ConfigOption
-                  label="Alerte 'jamais déposé'"
-                  type="number"
-                  value={config.lifecycle?.neverDepositedAlertHours ?? 48}
-                  onChange={(v) => patch('lifecycle.neverDepositedAlertHours', v)}
-                  description="Heures après l'inscription sans dépôt"
-                  inputProps={{ min: 1, max: 168 }}
-                />
-                <ConfigOption
-                  label="Dépôt en attente"
-                  type="number"
-                  value={config.alerts?.pendingDepositStuckHours ?? 24}
-                  onChange={(v) => patch('alerts.pendingDepositStuckHours', v)}
-                  description="Heures avant de considérer un dépôt bloqué"
-                  inputProps={{ min: 1, max: 72 }}
-                />
-                <ConfigOption
-                  label="Argent qui dort"
-                  type="number"
-                  value={config.alerts?.idleBalanceMinDays ?? 3}
-                  onChange={(v) => patch('alerts.idleBalanceMinDays', v)}
-                  description="Jours avant d'alerter sur l'argent non placé"
-                  inputProps={{ min: 1, max: 30 }}
-                />
-                <ConfigOption
-                  label="Client important (USD)"
-                  type="number"
-                  value={config.alerts?.highValueMinUsd ?? 150}
-                  onChange={(v) => patch('alerts.highValueMinUsd', v)}
-                  description="Seuil pour considérer un client comme important"
-                  inputProps={{ min: 0, max: 10000 }}
-                />
-              </ConfigCard>
+              <SectionCard title="Seuils d’alerte" icon={<NotificationsActiveIcon />} tone={SSS_COLORS.warning}>
+                <Field label="Alerte « jamais déposé » (h)">
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.lifecycle?.neverDepositedAlertHours ?? 48}
+                    onChange={(e) => patch('lifecycle.neverDepositedAlertHours', Number(e.target.value))}
+                    inputProps={{ min: 1, max: 168 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+                <Field label="Dépôt en attente bloqué (h)">
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.alerts?.pendingDepositStuckHours ?? 24}
+                    onChange={(e) => patch('alerts.pendingDepositStuckHours', Number(e.target.value))}
+                    inputProps={{ min: 1, max: 72 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+                <Field label="Argent qui dort (jours)">
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.alerts?.idleBalanceMinDays ?? 3}
+                    onChange={(e) => patch('alerts.idleBalanceMinDays', Number(e.target.value))}
+                    inputProps={{ min: 1, max: 30 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+                <Field label="Client important (USD)">
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.alerts?.highValueMinUsd ?? 150}
+                    onChange={(e) => patch('alerts.highValueMinUsd', Number(e.target.value))}
+                    inputProps={{ min: 0, max: 10000 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+              </SectionCard>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <ConfigCard
-                title="Inactivité longue"
-                icon={<HistoryIcon />}
-                color={theme.palette.error.main}
-              >
-                <ConfigOption
-                  label="Inactif longtemps après"
-                  type="number"
-                  value={config.lifecycle?.lostMinDays ?? 90}
-                  onChange={(v) => patch('lifecycle.lostMinDays', v)}
-                  description="Jours sans activité avant de considérer le compte perdu"
-                  inputProps={{ min: 30, max: 365 }}
-                />
-                <Box sx={{ mt: 2 }}>
-                  <Alert severity="info" sx={{ borderRadius: 2 }}>
-                    <Typography variant="caption">
-                      Les poids avancés (priorité, santé) restent disponibles via l'API.
-                      Cette interface montre les réglages utiles au quotidien.
-                    </Typography>
-                  </Alert>
-                </Box>
-              </ConfigCard>
+              <SectionCard title="Inactivité longue" icon={<HistoryIcon />} tone={SSS_COLORS.error}>
+                <Field
+                  label="Inactif longtemps après (jours)"
+                  description="Seuil avant de considérer le compte perdu"
+                >
+                  <TextField
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={config.lifecycle?.lostMinDays ?? 90}
+                    onChange={(e) => patch('lifecycle.lostMinDays', Number(e.target.value))}
+                    inputProps={{ min: 30, max: 365 }}
+                    sx={fieldSx}
+                  />
+                </Field>
+                <div className="rounded-xl border border-sss-border bg-sss-page p-3 text-xs leading-relaxed text-sss-muted">
+                  Les poids avancés (priorité, santé) restent disponibles via l’API. Cette page montre les réglages
+                  utiles au quotidien.
+                </div>
+              </SectionCard>
             </Grid>
           </Grid>
         </Collapse>
-      </Box>
 
-      {/* Information de sauvegarde */}
-      <Box mt={3}>
-        <Alert
-          severity={hasUnsavedChanges ? 'warning' : 'success'}
-          sx={{ borderRadius: 2 }}
-          icon={hasUnsavedChanges ? <WarningIcon /> : <CheckCircleIcon />}
+        {/* Sticky save bar */}
+        <div
+          className={`fixed inset-x-0 bottom-0 z-30 border-t px-4 py-3 backdrop-blur transition-all ${
+            hasUnsavedChanges
+              ? 'border-sss-warning/30 bg-sss-warning-soft/95'
+              : 'border-sss-border bg-white/95'
+          }`}
         >
-          {hasUnsavedChanges ? (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="body2">
-                Vous avez {modifiedFields.length} modification{modifiedFields.length > 1 ? 's' : ''} non enregistrée{modifiedFields.length > 1 ? 's' : ''}.
-              </Typography>
-              <Button
-                size="small"
-                variant="contained"
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              {hasUnsavedChanges ? (
+                <>
+                  <WarningIcon sx={{ fontSize: 18, color: SSS_COLORS.warning }} />
+                  <span className="font-semibold text-sss-text">
+                    {modifiedFields.length} modification{modifiedFields.length > 1 ? 's' : ''} non enregistrée
+                    {modifiedFields.length > 1 ? 's' : ''}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <CheckCircleIcon sx={{ fontSize: 18, color: SSS_COLORS.success }} />
+                  <span className="font-semibold text-sss-text">Tous les réglages sont à jour</span>
+                </>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <GhostButton onClick={load} disabled={saving}>
+                Annuler les changements
+              </GhostButton>
+              <PrimaryButton
+                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
                 onClick={() => setSaveDialogOpen(true)}
-                sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
+                disabled={saving || !hasUnsavedChanges}
               >
-                Enregistrer maintenant
-              </Button>
-            </Stack>
-          ) : (
-            <Typography variant="body2">
-              Tous les réglages sont enregistrés
-            </Typography>
-          )}
-        </Alert>
-      </Box>
+                Enregistrer
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
 
-      {/* Dialogue de confirmation de sauvegarde */}
-      <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <SaveIcon color="primary" />
-            <Typography variant="h6" fontWeight={600}>
-              Enregistrer les modifications
+        <Dialog
+          open={saveDialogOpen}
+          onClose={() => setSaveDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle sx={{ fontWeight: 800 }}>Confirmer l’enregistrement</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Vous allez enregistrer {modifiedFields.length} modification
+              {modifiedFields.length > 1 ? 's' : ''}.
             </Typography>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Vous êtes sur le point d'enregistrer {modifiedFields.length} modification{modifiedFields.length > 1 ? 's' : ''} dans les réglages.
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              Champs modifiés :
-            </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1, gap: 1 }}>
-              {modifiedFields.map((field, index) => (
+            <div className="flex flex-wrap gap-1.5">
+              {modifiedFields.map((field) => (
                 <Chip
-                  key={index}
-                  label={field}
+                  key={field}
+                  label={FIELD_LABELS[field] || field}
                   size="small"
                   variant="outlined"
+                  sx={{ fontWeight: 600 }}
                 />
               ))}
-            </Stack>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setSaveDialogOpen(false)} disabled={saving}>
-            Annuler
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={saving}
-            startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-            sx={{ borderRadius: 2, bgcolor: SSS_COLORS.brand, boxShadow: 'none', '&:hover': { bgcolor: SSS_COLORS.brandDark } }}
-          >
-            {saving ? 'Enregistrement...' : 'Confirmer'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </div>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+            <GhostButton onClick={() => setSaveDialogOpen(false)} disabled={saving}>
+              Annuler
+            </GhostButton>
+            <PrimaryButton
+              onClick={handleSave}
+              disabled={saving}
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+            >
+              {saving ? 'Enregistrement…' : 'Confirmer'}
+            </PrimaryButton>
+          </DialogActions>
+        </Dialog>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-
-      {/* Speed Dial */}
-      <SpeedDial
-        ariaLabel="Actions rapides"
-        sx={{ position: 'fixed', bottom: 24, right: 24 }}
-        icon={<SpeedDialIcon />}
-        direction="up"
-      >
-        <SpeedDialAction
-          icon={<RefreshIcon />}
-          tooltipTitle="Actualiser"
-          onClick={load}
-        />
-        <SpeedDialAction
-          icon={<SaveIcon />}
-          tooltipTitle="Enregistrer"
-          onClick={() => setSaveDialogOpen(true)}
-          disabled={!hasUnsavedChanges}
-        />
-        <SpeedDialAction
-          icon={<BackfillIcon />}
-          tooltipTitle="Initialiser"
-          onClick={handleBackfill}
-          disabled={backfilling}
-        />
-      </SpeedDial>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </div>
     </MainCard>
   );
 };

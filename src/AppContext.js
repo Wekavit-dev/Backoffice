@@ -1,16 +1,39 @@
-import React, { createContext, useState } from 'react';
-import PropTyes from 'prop-types';
+import React, { createContext, useCallback, useState } from 'react';
+import PropTypes from 'prop-types';
+import { clearAdminSession, loadAdminSession, persistAdminSession } from 'utils/adminSession';
 
-// Create a new context
 const AppContext = createContext();
 
-// Create a provider component to provide the global state to the entire app
 const AppProvider = ({ children }) => {
-  const [globalState, setGlobalState] = useState('initial value');
+  const [globalState, setGlobalState] = useState(() => loadAdminSession() || {});
 
-  return <AppContext.Provider value={{ globalState, setGlobalState }}>{children}</AppContext.Provider>;
+  const setSession = useCallback((next) => {
+    setGlobalState((prev) => {
+      const value = typeof next === 'function' ? next(prev) : next;
+
+      if (!value?.key) {
+        clearAdminSession();
+        return {};
+      }
+
+      return persistAdminSession({ ...prev, ...value });
+    });
+  }, []);
+
+  const logout = useCallback(() => {
+    clearAdminSession();
+    setGlobalState({});
+  }, []);
+
+  return (
+    <AppContext.Provider value={{ globalState, setGlobalState: setSession, logout }}>
+      {children}
+    </AppContext.Provider>
+  );
 };
+
 AppProvider.propTypes = {
-  children: PropTyes.any
+  children: PropTypes.any
 };
+
 export { AppContext, AppProvider };

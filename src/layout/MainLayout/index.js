@@ -13,6 +13,7 @@ import Customization from '../Customization';
 import navigation from 'menu-items';
 import { drawerWidth } from 'store/constant';
 import { SET_MENU } from 'store/actions';
+import RouteAccessGuard from 'components/access/RouteAccessGuard';
 
 // assets
 import { IconChevronRight } from '@tabler/icons';
@@ -89,7 +90,9 @@ const MainLayout = () => {
       <Main theme={theme} open={leftDrawerOpened}>
         {/* breadcrumb */}
         <Breadcrumbs separator={IconChevronRight} navigation={navigation} icon title rightAlign />
-        <Outlet />
+        <RouteAccessGuard>
+          <Outlet />
+        </RouteAccessGuard>
       </Main>
       <Customization />
     </Box>

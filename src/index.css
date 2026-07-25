@@ -74,4 +74,125 @@
   .sss-skeleton {
     @apply animate-sss-shimmer rounded-lg bg-gradient-to-r from-sss-neutral-soft via-white to-sss-neutral-soft bg-[length:200%_100%];
   }
+
+  .admin-page {
+    @apply font-sss text-sss-text antialiased;
+  }
+
+  .admin-glass {
+    @apply rounded-sss-lg border border-white/60 bg-white/80 shadow-sss-lg backdrop-blur-xl;
+  }
+
+  .admin-card {
+    @apply rounded-sss border border-sss-border bg-white shadow-sss-sm transition-all duration-300 hover:shadow-sss-card;
+  }
+
+  .admin-btn-primary {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sss-brand to-indigo-500 px-5 text-sm font-semibold text-white shadow-sss-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sss-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sss-brand/40 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .admin-btn-ghost {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-sss-border bg-white px-4 text-sm font-semibold text-sss-text transition-all duration-200 hover:border-sss-brand/40 hover:bg-sss-brand-soft hover:text-sss-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sss-brand/30 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .admin-input {
+    @apply w-full rounded-xl border border-sss-border bg-white px-4 py-2.5 text-sm text-sss-text outline-none transition-all duration-200 placeholder:text-sss-muted/70 focus:border-sss-brand focus:ring-2 focus:ring-sss-brand/20;
+  }
+
+  .admin-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wide;
+  }
+
+  .admin-menu-tile {
+    @apply relative flex cursor-pointer items-start gap-3 rounded-xl border border-sss-border bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-sss-brand/35 hover:shadow-sss-card;
+  }
+
+  .admin-menu-tile-active {
+    @apply border-sss-brand bg-gradient-to-br from-sss-brand-soft to-white shadow-sss-md ring-1 ring-sss-brand/20;
+  }
+
+  .admin-hero {
+    @apply relative overflow-hidden rounded-[1.35rem] border border-white/70 bg-white shadow-sss-lg;
+  }
+
+  .admin-hero-mesh {
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(91, 91, 214, 0.18), transparent 34%),
+      radial-gradient(circle at 88% 8%, rgba(99, 102, 241, 0.16), transparent 30%),
+      radial-gradient(circle at 76% 82%, rgba(168, 85, 247, 0.12), transparent 36%),
+      linear-gradient(135deg, #f8f9ff 0%, #ffffff 48%, #f4f7ff 100%);
+  }
+
+  .admin-stat-pill {
+    @apply rounded-2xl border border-white/80 bg-white/75 px-4 py-3 shadow-sss-sm backdrop-blur-md;
+  }
+
+  .admin-filter-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-sss-border bg-white px-3.5 py-1.5 text-xs font-semibold text-sss-muted transition-all duration-200 hover:border-sss-brand/30 hover:text-sss-brand;
+  }
+
+  .admin-filter-chip-active {
+    @apply border-sss-brand bg-sss-brand text-white shadow-sss-md hover:border-sss-brand hover:text-white;
+  }
+
+  .admin-avatar {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-sss-sm ring-2 ring-white;
+  }
+
+  .admin-avatar-lg {
+    @apply flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.15rem] text-xl font-bold text-white shadow-sss-md ring-4 ring-white/80;
+  }
+
+  .admin-progress-track {
+    @apply h-1.5 overflow-hidden rounded-full bg-slate-100;
+  }
+
+  .admin-progress-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-sss-brand to-indigo-500 transition-all duration-500 ease-out;
+  }
+
+  .admin-workspace {
+    @apply overflow-hidden rounded-[1.35rem] border border-sss-border bg-white shadow-sss-lg;
+  }
+
+  .admin-panel-header {
+    @apply border-b border-sss-border bg-[linear-gradient(180deg,#fcfcff_0%,#ffffff_100%)];
+  }
+
+  .admin-accordion {
+    @apply overflow-hidden rounded-2xl border border-sss-border bg-white shadow-sss-sm;
+  }
+
+  .admin-accordion-trigger {
+    @apply flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors hover:bg-sss-brand-soft/35 sm:px-5;
+  }
+
+  .admin-preset-card {
+    @apply rounded-2xl border border-sss-border bg-gradient-to-br from-white to-[#fafbff] p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-sss-brand/35 hover:shadow-sss-card;
+  }
+
+  .admin-preset-card-active {
+    @apply border-sss-brand bg-gradient-to-br from-sss-brand-soft to-white shadow-sss-md ring-1 ring-sss-brand/20;
+  }
+
+  .admin-switch {
+    @apply relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border border-sss-border bg-slate-200 transition-colors duration-200;
+  }
+
+  .admin-switch-on {
+    @apply border-sss-brand bg-gradient-to-r from-sss-brand to-indigo-500;
+  }
+
+  .admin-switch-knob {
+    @apply absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200;
+  }
+
+  .admin-floating-bar {
+    @apply fixed bottom-6 left-1/2 z-40 flex w-[min(92vw,720px)] -translate-x-1/2 items-center justify-between gap-4 rounded-2xl border border-sss-brand/20 bg-slate-900/90 px-4 py-3 text-white shadow-[0_20px_50px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:px-5;
+  }
+
+  .admin-dot-grid {
+    background-image: radial-gradient(circle, rgba(91, 91, 214, 0.08) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
 }

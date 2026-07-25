@@ -17,6 +17,8 @@ import { AppContext } from 'AppContext';
 import ResponsiveDialog from 'ui-component/modal/reponsiveFormModal';
 import CustomizableAlert from 'ui-component/alert/alertModal';
 import { useSnackbar } from 'notistack';
+import { persistAdminSession } from 'utils/adminSession';
+import { getFirstAccessiblePath } from 'utils/menuFilter';
 
 // assets
 
@@ -59,8 +61,7 @@ const Login = () => {
           }
         } else {
           const response = res.response;
-          alertModal(response.status, response.data.message);
-          enqueueSnackbar(response.data.message, { variant: 'info', autoHideDuration: 4000 });
+          enqueueSnackbar(response?.data?.message || 'Identifiants invalides', { variant: 'error', autoHideDuration: 4000 });
           setLoad(false);
         }
       })
@@ -84,23 +85,26 @@ const Login = () => {
   };
 
   const handleSubmit = (code) => {
-    // Handle the email submission here
     setLoad(true);
     const data = { secretKey: code, email: email };
     AuthentificationAPI.VerifyCode(data, globalState?.key)
       .then((res) => {
-        console.log('res000', res);
         if (res.data) {
-          let status = res.status;
-          if (status == (200 || 201)) {
-            // Assuming verification is successful
+          const status = res.status;
+          if (status === 200 || status === 201) {
+            const credentials = res.data.credentials || res.data.data || {};
+            const session = persistAdminSession({
+              ...credentials,
+              key: res.data.key
+            });
+
+            setGlobalState(session);
             setLoad(false);
-            setGlobalState({ ...res.data.data, key: res.data.key });
-            navigate('/wekavit/Dashboard/Default');
+            navigate(getFirstAccessiblePath(session.menuAccess, session.isSuperAdmin));
           }
         } else {
           const response = res.response;
-          alertModal(response.status, response.data.message);
+          enqueueSnackbar(response?.data?.message || 'Code invalide', { variant: 'error', autoHideDuration: 4000 });
           setLoad(false);
         }
       })
@@ -108,7 +112,6 @@ const Login = () => {
         enqueueSnackbar(err, { variant: 'error', autoHideDuration: 4000 });
         setLoad(false);
       });
-    console.log('Email submitted:', email);
   };
   console.log('globalState', load);
   return (

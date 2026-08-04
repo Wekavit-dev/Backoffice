@@ -154,7 +154,14 @@ const TodayTasksPage = () => {
   };
 
   const handleSave = async (payload) => {
-    if (!selected || !globalState?.key) return;
+    if (!selected) {
+      toast.error('Aucune tâche sélectionnée. Fermez la fenêtre et rouvrez la tâche.');
+      return;
+    }
+    if (!globalState?.key) {
+      toast.error('Session expirée. Veuillez vous reconnecter pour enregistrer.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await SssApi.updateTask(selected._id, payload, globalState.key);

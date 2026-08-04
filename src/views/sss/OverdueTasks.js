@@ -131,7 +131,14 @@ const OverdueTasksPage = () => {
   }, [tasks, searchTerm]);
 
   const handleSave = async (payload) => {
-    if (!selected || !globalState?.key) return;
+    if (!selected) {
+      toast.error('Aucune tâche sélectionnée. Fermez la fenêtre et rouvrez la tâche.');
+      return;
+    }
+    if (!globalState?.key) {
+      toast.error('Session expirée. Veuillez vous reconnecter pour enregistrer.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await SssApi.updateTask(selected._id, payload, globalState.key);
@@ -140,6 +147,9 @@ const OverdueTasksPage = () => {
         setDialogOpen(false);
         await load();
         setSnackbar({ open: true, message: 'Tâche mise à jour', severity: 'success' });
+      } else {
+        toast.error(res?.data?.message || 'Échec de la mise à jour');
+        setSnackbar({ open: true, message: 'Erreur lors de la mise à jour', severity: 'error' });
       }
     } catch (err) {
       toast.error(err?.data?.message || 'Échec de la mise à jour');

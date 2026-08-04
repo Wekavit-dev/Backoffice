@@ -28,6 +28,7 @@ import {
   Grid,
   Divider
 } from '@mui/material';
+import { toast } from 'react-toastify';
 import {
   Close as CloseIcon,
   CheckCircle as CheckCircleIcon,
@@ -193,20 +194,29 @@ const TaskActionDialog = ({
   const selectedStatus = STATUS_CHOICES.find((s) => s.value === status);
   const fichePath = userId ? `/wekavit/sss/people/${userId}` : null;
 
+  const showValidationError = (msg) => {
+    setHasError(true);
+    setErrorMessage(msg);
+    toast.warning(msg);
+  };
+
   const validateForm = () => {
     if (!status) {
-      setHasError(true);
-      setErrorMessage('Veuillez sélectionner un statut.');
+      showValidationError('Veuillez sélectionner un statut avant d’enregistrer.');
       return false;
     }
     if (status === 'done' && completionDegree < 100) {
-      setHasError(true);
-      setErrorMessage('Pour marquer comme terminé, l’avancement doit être à 100 %.');
+      showValidationError(
+        `Pour marquer comme terminé, réglez l’avancement à 100 % (actuellement ${completionDegree} %).`
+      );
       return false;
     }
-    if (snoozeDays && (Number(snoozeDays) < 1 || Number(snoozeDays) > 90)) {
-      setHasError(true);
-      setErrorMessage('La période de report doit être entre 1 et 90 jours.');
+    if (status !== 'skipped' && status !== 'blocked' && !outcome) {
+      showValidationError('Veuillez sélectionner le résultat du contact avant d’enregistrer.');
+      return false;
+    }
+    if (snoozeDays && (Number.isNaN(Number(snoozeDays)) || Number(snoozeDays) < 1 || Number(snoozeDays) > 90)) {
+      showValidationError('La période de pause de contact doit être entre 1 et 90 jours (ou laissée vide).');
       return false;
     }
     setHasError(false);
@@ -215,7 +225,12 @@ const TaskActionDialog = ({
   };
 
   const handleSubmit = () => {
+    if (saving) return;
     if (!validateForm()) return;
+    if (typeof onSave !== 'function') {
+      toast.error('Enregistrement indisponible : aucune action de sauvegarde n’est configurée.');
+      return;
+    }
     const payload = {
       status,
       completionDegree: Number(completionDegree),
@@ -227,6 +242,14 @@ const TaskActionDialog = ({
       payload.snoozeReason = snoozeReason.trim() || undefined;
     }
     onSave(payload);
+  };
+
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    // « Terminé » implique 100 % : on ajuste automatiquement pour éviter un blocage à la validation.
+    if (value === 'done' && completionDegree < 100) setCompletionDegree(100);
+    setHasError(false);
+    setErrorMessage('');
   };
 
   const handleCopyMessage = async () => {
@@ -570,7 +593,7 @@ const TaskActionDialog = ({
                             <Box
                               component="button"
                               type="button"
-                              onClick={() => setStatus(option.value)}
+                              onClick={() => handleStatusChange(option.value)}
                               sx={{
                                 width: '100%',
                                 textAlign: 'left',
@@ -767,9 +790,6 @@ const TaskActionDialog = ({
             disabled={saving}
             startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
             sx={{ minWidth: 160 }}
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSubmit();
-            }}
           >
             {saving ? 'Enregistrement…' : 'Enregistrer le résultat'}
           </PrimaryButton>

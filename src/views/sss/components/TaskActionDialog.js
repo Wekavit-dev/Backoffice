@@ -200,25 +200,41 @@ const TaskActionDialog = ({
     toast.warning(msg);
   };
 
+  // Collecte TOUS les points restant à compléter, puis les affiche en un seul toast
+  // (au lieu de s’arrêter à la première erreur), pour que l’utilisateur sache
+  // exactement quoi corriger avant que l’enregistrement passe.
   const validateForm = () => {
+    const degree = Number(completionDegree);
+    const remaining = [];
+
     if (!status) {
-      showValidationError('Veuillez sélectionner un statut avant d’enregistrer.');
-      return false;
+      remaining.push('choisir un statut');
     }
-    if (status === 'done' && completionDegree < 100) {
-      showValidationError(
-        `Pour marquer comme terminé, réglez l’avancement à 100 % (actuellement ${completionDegree} %).`
-      );
-      return false;
+    if (status === 'done' && degree < 100) {
+      remaining.push(`régler l’avancement à 100 % pour « Terminé » (actuellement ${completionDegree} %)`);
+    }
+    if (status === 'partial' && degree >= 100) {
+      remaining.push('réduire l’avancement sous 100 % pour « Partiel » (ou choisir « Terminé »)');
+    }
+    if (status === 'partial' && degree <= 0) {
+      remaining.push('indiquer un avancement supérieur à 0 % pour « Partiel »');
     }
     if (status !== 'skipped' && status !== 'blocked' && !outcome) {
-      showValidationError('Veuillez sélectionner le résultat du contact avant d’enregistrer.');
-      return false;
+      remaining.push('sélectionner le résultat du contact');
     }
     if (snoozeDays && (Number.isNaN(Number(snoozeDays)) || Number(snoozeDays) < 1 || Number(snoozeDays) > 90)) {
-      showValidationError('La période de pause de contact doit être entre 1 et 90 jours (ou laissée vide).');
+      remaining.push('saisir une pause de contact entre 1 et 90 jours (ou la laisser vide)');
+    }
+
+    if (remaining.length > 0) {
+      const msg =
+        remaining.length === 1
+          ? `Il reste à compléter : ${remaining[0]}.`
+          : `Il reste ${remaining.length} points à compléter : ${remaining.join(' · ')}.`;
+      showValidationError(msg);
       return false;
     }
+
     setHasError(false);
     setErrorMessage('');
     return true;

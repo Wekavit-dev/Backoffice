@@ -34,13 +34,28 @@ import {
   CheckCircle as CheckCircleIcon,
   Download as DownloadIcon,
   PeopleAlt as PeopleAltIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  RadioButtonUnchecked as TodoIcon,
+  Autorenew as InProgressIcon,
+  Timelapse as PartialIcon,
+  SkipNext as SkippedIcon,
+  Block as BlockedIcon
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { AppContext } from 'AppContext';
 import MainCard from 'ui-component/cards/MainCard';
 import SssApi from 'api/sss/sss';
-import { displayName, maskPhone, telHref, whatsappHref, ACTION_LABELS, URGENCY_LABELS } from './labels';
+import {
+  displayName,
+  maskPhone,
+  telHref,
+  whatsappHref,
+  ACTION_LABELS,
+  URGENCY_LABELS,
+  TASK_STATUS_LABELS,
+  TASK_STATUS_COLORS,
+  TASK_STATUS_ORDER
+} from './labels';
 import {
   ActionLabel,
   EmptyState,
@@ -62,8 +77,42 @@ import {
   viewButtonSx,
   PrimaryButton,
   GhostButton,
-  SSS_COLORS
+  SSS_COLORS,
+  toneColor
 } from './components/SssLayout';
+
+const STATUS_SUMMARY_ICONS = {
+  todo: <TodoIcon />,
+  in_progress: <InProgressIcon />,
+  done: <CheckCircleIcon />,
+  partial: <PartialIcon />,
+  skipped: <SkippedIcon />,
+  blocked: <BlockedIcon />,
+  carried_over: <CarryIcon />
+};
+
+/** Résumé des tâches groupées par statut : texte + icône, chaque statut dans sa couleur. */
+const StatusSummaryRow = ({ counts, loading }) => (
+  <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-sss-border bg-white px-4 py-3">
+    {Object.keys(TASK_STATUS_LABELS)
+      .sort((a, b) => (TASK_STATUS_ORDER[a] ?? 99) - (TASK_STATUS_ORDER[b] ?? 99))
+      .map((status) => {
+        const tone = toneColor(TASK_STATUS_COLORS[status] || 'default');
+        return (
+          <div key={status} className="inline-flex items-center gap-1.5" style={{ color: tone }}>
+            <span className="inline-flex [&>svg]:text-[1.05rem]">{STATUS_SUMMARY_ICONS[status]}</span>
+            <span className="text-sm font-semibold">{TASK_STATUS_LABELS[status]}</span>
+            <span
+              className="min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-extrabold tabular-nums"
+              style={{ backgroundColor: `${tone}1a` }}
+            >
+              {loading ? '…' : counts[status] || 0}
+            </span>
+          </div>
+        );
+      })}
+  </div>
+);
 
 const TodayTasksPage = () => {
   const { globalState } = useContext(AppContext);
@@ -137,6 +186,15 @@ const TodayTasksPage = () => {
       })
       .sort((a, b) => (urgencyOrder[a.urgency] ?? 4) - (urgencyOrder[b.urgency] ?? 4));
   }, [tasks, filterStatus, filterUrgency, search]);
+
+  const statusCounts = useMemo(() => {
+    const counts = {};
+    (Array.isArray(tasks) ? tasks : []).forEach((t) => {
+      const s = t?.status && TASK_STATUS_LABELS[t.status] ? t.status : 'todo';
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    return counts;
+  }, [tasks]);
 
   const stats = useMemo(() => {
     if (!summary) return { total: 0, open: 0, done: 0, reports: 0 };
@@ -395,6 +453,8 @@ const TodayTasksPage = () => {
             <p className="sss-muted mt-2 text-xs">Chargement des tâches du jour...</p>
           </div>
         )}
+
+        <StatusSummaryRow counts={statusCounts} loading={loading} />
 
         <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard title="Total" value={stats.total} hint="Actions du jour" icon={<FactCheckIcon />} color={SSS_COLORS.brand} loading={loading} variant="dark" />

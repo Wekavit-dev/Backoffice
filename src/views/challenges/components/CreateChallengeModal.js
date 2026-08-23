@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Button,
   Box,
   Typography,
   IconButton,
@@ -20,6 +19,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import ConfirmDialog from './ConfirmDialog';
+import { PrimaryButton, GhostButton, fieldSx, CHALLENGE_ACCENT } from './ChallengeLayout';
 import {
   FREQUENCIES,
   GAME_MODES,
@@ -146,21 +146,28 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
         }}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 2 } }}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 24px 48px rgba(17, 24, 39, 0.12)'
+          }
+        }}
       >
-      <DialogTitle sx={{ pb: 1 }}>
+        <DialogTitle sx={{ pb: 1, bgcolor: '#fcfcff', borderBottom: '1px solid', borderColor: 'divider' }}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={1.5}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                bgcolor: 'primary.main',
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                bgcolor: CHALLENGE_ACCENT,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'white'
+                color: 'white',
+                boxShadow: `0 8px 20px ${CHALLENGE_ACCENT}55`
               }}
             >
               <TrophyIcon />
@@ -181,7 +188,7 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
-        <DialogContent dividers sx={{ pt: 2 }}>
+        <DialogContent dividers sx={{ pt: 2, bgcolor: '#fafbff' }}>
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
               {error}
@@ -197,6 +204,7 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
                 value={form.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 required
+                sx={fieldSx}
               />
             </Grid>
 
@@ -325,6 +333,7 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
                 onChange={(e) => handleChange('endDate', e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 required
+                sx={fieldSx}
               />
             </Grid>
 
@@ -364,13 +373,11 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={handleRequestClose} variant="outlined">
-            Annuler
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            {isSubmitting ? 'Création...' : 'Créer le brouillon'}
-          </Button>
+        <DialogActions sx={{ px: 3, py: 2.5, bgcolor: '#fff', borderTop: '1px solid', borderColor: 'divider' }}>
+          <GhostButton onClick={handleRequestClose}>Annuler</GhostButton>
+          <PrimaryButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Création…' : 'Créer le brouillon'}
+          </PrimaryButton>
         </DialogActions>
       </form>
       </Dialog>

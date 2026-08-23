@@ -1,36 +1,12 @@
 /* eslint-disable no-unused-vars */
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Grid, IconButton, Tooltip } from '@mui/material';
 import {
-  Typography,
-  Grid,
-  Box,
-  Chip,
-  TextField,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Card,
-  IconButton,
-  Tooltip,
-  Alert
-} from '@mui/material';
-import {
-  Search as SearchIcon,
-  FilterList as FilterIcon,
   Add as AddIcon,
   ChevronLeft as ChevronLeftIcon,
   EmojiEvents as TrophyIcon,
-  Settings as SettingsIcon
+  LightbulbOutlined as TipIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { IconTrophy, IconUsers, IconEye, IconFileText } from '@tabler/icons';
 import { toast } from 'react-toastify';
@@ -40,13 +16,28 @@ import MainCard from 'ui-component/cards/MainCard';
 import { AppContext } from 'AppContext';
 import ChallengesApi from 'api/challenges/challenges';
 import locekdSavesApi from 'api/saves/locked';
-import SummaryCard from 'views/admin/components/SummaryCard';
 import CreateChallengeModal from './components/CreateChallengeModal';
 import ChallengeDetailPanel from './components/ChallengeDetailPanel';
 import {
+  PageToolbar,
+  KpiCard,
+  FilterBar,
+  FilterSelect,
+  PrimaryButton,
+  GhostButton,
+  PageFrame,
+  InfoBanner,
+  ChallengeListItem,
+  EmptyState,
+  DetailWorkspace,
+  KpiSkeletonGrid,
+  ListSkeleton,
+  StatusBadge,
+  CHALLENGE_ACCENT,
+  SSS_COLORS
+} from './components/ChallengeLayout';
+import {
   PUBLISH_OPTIONS,
-  STATUS_COLORS,
-  STATUS_LABELS,
   STATUS_OPTIONS,
   extractData,
   extractList,
@@ -61,6 +52,7 @@ const ChallengesPage = () => {
 
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [publishFilter, setPublishFilter] = useState('all');
@@ -70,7 +62,6 @@ const ChallengesPage = () => {
   const [mobileShowPanel, setMobileShowPanel] = useState(false);
   const [savingTypes, setSavingTypes] = useState([]);
   const [devises, setDevises] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0 });
 
   const fetchMeta = useCallback(async () => {
     if (!globalState?.key) return;
@@ -86,36 +77,39 @@ const ChallengesPage = () => {
     }
   }, [globalState?.key]);
 
-  const fetchChallenges = useCallback(async () => {
-    if (!globalState?.key) return;
-    setLoading(true);
-    try {
-      const params = { page: 1, limit: 100 };
-      if (statusFilter !== 'all') params.status = statusFilter;
-      if (publishFilter !== 'all') params.isPublished = publishFilter;
+  const fetchChallenges = useCallback(
+    async (showLoading = true) => {
+      if (!globalState?.key) return;
+      if (showLoading) setLoading(true);
+      else setRefreshing(true);
 
-      const response = await ChallengesApi.listChallenges(params, globalState.key);
-      const list = extractList(response);
-      const pageInfo = response?.data?.pagination;
+      try {
+        const params = { page: 1, limit: 100 };
+        if (statusFilter !== 'all') params.status = statusFilter;
+        if (publishFilter !== 'all') params.isPublished = publishFilter;
 
-      setChallenges(list);
-      if (pageInfo) setPagination(pageInfo);
+        const response = await ChallengesApi.listChallenges(params, globalState.key);
+        const list = extractList(response);
+        setChallenges(list);
 
-      setSelectedChallenge((prev) => {
-        if (!list.length) return null;
-        if (prev) {
-          const stillThere = list.find((item) => item._id === prev._id);
-          return stillThere || list[0];
-        }
-        return list[0];
-      });
-    } catch (error) {
-      toast.error(error?.data?.error || 'Impossible de charger les défis', { position: 'top-right' });
-      setChallenges([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [globalState?.key, statusFilter, publishFilter]);
+        setSelectedChallenge((prev) => {
+          if (!list.length) return null;
+          if (prev) {
+            const stillThere = list.find((item) => item._id === prev._id);
+            return stillThere || list[0];
+          }
+          return list[0];
+        });
+      } catch (error) {
+        toast.error(error?.data?.error || 'Impossible de charger les défis', { position: 'top-right' });
+        setChallenges([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [globalState?.key, statusFilter, publishFilter]
+  );
 
   useEffect(() => {
     fetchMeta();
@@ -140,16 +134,9 @@ const ChallengesPage = () => {
 
   const stats = useMemo(() => {
     const published = challenges.filter((c) => c.isPublished).length;
-    const drafts = challenges.filter((c) => !c.isPublished || c.status === 'draft').length;
     const active = challenges.filter((c) => c.status === 'active').length;
     const participants = challenges.reduce((sum, c) => sum + (Number(c.participantCount) || 0), 0);
-    return {
-      total: challenges.length,
-      published,
-      drafts,
-      active,
-      participants
-    };
+    return { total: challenges.length, published, active, participants };
   }, [challenges]);
 
   const handleCreate = async (payload, resetForm) => {
@@ -164,7 +151,7 @@ const ChallengesPage = () => {
       toast.success('Défi créé en brouillon', { position: 'top-right' });
       setAddModalOpen(false);
       resetForm?.();
-      await fetchChallenges();
+      await fetchChallenges(false);
       const created = extractData(response);
       if (created) {
         setSelectedChallenge(created);
@@ -179,10 +166,9 @@ const ChallengesPage = () => {
 
   const handleUpdated = (updated) => {
     if (!updated?._id) {
-      fetchChallenges();
+      fetchChallenges(false);
       return;
     }
-
     setChallenges((prev) => prev.map((item) => (item._id === updated._id ? { ...item, ...updated } : item)));
     setSelectedChallenge((prev) => (prev?._id === updated._id ? { ...prev, ...updated } : prev));
   };
@@ -192,244 +178,163 @@ const ChallengesPage = () => {
     setMobileShowPanel(true);
   };
 
+  const getProgress = (challenge) =>
+    challenge.goalAmount
+      ? Math.min(100, Math.round((Number(challenge.totalSaved || 0) / Number(challenge.goalAmount)) * 100))
+      : 0;
+
   if (loading && !challenges.length) {
     return (
-      <MainCard title="Tous les défis d’épargne">
-        <Box>
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            {[1, 2, 3, 4].map((item) => (
-              <Grid item xs={12} sm={6} md={3} key={item}>
-                <Card>
-                  <Box sx={{ p: 3 }}>
-                    <Skeleton variant="text" width="60%" height={20} sx={{ mb: 1 }} />
-                    <Skeleton variant="text" width="40%" height={32} />
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-          <Skeleton variant="rounded" height={420} />
-        </Box>
+      <MainCard border={false} content={false}>
+        <PageFrame className="p-1 sm:p-2">
+          <KpiSkeletonGrid />
+          <ListSkeleton />
+        </PageFrame>
       </MainCard>
     );
   }
 
   return (
-    <MainCard title="Tous les défis d’épargne">
-      <Box>
-        <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-          Créez un défi en brouillon, configurez-le, puis rendez-le visible dans l’app. Le classement et les versements
-          manqués se gèrent depuis le panneau de droite.
-        </Alert>
+    <MainCard border={false} content={false}>
+      <PageFrame className="p-1 sm:p-2">
+        <PageToolbar
+          icon={<TrophyIcon />}
+          title="Défis d’épargne"
+          subtitle="Créez, configurez et publiez des défis. Gérez le classement et les versements manqués depuis le panneau de détail."
+          color={CHALLENGE_ACCENT}
+          actions={
+            <>
+              <GhostButton startIcon={<RefreshIcon />} onClick={() => fetchChallenges(false)} disabled={refreshing}>
+                {refreshing ? '…' : 'Actualiser'}
+              </GhostButton>
+              <PrimaryButton startIcon={<AddIcon />} onClick={() => setAddModalOpen(true)}>
+                Nouveau défi
+              </PrimaryButton>
+            </>
+          }
+        />
 
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard title="Tous les défis" amount={stats.total} icon={<IconTrophy />} color="#1976d2" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard title="Visibles dans l’app" amount={stats.published} icon={<IconEye />} color="#2e7d32" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard title="En cours" amount={stats.active} icon={<IconFileText />} color="#ed6c02" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard title="Participants" amount={stats.participants} icon={<IconUsers />} color="#7b1fa2" />
-          </Grid>
-        </Grid>
+        <InfoBanner icon={<TipIcon />} color={CHALLENGE_ACCENT}>
+          Workflow recommandé : créer un brouillon → configurer règles et récompenses → rendre visible dans l’app.
+        </InfoBanner>
 
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-          <TextField
-            size="small"
-            placeholder="Rechercher un défi..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-            sx={{ minWidth: 260 }}
+        <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 animate-sss-fade-up">
+          <KpiCard title="Tous les défis" value={stats.total} icon={<IconTrophy />} color={SSS_COLORS.brand} />
+          <KpiCard title="Visibles dans l’app" value={stats.published} icon={<IconEye />} color={SSS_COLORS.success} />
+          <KpiCard title="En cours" value={stats.active} icon={<IconFileText />} color={SSS_COLORS.warning} />
+          <KpiCard title="Participants" value={stats.participants} icon={<IconUsers />} color={SSS_COLORS.info} />
+        </div>
+
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Rechercher un défi, un type, un mot-clé…"
+        >
+          <FilterSelect
+            label="État"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            options={STATUS_OPTIONS}
           />
-
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>État</InputLabel>
-            <Select
-              value={statusFilter}
-              label="État"
-              onChange={(e) => setStatusFilter(e.target.value)}
-              startAdornment={<FilterIcon sx={{ mr: 1, fontSize: '1rem', color: 'action.active' }} />}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Visibilité</InputLabel>
-            <Select value={publishFilter} label="Visibilité" onChange={(e) => setPublishFilter(e.target.value)}>
-              {PUBLISH_OPTIONS.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddModalOpen(true)}>
-            Nouveau défi
-          </Button>
-
-          <Box sx={{ ml: 'auto' }}>
-            <Chip
-              icon={<TrophyIcon sx={{ fontSize: '1rem !important' }} />}
-              label={`${filteredChallenges.length} défi${filteredChallenges.length > 1 ? 's' : ''}`}
-              variant="outlined"
-              color="primary"
-            />
-          </Box>
-        </Box>
+          <FilterSelect
+            label="Visibilité"
+            value={publishFilter}
+            onChange={(e) => setPublishFilter(e.target.value)}
+            options={PUBLISH_OPTIONS}
+          />
+        </FilterBar>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} xl={5} sx={{ display: { xs: mobileShowPanel ? 'none' : 'block', xl: 'block' } }}>
-            <TableContainer component={Card}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Défi</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>État</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Participants</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    [1, 2, 3, 4, 5].map((row) => (
-                      <TableRow key={row}>
-                        {[1, 2, 3].map((cell) => (
-                          <TableCell key={cell}>
-                            <Skeleton variant="text" width="100%" height={20} />
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : filteredChallenges.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center">
-                        <Box sx={{ py: 4 }}>
-                          <TrophyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Aucun défi trouvé avec ces critères
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredChallenges.map((challenge) => {
-                      const selected = selectedChallenge?._id === challenge._id;
-                      return (
-                        <TableRow
-                          key={challenge._id}
-                          hover
+          <Grid
+            item
+            xs={12}
+            xl={5}
+            sx={{ display: { xs: mobileShowPanel ? 'none' : 'block', xl: 'block' } }}
+          >
+            <div className="sss-surface flex max-h-[calc(100vh-280px)] min-h-[420px] flex-col overflow-hidden xl:max-h-[calc(100vh-240px)]">
+              <div className="border-b border-sss-border px-4 py-3.5 sm:px-5">
+                <h2 className="m-0 text-sm font-bold text-sss-text">Vos défis</h2>
+                <p className="sss-muted m-0 mt-0.5 text-xs">
+                  {filteredChallenges.length} défi{filteredChallenges.length > 1 ? 's affichés' : ' affiché'}
+                </p>
+              </div>
+
+              <div className="flex-1 space-y-2.5 overflow-y-auto p-3 sm:p-4">
+                {loading ? (
+                  <ListSkeleton />
+                ) : filteredChallenges.length === 0 ? (
+                  <EmptyState
+                    icon={<TrophyIcon />}
+                    title="Aucun défi trouvé"
+                    description="Ajustez vos filtres ou créez votre premier défi d’épargne."
+                    action={
+                      <PrimaryButton startIcon={<AddIcon />} onClick={() => setAddModalOpen(true)}>
+                        Créer un défi
+                      </PrimaryButton>
+                    }
+                  />
+                ) : (
+                  filteredChallenges.map((challenge) => {
+                    const selected = selectedChallenge?._id === challenge._id;
+                    const progress = getProgress(challenge);
+                    return (
+                      <div key={challenge._id} className="space-y-2">
+                        <ChallengeListItem
+                          name={challenge.name}
+                          subtitle={`${getGameModeLabel(challenge.gameMode)} · ${formatAmount(challenge.goalAmount, challenge.idDevise)}`}
+                          meta={`${formatDate(challenge.startDate)} → ${formatDate(challenge.endDate)}`}
+                          progress={progress}
+                          participants={challenge.participantCount || 0}
+                          maxParticipants={challenge.maxParticipants}
                           selected={selected}
                           onClick={() => handleSelect(challenge)}
-                          sx={{
-                            cursor: 'pointer',
-                            '&.Mui-selected': {
-                              bgcolor: 'primary.50',
-                              '&:hover': { bgcolor: 'primary.100' }
-                            }
-                          }}
-                        >
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              {challenge.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              {getGameModeLabel(challenge.gameMode)} · {formatAmount(challenge.goalAmount, challenge.idDevise)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {formatDate(challenge.startDate)} → {formatDate(challenge.endDate)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box display="flex" flexDirection="column" gap={0.5} alignItems="flex-start">
-                              <Chip
-                                size="small"
-                                label={STATUS_LABELS[challenge.status] || challenge.status}
-                                color={STATUS_COLORS[challenge.status] || 'default'}
-                              />
-                              <Chip
-                                size="small"
-                                variant="outlined"
-                                label={challenge.isPublished ? 'Visible' : 'Masqué'}
-                                color={challenge.isPublished ? 'success' : 'default'}
-                              />
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight={600}>
-                              {challenge.participantCount || 0}
-                            </Typography>
-                            {challenge.maxParticipants > 0 && (
-                              <Typography variant="caption" color="text.secondary">
-                                / {challenge.maxParticipants}
-                              </Typography>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                        />
+                        {selected && (
+                          <div className="px-1">
+                            <StatusBadge
+                              status={challenge.status}
+                              published={challenge.isPublished}
+                              featured={challenge.featured}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </Grid>
 
-          <Grid item xs={12} xl={7} sx={{ display: { xs: mobileShowPanel ? 'block' : 'none', xl: 'block' } }}>
-            <Card sx={{ overflow: 'hidden', border: '1px solid', borderColor: 'divider', minHeight: { xs: 'auto', xl: 560 } }}>
-              <Box
-                sx={{
-                  px: 2.5,
-                  py: 2,
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'grey.50',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 2
-                }}
-              >
-                <Box display="flex" alignItems="center" gap={1.5}>
-                  {mobileShowPanel && (
-                    <Tooltip title="Retour à la liste">
-                      <IconButton size="small" onClick={() => setMobileShowPanel(false)} sx={{ display: { xl: 'none' } }}>
-                        <ChevronLeftIcon />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <SettingsIcon color="primary" sx={{ fontSize: 20 }} />
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight={700}>
-                      Détail du défi
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {selectedChallenge ? selectedChallenge.name : 'Sélectionnez un défi dans le tableau'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
+          <Grid
+            item
+            xs={12}
+            xl={7}
+            sx={{ display: { xs: mobileShowPanel ? 'block' : 'none', xl: 'block' } }}
+          >
+            <DetailWorkspace className="min-h-[420px] xl:min-h-[calc(100vh-240px)]">
+              <div className="admin-panel-header flex items-center gap-2 border-b border-sss-border px-4 py-3 sm:px-5">
+                {mobileShowPanel && (
+                  <Tooltip title="Retour à la liste">
+                    <IconButton size="small" onClick={() => setMobileShowPanel(false)} sx={{ display: { xl: 'none' } }}>
+                      <ChevronLeftIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+                <div className="min-w-0">
+                  <p className="m-0 text-[0.68rem] font-bold uppercase tracking-wider text-sss-muted">Détail</p>
+                  <h2 className="m-0 truncate text-base font-bold text-sss-text">
+                    {selectedChallenge?.name || 'Sélectionnez un défi'}
+                  </h2>
+                </div>
+              </div>
 
               <ChallengeDetailPanel
                 challenge={selectedChallenge}
                 token={globalState?.key}
                 onUpdated={handleUpdated}
               />
-            </Card>
+            </DetailWorkspace>
           </Grid>
         </Grid>
 
@@ -441,7 +346,7 @@ const ChallengesPage = () => {
           savingTypes={savingTypes}
           devises={devises}
         />
-      </Box>
+      </PageFrame>
     </MainCard>
   );
 };

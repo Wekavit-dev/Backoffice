@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Button,
   Box,
   Typography,
   Grid,
@@ -21,6 +20,7 @@ import {
   Alert
 } from '@mui/material';
 import ConfirmDialog from './ConfirmDialog';
+import { PrimaryButton, GhostButton, fieldSx, SSS_COLORS } from './ChallengeLayout';
 import {
   GAME_MODES,
   RULE_CATEGORY_LABELS,
@@ -115,9 +115,9 @@ const EditRuleTemplateModal = ({ open, rule, onClose, onSubmit, isSubmitting }) 
         }}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 2 } }}
+        PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}
       >
-      <DialogTitle>
+      <DialogTitle sx={{ bgcolor: '#fcfcff', borderBottom: '1px solid', borderColor: 'divider' }}>
         <Typography variant="h6" fontWeight={700}>
           Modifier la règle
         </Typography>
@@ -126,7 +126,7 @@ const EditRuleTemplateModal = ({ open, rule, onClose, onSubmit, isSubmitting }) 
         </Typography>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ bgcolor: '#fafbff' }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
             {error}
@@ -141,6 +141,7 @@ const EditRuleTemplateModal = ({ open, rule, onClose, onSubmit, isSubmitting }) 
               label="Nom affiché"
               value={form.name}
               onChange={(e) => handleChange('name', e.target.value)}
+              sx={fieldSx}
             />
           </Grid>
           <Grid item xs={12}>
@@ -153,6 +154,7 @@ const EditRuleTemplateModal = ({ open, rule, onClose, onSubmit, isSubmitting }) 
               multiline
               minRows={3}
               helperText="Expliquez clairement à quoi sert cette règle et comment elle impacte le score ou le déroulement."
+              sx={fieldSx}
             />
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -236,7 +238,7 @@ const EditRuleTemplateModal = ({ open, rule, onClose, onSubmit, isSubmitting }) 
             </FormControl>
           </Grid>
           <Grid item xs={12}>
-            <Alert severity="info" sx={{ borderRadius: 2 }}>
+            <Alert severity="info" sx={{ borderRadius: 2, bgcolor: `${SSS_COLORS.brand}0a`, color: 'text.secondary' }}>
               Plage actuelle : {formatRuleBounds({ min: form.min, max: form.max === '' ? null : form.max })} · Catégorie :{' '}
               {RULE_CATEGORY_LABELS[rule.category] || rule.category}
             </Alert>
@@ -244,13 +246,11 @@ const EditRuleTemplateModal = ({ open, rule, onClose, onSubmit, isSubmitting }) 
         </Grid>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleRequestClose} variant="outlined">
-          Annuler
-        </Button>
-        <Button onClick={handleSave} variant="contained" disabled={isSubmitting}>
-          {isSubmitting ? 'Enregistrement...' : 'Enregistrer la règle'}
-        </Button>
+      <DialogActions sx={{ px: 3, py: 2.5, bgcolor: '#fff' }}>
+        <GhostButton onClick={handleRequestClose}>Annuler</GhostButton>
+        <PrimaryButton onClick={handleSave} disabled={isSubmitting}>
+          {isSubmitting ? 'Enregistrement…' : 'Enregistrer la règle'}
+        </PrimaryButton>
       </DialogActions>
       </Dialog>
 

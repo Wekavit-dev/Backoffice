@@ -1,15 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Box
-} from '@mui/material';
+import { Dialog, DialogContent, DialogActions } from '@mui/material';
 import { WarningAmber as WarningIcon } from '@mui/icons-material';
+import { PrimaryButton, GhostButton, SSS_COLORS } from './ChallengeLayout';
+
+const toneMap = {
+  primary: { bg: `${SSS_COLORS.brand}14`, color: SSS_COLORS.brand },
+  success: { bg: SSS_COLORS.successSoft, color: SSS_COLORS.success },
+  warning: { bg: SSS_COLORS.warningSoft, color: SSS_COLORS.warning },
+  error: { bg: SSS_COLORS.errorSoft, color: SSS_COLORS.error }
+};
 
 const ConfirmDialog = ({
   open,
@@ -21,50 +21,51 @@ const ConfirmDialog = ({
   onConfirm,
   onCancel,
   loading = false
-}) => (
-  <Dialog
-    open={open}
-    onClose={loading ? undefined : onCancel}
-    maxWidth="xs"
-    fullWidth
-    PaperProps={{ sx: { borderRadius: 2 } }}
-  >
-    <DialogTitle sx={{ pb: 1 }}>
-      <Box display="flex" alignItems="center" gap={1.5}>
-        <Box
+}) => {
+  const tone = toneMap[confirmColor] || toneMap.warning;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={loading ? undefined : onCancel}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}
+    >
+      <DialogContent className="!p-0">
+        <div className="border-b border-sss-border bg-[#fcfcff] px-5 py-4">
+          <div className="flex items-start gap-3">
+            <span
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: tone.bg, color: tone.color }}
+            >
+              <WarningIcon />
+            </span>
+            <div>
+              <h3 className="m-0 text-base font-bold text-sss-text">{title}</h3>
+              <p className="sss-muted m-0 mt-2 leading-relaxed">{message}</p>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+      <DialogActions className="!border-t !border-sss-border !bg-white !px-5 !py-4">
+        <GhostButton onClick={onCancel} disabled={loading}>
+          {cancelLabel}
+        </GhostButton>
+        <PrimaryButton
+          onClick={onConfirm}
+          disabled={loading}
           sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 2,
-            bgcolor: confirmColor === 'error' ? 'error.light' : 'warning.light',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: confirmColor === 'error' ? 'error.dark' : 'warning.dark'
+            bgcolor: tone.color,
+            '&:hover': { bgcolor: tone.color, filter: 'brightness(0.92)' }
           }}
         >
-          <WarningIcon />
-        </Box>
-        <Typography variant="h6" fontWeight={700}>
-          {title}
-        </Typography>
-      </Box>
-    </DialogTitle>
-    <DialogContent>
-      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-        {message}
-      </Typography>
-    </DialogContent>
-    <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-      <Button onClick={onCancel} variant="outlined" disabled={loading}>
-        {cancelLabel}
-      </Button>
-      <Button onClick={onConfirm} variant="contained" color={confirmColor} disabled={loading}>
-        {loading ? '...' : confirmLabel}
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+          {loading ? '…' : confirmLabel}
+        </PrimaryButton>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 ConfirmDialog.propTypes = {
   open: PropTypes.bool,

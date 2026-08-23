@@ -6,7 +6,6 @@ import {
   Tabs,
   Tab,
   TextField,
-  Button,
   Chip,
   Alert,
   FormControl,
@@ -21,8 +20,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  IconButton,
-  LinearProgress
+  IconButton
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -39,12 +37,19 @@ import RankingPanel from './RankingPanel';
 import MissedPaymentsPanel from './MissedPaymentsPanel';
 import ConfirmDialog from './ConfirmDialog';
 import {
+  EmptyState,
+  StatusBadge,
+  DetailHeader,
+  fieldSx,
+  PrimaryButton,
+  GhostButton,
+  SSS_COLORS
+} from './ChallengeLayout';
+import {
   FREQUENCIES,
   GAME_MODES,
   PRIZE_TYPE_LABELS,
   RULE_CATEGORY_LABELS,
-  STATUS_COLORS,
-  STATUS_LABELS,
   VALUE_TYPE_LABELS,
   extractData,
   formatAmount,
@@ -59,7 +64,7 @@ import {
 
 const TabPanel = ({ value, index, children }) => {
   if (value !== index) return null;
-  return <Box sx={{ p: 2.5 }}>{children}</Box>;
+  return <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>;
 };
 
 TabPanel.propTypes = {
@@ -157,15 +162,11 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
 
   if (!challenge) {
     return (
-      <Box sx={{ p: 5, textAlign: 'center' }}>
-        <TrophyIcon sx={{ fontSize: 56, color: 'primary.main', mb: 2, opacity: 0.7 }} />
-        <Typography variant="h6" gutterBottom>
-          Sélectionnez un défi
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 380, mx: 'auto' }}>
-          Cliquez sur une ligne pour voir les infos, le classement, les versements manqués, les règles et les récompenses.
-        </Typography>
-      </Box>
+      <EmptyState
+        icon={<TrophyIcon />}
+        title="Sélectionnez un défi"
+        description="Choisissez un défi dans la liste pour voir le classement, les règles, les récompenses et la visibilité."
+      />
     );
   }
 
@@ -393,65 +394,89 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 520 }}>
-      <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'grey.50' }}>
+      <DetailHeader>
         <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={2} flexWrap="wrap">
-          <Box>
-            <Typography variant="h6" fontWeight={700}>
+          <Box className="min-w-0 flex-1">
+            <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.02em' }}>
               {challenge.name}
             </Typography>
-            <Typography variant="caption" color="text.secondary" display="block">
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {getGameModeLabel(challenge.gameMode)} · {formatDate(challenge.startDate)} → {formatDate(challenge.endDate)}
             </Typography>
-            <Box display="flex" gap={0.75} mt={1} flexWrap="wrap">
-              <Chip
-                size="small"
-                label={STATUS_LABELS[challenge.status] || challenge.status}
-                color={STATUS_COLORS[challenge.status] || 'default'}
-              />
-              <Chip
-                size="small"
-                label={challenge.isPublished ? 'Visible dans l’app' : 'Masqué'}
-                color={challenge.isPublished ? 'success' : 'default'}
-                variant="outlined"
-              />
-              {challenge.featured && <Chip size="small" label="Mis en avant" color="secondary" />}
+            <Box mt={1.5}>
+              <StatusBadge status={challenge.status} published={challenge.isPublished} featured={challenge.featured} />
             </Box>
           </Box>
 
-          <Button
-            variant="contained"
-            color={challenge.isPublished ? 'warning' : 'success'}
+          <PrimaryButton
             startIcon={challenge.isPublished ? <UnpublishIcon /> : <PublishIcon />}
             onClick={() => setPublishConfirmOpen(true)}
             disabled={publishing || challenge.status === 'completed' || challenge.status === 'cancelled'}
+            sx={{
+              bgcolor: challenge.isPublished ? SSS_COLORS.warning : SSS_COLORS.success,
+              '&:hover': {
+                bgcolor: challenge.isPublished ? '#b7791f' : '#2d8a66'
+              }
+            }}
           >
-            {publishing ? '...' : challenge.isPublished ? 'Masquer de l’app' : 'Rendre visible'}
-          </Button>
+            {publishing ? '…' : challenge.isPublished ? 'Masquer de l’app' : 'Rendre visible'}
+          </PrimaryButton>
         </Box>
 
-        <Box mt={2}>
-          <Box display="flex" justifyContent="space-between" mb={0.5}>
-            <Typography variant="caption" color="text.secondary">
+        <Box mt={3} className="rounded-2xl border border-sss-border bg-white/80 p-4 backdrop-blur-sm">
+          <Box display="flex" justifyContent="space-between" mb={1}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
               Progression · {challenge.participantCount || 0} participant
               {(challenge.participantCount || 0) > 1 ? 's' : ''}
             </Typography>
-            <Typography variant="caption" fontWeight={700} color="primary.main">
+            <Typography variant="caption" fontWeight={800} sx={{ color: SSS_COLORS.brand }}>
               {progress}%
             </Typography>
           </Box>
-          <LinearProgress variant="determinate" value={progress} sx={{ height: 6, borderRadius: 3 }} />
-          <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+          <div className="admin-progress-track">
+            <div className="admin-progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <Typography variant="caption" color="text.secondary" display="block" mt={1}>
             {formatAmount(challenge.totalSaved, challenge.idDevise)} / {formatAmount(challenge.goalAmount, challenge.idDevise)}
           </Typography>
         </Box>
-      </Box>
+      </DetailHeader>
 
       <Tabs
         value={tab}
         onChange={(_, value) => setTab(value)}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ borderBottom: 1, borderColor: 'divider', px: 1 }}
+        sx={{
+          px: { xs: 1.5, sm: 2 },
+          pt: 1.5,
+          minHeight: 48,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          bgcolor: '#fcfcff',
+          '& .MuiTabs-indicator': { display: 'none' },
+          '& .MuiTab-root': {
+            minHeight: 36,
+            py: 0.75,
+            px: 1.75,
+            mr: 0.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '0.8125rem',
+            borderRadius: 2,
+            color: 'text.secondary',
+            transition: 'all 0.2s ease',
+            '&.Mui-selected': {
+              bgcolor: SSS_COLORS.brand,
+              color: '#fff',
+              boxShadow: `0 4px 12px ${SSS_COLORS.brand}40`
+            },
+            '&:hover:not(.Mui-selected)': {
+              bgcolor: `${SSS_COLORS.brand}0a`,
+              color: SSS_COLORS.brand
+            }
+          }
+        }}
       >
         <Tab label="Infos" />
         <Tab label="Classement" />
@@ -599,14 +624,9 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
           </Grid>
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon />}
-              onClick={handleSaveInfos}
-              disabled={saving || challenge.status === 'completed'}
-            >
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
+            <PrimaryButton startIcon={<SaveIcon />} onClick={handleSaveInfos} disabled={saving || challenge.status === 'completed'}>
+              {saving ? 'Enregistrement…' : 'Enregistrer'}
+            </PrimaryButton>
           </Box>
         </TabPanel>
 
@@ -642,13 +662,8 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
             <Accordion
               key={rule.slug}
               disableGutters
-              sx={{
-                mb: 1,
-                '&:before': { display: 'none' },
-                borderRadius: '8px !important',
-                border: '1px solid',
-                borderColor: 'divider'
-              }}
+              className="admin-accordion mb-2 !rounded-2xl"
+              sx={{ '&:before': { display: 'none' } }}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={1} gap={1}>
@@ -753,14 +768,9 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
           ))}
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon />}
-              onClick={handleSaveRules}
-              disabled={saving || challenge.status === 'completed'}
-            >
-              {saving ? 'Enregistrement...' : 'Enregistrer le fonctionnement'}
-            </Button>
+            <PrimaryButton startIcon={<SaveIcon />} onClick={handleSaveRules} disabled={saving || challenge.status === 'completed'}>
+              {saving ? 'Enregistrement…' : 'Enregistrer le fonctionnement'}
+            </PrimaryButton>
           </Box>
         </TabPanel>
 
@@ -778,9 +788,9 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
               />
             </Grid>
             <Grid item xs={12} sm={6} display="flex" alignItems="center" justifyContent="flex-end">
-              <Button startIcon={<AddIcon />} onClick={handleAddPrize} variant="outlined" size="small">
+              <GhostButton startIcon={<AddIcon />} onClick={handleAddPrize} size="small">
                 Ajouter une récompense
-              </Button>
+              </GhostButton>
             </Grid>
           </Grid>
 
@@ -793,14 +803,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
           {prizes.map((prize, index) => (
             <Box
               key={`prize-${index}`}
-              sx={{
-                p: 2,
-                mb: 1.5,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 2,
-                bgcolor: 'background.paper'
-              }}
+              className="admin-preset-card mb-3"
             >
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
                 <Typography variant="subtitle2" fontWeight={700}>
@@ -872,9 +875,9 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
           <Divider sx={{ my: 2 }} />
 
           <Box display="flex" justifyContent="flex-end">
-            <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSavePrizes} disabled={saving}>
-              {saving ? 'Enregistrement...' : 'Enregistrer les récompenses'}
-            </Button>
+            <PrimaryButton startIcon={<SaveIcon />} onClick={handleSavePrizes} disabled={saving}>
+              {saving ? 'Enregistrement…' : 'Enregistrer les récompenses'}
+            </PrimaryButton>
           </Box>
         </TabPanel>
       </Box>

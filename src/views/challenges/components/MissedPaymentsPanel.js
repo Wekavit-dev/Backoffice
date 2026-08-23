@@ -6,13 +6,10 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Chip,
-  Button,
   Skeleton,
-  Alert,
   Tooltip
 } from '@mui/material';
 import {
@@ -23,6 +20,16 @@ import {
 import { toast } from 'react-toastify';
 import ChallengesApi from 'api/challenges/challenges';
 import ConfirmDialog from './ConfirmDialog';
+import {
+  TableShell,
+  tableHeadCellSx,
+  tableBodyCellSx,
+  GhostButton,
+  PrimaryButton,
+  InfoBanner,
+  EmptyState,
+  SSS_COLORS
+} from './ChallengeLayout';
 import {
   formatDate,
   formatDateTime,
@@ -120,10 +127,10 @@ const MissedPaymentsPanel = ({ challenge, token }) => {
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2} gap={2} flexWrap="wrap">
+    <Box className="animate-sss-fade-up">
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2.5} gap={2} flexWrap="wrap">
         <Box>
-          <Typography variant="subtitle1" fontWeight={700}>
+          <Typography variant="subtitle1" fontWeight={800}>
             Versements manqués
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -131,61 +138,52 @@ const MissedPaymentsPanel = ({ challenge, token }) => {
           </Typography>
         </Box>
         <Box display="flex" gap={1} flexWrap="wrap">
-          <Button size="small" startIcon={<RefreshIcon />} variant="outlined" onClick={loadMissed}>
+          <GhostButton size="small" startIcon={<RefreshIcon />} onClick={loadMissed}>
             Actualiser
-          </Button>
-          <Button
-            size="small"
-            startIcon={<CheckIcon />}
-            variant="contained"
-            onClick={handleCheck}
-            disabled={checking}
-          >
-            {checking ? 'Vérification...' : 'Lancer une vérification'}
-          </Button>
+          </GhostButton>
+          <PrimaryButton size="small" startIcon={<CheckIcon />} onClick={handleCheck} disabled={checking}>
+            {checking ? 'Vérification…' : 'Lancer une vérification'}
+          </PrimaryButton>
         </Box>
       </Box>
 
-      <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
-        Un versement manqué apparaît quand un participant n’a pas payé à la date prévue (modes à échéances). Vous pouvez
-        l’annuler pour retirer la pénalité.
-      </Alert>
+      <InfoBanner color={SSS_COLORS.info}>
+        Un versement manqué apparaît quand un participant n’a pas payé à la date prévue. Vous pouvez l’annuler pour retirer la pénalité.
+      </InfoBanner>
 
       {items.length === 0 ? (
-        <Alert severity="success" sx={{ borderRadius: 2 }}>
-          Aucun versement manqué pour ce défi.
-        </Alert>
+        <EmptyState title="Aucun versement manqué" description="Tous les participants sont à jour pour ce défi." />
       ) : (
-        <TableContainer>
+        <TableShell>
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>Participant</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Échéance</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Détecté le</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Pénalité</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>État</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }} align="right">
+                <TableCell sx={tableHeadCellSx}>Participant</TableCell>
+                <TableCell sx={tableHeadCellSx}>Échéance</TableCell>
+                <TableCell sx={tableHeadCellSx}>Détecté le</TableCell>
+                <TableCell sx={tableHeadCellSx}>Pénalité</TableCell>
+                <TableCell sx={tableHeadCellSx}>État</TableCell>
+                <TableCell sx={tableHeadCellSx} align="right">
                   Action
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {items.map((item) => (
-                <TableRow key={String(item.missedPaymentId)} hover>
-                  <TableCell>
+                <TableRow key={String(item.missedPaymentId)} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                  <TableCell sx={tableBodyCellSx}>
                     <Typography variant="body2" fontWeight={600}>
                       {getMemberDisplayName(item.user)}
                     </Typography>
                   </TableCell>
-                  <TableCell>{formatDate(item.dueDate)}</TableCell>
-                  <TableCell>{formatDateTime(item.detectedAt)}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="error.main" fontWeight={600}>
+                  <TableCell sx={tableBodyCellSx}>{formatDate(item.dueDate)}</TableCell>
+                  <TableCell sx={tableBodyCellSx}>{formatDateTime(item.detectedAt)}</TableCell>
+                  <TableCell sx={tableBodyCellSx}>
+                    <Typography variant="body2" color="error.main" fontWeight={700}>
                       −{item.scorePenaltyApplied || 0} pts
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={tableBodyCellSx}>
                     <Chip
                       size="small"
                       label={item.waived ? 'Annulé' : 'À traiter'}
@@ -197,18 +195,18 @@ const MissedPaymentsPanel = ({ challenge, token }) => {
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell sx={tableBodyCellSx} align="right">
                     {!item.waived && (
                       <Tooltip title="Annuler ce manquement">
                         <span>
-                          <Button
+                          <GhostButton
                             size="small"
                             startIcon={<UndoIcon />}
                             disabled={waivingId === item.missedPaymentId}
                             onClick={() => setItemToWaive(item)}
                           >
                             Annuler
-                          </Button>
+                          </GhostButton>
                         </span>
                       </Tooltip>
                     )}
@@ -217,7 +215,7 @@ const MissedPaymentsPanel = ({ challenge, token }) => {
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </TableShell>
       )}
 
       <ConfirmDialog

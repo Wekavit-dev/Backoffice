@@ -6,15 +6,11 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Chip,
-  Button,
   Skeleton,
-  Alert,
   Avatar,
-  LinearProgress,
   Tooltip,
   IconButton
 } from '@mui/material';
@@ -26,6 +22,14 @@ import {
 import { toast } from 'react-toastify';
 import ChallengesApi from 'api/challenges/challenges';
 import ConfirmDialog from './ConfirmDialog';
+import {
+  TableShell,
+  tableHeadCellSx,
+  tableBodyCellSx,
+  GhostButton,
+  EmptyState,
+  SSS_COLORS
+} from './ChallengeLayout';
 import {
   MEMBER_STATUS_COLORS,
   MEMBER_STATUS_LABELS,
@@ -110,36 +114,37 @@ const RankingPanel = ({ challenge, token, onMemberAction }) => {
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
+    <Box className="animate-sss-fade-up">
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2.5} gap={2} flexWrap="wrap">
         <Box>
-          <Typography variant="subtitle1" fontWeight={700}>
+          <Typography variant="subtitle1" fontWeight={800} sx={{ letterSpacing: '-0.01em' }}>
             Classement des participants
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {ranking.length} personne{ranking.length > 1 ? 's' : ''} · scores et positions à jour
           </Typography>
         </Box>
-        <Button size="small" startIcon={<RefreshIcon />} onClick={loadRanking} variant="outlined">
+        <GhostButton size="small" startIcon={<RefreshIcon />} onClick={loadRanking}>
           Actualiser
-        </Button>
+        </GhostButton>
       </Box>
 
       {ranking.length === 0 ? (
-        <Alert severity="info" sx={{ borderRadius: 2 }}>
-          Personne n’a encore rejoint ce défi.
-        </Alert>
+        <EmptyState
+          title="Aucun participant"
+          description="Personne n’a encore rejoint ce défi. Publiez-le dans l’app pour attirer des participants."
+        />
       ) : (
-        <TableContainer>
+        <TableShell>
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Participant</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Épargné</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Points</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>État</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }} align="right">
+                <TableCell sx={tableHeadCellSx}>#</TableCell>
+                <TableCell sx={tableHeadCellSx}>Participant</TableCell>
+                <TableCell sx={tableHeadCellSx}>Épargné</TableCell>
+                <TableCell sx={tableHeadCellSx}>Points</TableCell>
+                <TableCell sx={tableHeadCellSx}>État</TableCell>
+                <TableCell sx={tableHeadCellSx} align="right">
                   Actions
                 </TableCell>
               </TableRow>
@@ -157,15 +162,15 @@ const RankingPanel = ({ challenge, token, onMemberAction }) => {
                   .toUpperCase();
 
                 return (
-                  <TableRow key={userId || row.rank} hover>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={700} color="primary.main">
+                  <TableRow key={userId || row.rank} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                    <TableCell sx={tableBodyCellSx}>
+                      <Typography variant="body2" fontWeight={800} sx={{ color: SSS_COLORS.brand }}>
                         {row.rank || '—'}
                       </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={tableBodyCellSx}>
                       <Box display="flex" alignItems="center" gap={1.25}>
-                        <Avatar sx={{ width: 32, height: 32, fontSize: 12, bgcolor: 'primary.main' }}>{initials || '?'}</Avatar>
+                        <Avatar sx={{ width: 34, height: 34, fontSize: 12, bgcolor: SSS_COLORS.brand }}>{initials || '?'}</Avatar>
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
                             {name}
@@ -178,24 +183,27 @@ const RankingPanel = ({ challenge, token, onMemberAction }) => {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={tableBodyCellSx}>
                       <Typography variant="body2" fontWeight={600}>
                         {formatAmount(row.totalContributed, challenge.idDevise)}
                       </Typography>
                       {challenge.goalAmount > 0 && (
-                        <LinearProgress
-                          variant="determinate"
-                          value={Math.min(100, Math.round((Number(row.totalContributed || 0) / Number(challenge.goalAmount)) * 100))}
-                          sx={{ mt: 0.5, height: 4, borderRadius: 2, maxWidth: 90 }}
-                        />
+                        <div className="admin-progress-track mt-1.5 max-w-[96px]">
+                          <div
+                            className="admin-progress-fill"
+                            style={{
+                              width: `${Math.min(100, Math.round((Number(row.totalContributed || 0) / Number(challenge.goalAmount)) * 100))}%`
+                            }}
+                          />
+                        </div>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={700}>
+                    <TableCell sx={tableBodyCellSx}>
+                      <Typography variant="body2" fontWeight={800}>
                         {Math.round(Number(row.score) || 0)}
                       </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={tableBodyCellSx}>
                       <Chip
                         size="small"
                         label={MEMBER_STATUS_LABELS[row.status] || row.status}
@@ -212,7 +220,7 @@ const RankingPanel = ({ challenge, token, onMemberAction }) => {
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell sx={tableBodyCellSx} align="right">
                       {row.status === 'disqualified' ? (
                         <Tooltip title="Réintégrer">
                           <span>
@@ -246,7 +254,7 @@ const RankingPanel = ({ challenge, token, onMemberAction }) => {
               })}
             </TableBody>
           </Table>
-        </TableContainer>
+        </TableShell>
       )}
 
       <ConfirmDialog

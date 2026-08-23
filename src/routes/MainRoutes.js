@@ -38,6 +38,10 @@ const SssPeople = Loadable(lazy(() => import('views/sss/People')));
 const SssPersonFiche = Loadable(lazy(() => import('views/sss/PersonFiche')));
 const SssSettings = Loadable(lazy(() => import('views/sss/Settings')));
 
+// Challenges
+const ChallengesPage = Loadable(lazy(() => import('views/challenges')));
+const ChallengesRulesPage = Loadable(lazy(() => import('views/challenges/Rules')));
+
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
 const UtilsColor = Loadable(lazy(() => import('views/utilities/Color')));
@@ -125,6 +129,16 @@ const MainRoutes = {
       path: 'sss/settings',
       element: <SssSettings />,
       title: 'Réglages d’accompagnement'
+    },
+    {
+      path: 'challenges',
+      element: <ChallengesPage />,
+      title: 'Tous les défis'
+    },
+    {
+      path: 'challenges/rules',
+      element: <ChallengesRulesPage />,
+      title: 'Comment fonctionnent les défis'
     },
     {
       path: 'savings',

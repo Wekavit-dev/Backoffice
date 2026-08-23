@@ -1,16 +1,60 @@
+/* eslint-disable no-unused-vars */
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-toastify';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Typography,
+  Grid,
+  Box,
+  Chip,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Skeleton,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Card,
+  LinearProgress,
+  Alert,
+  IconButton,
+  Tooltip
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  FilterList as FilterIcon,
+  Add as AddIcon,
+  Shield as ShieldIcon,
+  Settings as SettingsIcon,
+  ChevronLeft as ChevronLeftIcon
+} from '@mui/icons-material';
 import { AppContext } from 'AppContext';
 import { useAdminAccess } from 'hooks/useAdminAccess';
+import { IconUsers, IconUserCheck, IconShield, IconInbox } from '@tabler/icons';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+import MainCard from 'ui-component/cards/MainCard';
 import AdminsApi from 'api/admins/admins';
-import AdminHero from './components/AdminHero';
-import AdminTeamList from './components/AdminTeamList';
+import SummaryCard from './components/SummaryCard';
 import MenuAccessPanel from './components/MenuAccessPanel';
 import AddAdminModal from './components/AddAdminModal';
-import { Users, Shield, CheckCircle2, Wifi, ChevronRight, Sparkles } from 'lucide-react';
+import { getAvatarBgColor, getInitials, getMenuCoverage } from './utils/adminUi';
 
 const TOTAL_MENU_SLOTS = 27;
+
+const FILTER_OPTIONS = [
+  { value: 'all', label: 'Tous les profils' },
+  { value: 'verified', label: 'Vérifiés uniquement' },
+  { value: 'super', label: 'Super-administrateurs' },
+  { value: 'online', label: 'Connectés maintenant' }
+];
 
 const Administrator = () => {
   const { globalState } = useContext(AppContext);
@@ -43,7 +87,7 @@ const Administrator = () => {
         });
       }
     } catch (error) {
-      toast.error('Impossible de charger les administrateurs');
+      toast.error('Impossible de charger les administrateurs', { position: 'top-right' });
     } finally {
       setLoading(false);
     }
@@ -57,17 +101,14 @@ const Administrator = () => {
 
   const filteredAdmins = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-
     return admins.filter((admin) => {
       const matchesSearch =
         !q || admin.nom?.toLowerCase().includes(q) || admin.email?.toLowerCase().includes(q);
-
       const matchesFilter =
         filter === 'all' ||
         (filter === 'verified' && admin.verified) ||
         (filter === 'super' && admin.isSuperAdmin) ||
         (filter === 'online' && admin.connected);
-
       return matchesSearch && matchesFilter;
     });
   }, [admins, searchTerm, filter]);
@@ -89,7 +130,6 @@ const Administrator = () => {
         { nom: form.nom, email: form.email, password: form.password },
         globalState?.key
       );
-
       const ok =
         response?.status === 200 ||
         response?.status === 201 ||
@@ -97,17 +137,16 @@ const Administrator = () => {
         response?.data?.status === 201;
 
       if (ok) {
-        toast.success('Administrateur créé avec succès');
+        toast.success('Administrateur créé avec succès', { position: 'top-right' });
         setAddModalOpen(false);
         resetForm();
         await fetchData();
         setMobileShowPanel(true);
         return;
       }
-
-      toast.error("Erreur lors de la création de l'administrateur");
+      toast.error("Erreur lors de la création de l'administrateur", { position: 'top-right' });
     } catch (error) {
-      toast.error("Erreur lors de la création de l'administrateur");
+      toast.error("Erreur lors de la création de l'administrateur", { position: 'top-right' });
     } finally {
       setIsSubmitting(false);
     }
@@ -131,177 +170,321 @@ const Administrator = () => {
     setMobileShowPanel(true);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="admin-page relative pb-28 p-6 max-w-7xl mx-auto">
-        {/* Decorative gradient */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-indigo-500/10 to-transparent" />
-
-        {/* Loading overlay */}
-        <AnimatePresence>
-          {loading && !admins.length && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50"
-            >
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 flex items-center gap-4 shadow-xl">
-                <div className="h-8 w-8 animate-spin rounded-full border-3 border-indigo-600 border-t-transparent" />
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Chargement des administrateurs...
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="relative space-y-6">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
-                  Administration
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Gérez les administrateurs et leurs permissions
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Stats Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-4"
-          >
-            {[
-              { label: 'Total', value: stats.total, icon: Users, color: 'from-blue-500 to-indigo-600' },
-              { label: 'Vérifiés', value: stats.verified, icon: CheckCircle2, color: 'from-emerald-500 to-teal-600' },
-              { label: 'Connectés', value: stats.connected, icon: Wifi, color: 'from-cyan-500 to-blue-600' },
-              { label: 'Super Admins', value: stats.superAdmins, icon: Shield, color: 'from-purple-500 to-pink-600' },
-            ].map((stat, idx) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + idx * 0.05 }}
-                className={`bg-gradient-to-br ${stat.color} rounded-xl p-4 text-white shadow-lg`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium opacity-80">{stat.label}</p>
-                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  </div>
-                  <stat.icon className="h-6 w-6 opacity-80" />
-                </div>
-              </motion.div>
+  if (loading && !admins.length) {
+    return (
+      <MainCard title="Gestion des administrateurs">
+        <Box>
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            {[1, 2, 3, 4].map((item) => (
+              <Grid item xs={12} sm={6} md={3} key={item}>
+                <Card>
+                  <Box sx={{ p: 3 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                      <Box flex={1}>
+                        <Skeleton variant="text" width="60%" height={20} sx={{ mb: 1 }} />
+                        <Skeleton variant="text" width="40%" height={32} />
+                      </Box>
+                      <Skeleton variant="rounded" width={48} height={48} />
+                    </Box>
+                  </Box>
+                </Card>
+              </Grid>
             ))}
-          </motion.div>
+          </Grid>
+          <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
+            <Skeleton variant="rounded" width={300} height={40} />
+            <Skeleton variant="rounded" width={200} height={40} />
+          </Box>
+          <Skeleton variant="rounded" height={420} />
+        </Box>
+      </MainCard>
+    );
+  }
 
-          {/* Main Content */}
-          <AdminHero stats={stats} isSuperAdmin={isSuperAdmin} onAdd={() => setAddModalOpen(true)} />
+  return (
+    <MainCard title="Gestion des administrateurs">
+      <Box>
+        {!isSuperAdmin && (
+          <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+            Mode consultation — seuls les super-administrateurs peuvent créer des profils et modifier les droits d&apos;accès.
+          </Alert>
+        )}
 
-          <div className="grid gap-6 xl:grid-cols-[400px_minmax(0,1fr)]">
-            {/* Left Panel - Admin List */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className={`${mobileShowPanel ? 'hidden xl:block' : 'block'}`}
+        {/* Summary Cards — même pattern que growth */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <SummaryCard title="Total Admins" amount={stats.total} icon={<IconUsers />} color="#1976d2" />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <SummaryCard title="Vérifiés" amount={stats.verified} icon={<IconUserCheck />} color="#2e7d32" />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <SummaryCard
+              title="Connectés"
+              amount={stats.connected}
+              icon={<IconUsers />}
+              color="#ed6c02"
+              subtitle="Sessions actives"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <SummaryCard title="Super Admins" amount={stats.superAdmins} icon={<IconShield />} color="#7b1fa2" />
+          </Grid>
+        </Grid>
+
+        {/* Controls — même pattern que growth */}
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <TextField
+            size="small"
+            placeholder="Rechercher un administrateur..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+            sx={{ minWidth: 280 }}
+          />
+
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>Filtrer par statut</InputLabel>
+            <Select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              label="Filtrer par statut"
+              startAdornment={<FilterIcon sx={{ mr: 1, fontSize: '1rem', color: 'action.active' }} />}
             >
-              <div className="bg-white dark:bg-gray-800/90 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Équipe ({filteredAdmins.length})
-                      </h2>
-                    </div>
-                    {isSuperAdmin && (
-                      <button
-                        onClick={() => setAddModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        Ajouter
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <AdminTeamList
-                  admins={filteredAdmins}
-                  loading={loading}
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  filter={filter}
-                  onFilterChange={setFilter}
-                  selectedAdmin={selectedAdmin}
-                  onSelect={handleSelectAdmin}
-                  totalMenus={TOTAL_MENU_SLOTS}
-                />
-              </div>
-            </motion.div>
+              {FILTER_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            {/* Right Panel - Menu Access */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className={`${mobileShowPanel ? 'block' : 'hidden xl:block'}`}
+          {isSuperAdmin && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddModalOpen(true)}>
+              Ajouter un admin
+            </Button>
+          )}
+
+          <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              icon={<ShieldIcon sx={{ fontSize: '1rem !important' }} />}
+              label={`${filteredAdmins.length} administrateur${filteredAdmins.length > 1 ? 's' : ''}`}
+              variant="outlined"
+              color="primary"
+            />
+          </Box>
+        </Box>
+
+        {/* Master-detail layout */}
+        <Grid container spacing={3}>
+          {/* Table des admins */}
+          <Grid item xs={12} xl={5} sx={{ display: { xs: mobileShowPanel ? 'none' : 'block', xl: 'block' } }}>
+            <TableContainer component={Card}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Administrateur</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Statut</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Accès menus</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    [1, 2, 3, 4, 5].map((row) => (
+                      <TableRow key={row}>
+                        {[1, 2, 3].map((cell) => (
+                          <TableCell key={cell}>
+                            <Skeleton variant="text" width="100%" height={20} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : filteredAdmins.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} align="center">
+                        <Box sx={{ py: 4 }}>
+                          <IconInbox style={{ fontSize: 48, color: '#9e9e9e', marginBottom: 8 }} />
+                          <Typography variant="body2" color="text.secondary">
+                            Aucun administrateur trouvé avec ces critères
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredAdmins.map((admin) => {
+                      const selected = selectedAdmin?._id === admin._id;
+                      const coverage = getMenuCoverage(admin, TOTAL_MENU_SLOTS);
+                      const avatarColor = getAvatarBgColor(admin.email || admin.nom);
+
+                      return (
+                        <TableRow
+                          key={admin._id}
+                          hover
+                          selected={selected}
+                          onClick={() => handleSelectAdmin(admin)}
+                          sx={{
+                            cursor: 'pointer',
+                            '&.Mui-selected': {
+                              bgcolor: 'primary.50',
+                              '&:hover': { bgcolor: 'primary.100' }
+                            }
+                          }}
+                        >
+                          <TableCell>
+                            <Box display="flex" alignItems="center" gap={2}>
+                              <Avatar
+                                sx={{
+                                  width: 42,
+                                  height: 42,
+                                  bgcolor: avatarColor,
+                                  fontSize: '0.875rem',
+                                  fontWeight: 700
+                                }}
+                              >
+                                {getInitials(admin.nom)}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {admin.nom}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {admin.email}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" flexWrap="wrap" gap={0.5}>
+                              {admin.isSuperAdmin && (
+                                <Chip label="Super" size="small" color="secondary" variant="filled" />
+                              )}
+                              <Chip
+                                label={admin.verified ? 'Vérifié' : 'En attente'}
+                                size="small"
+                                color={admin.verified ? 'success' : 'error'}
+                                variant="outlined"
+                              />
+                              {admin.connected && (
+                                <Chip label="En ligne" size="small" color="info" variant="outlined" />
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ minWidth: 140 }}>
+                            <Box>
+                              <Box display="flex" justifyContent="space-between" mb={0.5}>
+                                <Typography variant="caption" color="text.secondary">
+                                  {admin.isSuperAdmin ? 'Accès total' : `${admin.menuAccess?.length || 0} menus`}
+                                </Typography>
+                                <Typography variant="caption" fontWeight="bold" color="primary.main">
+                                  {admin.isSuperAdmin ? '100%' : `${coverage}%`}
+                                </Typography>
+                              </Box>
+                              <LinearProgress
+                                variant="determinate"
+                                value={coverage}
+                                sx={{
+                                  height: 6,
+                                  borderRadius: 3,
+                                  bgcolor: 'grey.200',
+                                  '& .MuiLinearProgress-bar': {
+                                    borderRadius: 3,
+                                    background: 'linear-gradient(90deg, #1976d2, #7b1fa2)'
+                                  }
+                                }}
+                              />
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+
+          {/* Panneau permissions */}
+          <Grid
+            item
+            xs={12}
+            xl={7}
+            sx={{ display: { xs: mobileShowPanel ? 'block' : 'none', xl: 'block' } }}
+          >
+            <Card
+              sx={{
+                overflow: 'hidden',
+                border: '1px solid',
+                borderColor: 'divider',
+                minHeight: { xs: 'auto', xl: 560 }
+              }}
             >
-              <div className="bg-white dark:bg-gray-800/90 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                      <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Permissions
-                      </h2>
-                    </div>
-                    {mobileShowPanel && (
-                      <button
-                        onClick={() => setMobileShowPanel(false)}
-                        className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
-                      >
-                        <ChevronRight className="h-4 w-4 rotate-180" />
-                        Retour
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <MenuAccessPanel
-                  admin={selectedAdmin}
-                  token={globalState?.key}
-                  isSuperAdminViewer={isSuperAdmin}
-                  onSaved={handleAccessSaved}
-                  showBack={false}
-                />
-              </div>
-            </motion.div>
-          </div>
-        </div>
+              <Box
+                sx={{
+                  px: 2.5,
+                  py: 2,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'grey.50',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 2
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1.5}>
+                  {mobileShowPanel && (
+                    <Tooltip title="Retour à la liste">
+                      <IconButton size="small" onClick={() => setMobileShowPanel(false)} sx={{ display: { xl: 'none' } }}>
+                        <ChevronLeftIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <SettingsIcon color="primary" sx={{ fontSize: 20 }} />
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      Droits d&apos;accès aux menus
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedAdmin
+                        ? `Configuration pour ${selectedAdmin.nom}`
+                        : 'Sélectionnez un administrateur dans le tableau'}
+                    </Typography>
+                  </Box>
+                </Box>
+                {selectedAdmin && (
+                  <Chip
+                    label={selectedAdmin.isSuperAdmin ? 'Super-admin' : `${selectedAdmin.menuAccess?.length || 0} menus`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                )}
+              </Box>
 
-        {/* Add Admin Modal */}
+              <MenuAccessPanel
+                admin={selectedAdmin}
+                token={globalState?.key}
+                isSuperAdminViewer={isSuperAdmin}
+                onSaved={handleAccessSaved}
+              />
+            </Card>
+          </Grid>
+        </Grid>
+
         <AddAdminModal
           open={addModalOpen}
           onClose={() => setAddModalOpen(false)}
           onSubmit={handleCreateAdmin}
           isSubmitting={isSubmitting}
         />
-      </div>
-    </div>
+      </Box>
+    </MainCard>
   );
 };
 

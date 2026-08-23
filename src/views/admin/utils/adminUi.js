@@ -5,17 +5,10 @@ export const getInitials = (name = '') => {
   return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 };
 
-export const getAvatarTone = (seed = '') => {
-  const tones = [
-    'from-violet-500 to-indigo-600',
-    'from-sky-500 to-blue-600',
-    'from-emerald-500 to-teal-600',
-    'from-amber-500 to-orange-600',
-    'from-rose-500 to-pink-600',
-    'from-fuchsia-500 to-purple-600'
-  ];
+export const getAvatarBgColor = (seed = '') => {
+  const colors = ['#7c3aed', '#2563eb', '#059669', '#d97706', '#e11d48', '#c026d3'];
   const hash = [...seed].reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return tones[hash % tones.length];
+  return colors[hash % colors.length];
 };
 
 export const getMenuCoverage = (admin, totalMenus = 1) => {
@@ -78,5 +71,11 @@ export const ACCESS_PRESETS = [
       'agents-overview',
       'addons-overview'
     ]
+  },
+  {
+    id: 'challenges',
+    label: 'Défis',
+    description: 'Gestion et règles des défis d’épargne',
+    menuIds: ['default', 'challenges-list', 'challenges-rules']
   }
 ];

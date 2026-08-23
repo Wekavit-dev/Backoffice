@@ -1,19 +1,35 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  MagnifyingGlassIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-  Squares2X2Icon,
-  ChevronDownIcon,
-  ArrowLeftIcon,
-  CheckIcon,
-  XMarkIcon,
-  BoltIcon
-} from '@heroicons/react/24/outline';
+  Box,
+  Typography,
+  TextField,
+  InputAdornment,
+  Switch,
+  FormControlLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip,
+  Button,
+  Skeleton,
+  Alert,
+  Grid,
+  Paper,
+  Divider,
+  LinearProgress
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  ExpandMore as ExpandMoreIcon,
+  Shield as ShieldIcon,
+  Bolt as BoltIcon,
+  CheckCircle as CheckCircleIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import AdminsApi from 'api/admins/admins';
-import { ACCESS_PRESETS, getAvatarTone, getInitials } from '../utils/adminUi';
+import { ACCESS_PRESETS, getAvatarBgColor, getInitials } from '../utils/adminUi';
 
 const groupItems = (catalogTree = []) => {
   return catalogTree.map((group) => {
@@ -40,39 +56,7 @@ const groupItems = (catalogTree = []) => {
   });
 };
 
-const Switch = ({ checked, onChange, label, description }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    onClick={() => onChange(!checked)}
-    className={`flex w-full items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-all ${
-      checked
-        ? 'border-sss-brand bg-gradient-to-r from-sss-brand-soft to-white shadow-sss-sm'
-        : 'border-sss-border bg-white hover:border-sss-brand/25'
-    }`}
-  >
-    <div>
-      <div className="flex items-center gap-2">
-        <SparklesIcon className={`h-4 w-4 ${checked ? 'text-sss-brand' : 'text-sss-muted'}`} />
-        <span className="text-sm font-bold text-sss-text">{label}</span>
-      </div>
-      {description && <p className="mt-1 text-xs text-sss-muted">{description}</p>}
-    </div>
-    <span className={`admin-switch ${checked ? 'admin-switch-on' : ''}`}>
-      <span className={`admin-switch-knob ${checked ? 'translate-x-5' : ''}`} />
-    </span>
-  </button>
-);
-
-Switch.propTypes = {
-  checked: PropTypes.bool,
-  onChange: PropTypes.func,
-  label: PropTypes.string,
-  description: PropTypes.string
-};
-
-const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved, onBack, showBack }) => {
+const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved }) => {
   const [catalogTree, setCatalogTree] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [makeSuperAdmin, setMakeSuperAdmin] = useState(false);
@@ -80,8 +64,7 @@ const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved, onBack, sh
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [openGroups, setOpenGroups] = useState({});
-  const [activePreset, setActivePreset] = useState(null);
+  const [expandedGroups, setExpandedGroups] = useState({});
 
   const groupedCatalog = useMemo(() => groupItems(catalogTree), [catalogTree]);
 
@@ -119,10 +102,9 @@ const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved, onBack, sh
         setSelectedIds(access.menuAccess || []);
         setMakeSuperAdmin(Boolean(access.isSuperAdmin));
         setDirty(false);
-        setActivePreset(null);
-        setOpenGroups({});
+        setExpandedGroups({});
       } catch (error) {
-        toast.error("Impossible de charger les droits d'accès");
+        toast.error("Impossible de charger les droits d'accès", { position: 'top-right' });
       } finally {
         setLoading(false);
       }
@@ -134,7 +116,6 @@ const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved, onBack, sh
   const markDirty = (updater) => {
     setSelectedIds(updater);
     setDirty(true);
-    setActivePreset(null);
   };
 
   const toggleMenu = (menuId) => {
@@ -153,25 +134,23 @@ const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved, onBack, sh
 
   const applyPreset = (preset) => {
     const allowed = new Set(allMenuIds);
-    const next = preset.menuIds.filter((id) => allowed.has(id));
-    setSelectedIds(next);
+    setSelectedIds(preset.menuIds.filter((id) => allowed.has(id)));
     setMakeSuperAdmin(false);
     setDirty(true);
-    setActivePreset(preset.id);
   };
 
-  const resetChanges = () => {
+  const resetChanges = async () => {
     if (!admin?._id) return;
     setLoading(true);
-    AdminsApi.getAdminMenuAccess(admin._id, token)
-      .then((accessRes) => {
-        const access = accessRes?.data?.data || accessRes?.data || {};
-        setSelectedIds(access.menuAccess || []);
-        setMakeSuperAdmin(Boolean(access.isSuperAdmin));
-        setDirty(false);
-        setActivePreset(null);
-      })
-      .finally(() => setLoading(false));
+    try {
+      const accessRes = await AdminsApi.getAdminMenuAccess(admin._id, token);
+      const access = accessRes?.data?.data || accessRes?.data || {};
+      setSelectedIds(access.menuAccess || []);
+      setMakeSuperAdmin(Boolean(access.isSuperAdmin));
+      setDirty(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -183,16 +162,14 @@ const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved, onBack, sh
         { menuIds: makeSuperAdmin ? allMenuIds : selectedIds, isSuperAdmin: makeSuperAdmin },
         token
       );
-
       const payload = res?.data?.data || res?.data || {};
       setSelectedIds(payload.menuAccess || selectedIds);
       setMakeSuperAdmin(Boolean(payload.isSuperAdmin));
       setDirty(false);
-      setActivePreset(null);
-      toast.success('Droits enregistrés avec succès');
+      toast.success('Droits enregistrés avec succès', { position: 'top-right' });
       onSaved?.(payload);
     } catch (error) {
-      toast.error("Erreur lors de l'enregistrement des droits");
+      toast.error("Erreur lors de l'enregistrement", { position: 'top-right' });
     } finally {
       setSaving(false);
     }
@@ -202,283 +179,304 @@ const MenuAccessPanel = ({ admin, token, isSuperAdminViewer, onSaved, onBack, sh
 
   if (!isSuperAdminViewer) {
     return (
-      <div className="admin-workspace flex min-h-[680px] flex-col items-center justify-center p-10 text-center lg:min-h-[760px]">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[1.2rem] bg-slate-100 text-sss-muted">
-          <ShieldCheckIcon className="h-8 w-8" />
-        </div>
-        <h3 className="text-xl font-bold text-sss-text">Espace réservé</h3>
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-sss-muted">
-          Seuls les super-administrateurs peuvent configurer les droits d&apos;accès aux menus du backoffice.
-        </p>
-      </div>
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <ShieldIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+        <Typography variant="h6" gutterBottom>
+          Espace réservé
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Seuls les super-administrateurs peuvent configurer les droits d&apos;accès.
+        </Typography>
+      </Box>
     );
   }
 
   if (!admin) {
     return (
-      <div className="admin-workspace relative flex min-h-[680px] flex-col items-center justify-center overflow-hidden p-10 text-center lg:min-h-[760px]">
-        <div className="admin-hero-mesh absolute inset-0 opacity-70" />
-        <div className="relative">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[1.4rem] bg-white shadow-sss-lg ring-1 ring-sss-brand/10">
-            <Squares2X2Icon className="h-10 w-10 text-sss-brand" />
-          </div>
-          <h3 className="text-2xl font-bold text-sss-text">Choisissez un profil</h3>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-sss-muted">
-            Sélectionnez un administrateur dans la liste pour visualiser sa couverture d&apos;accès et configurer les
-            menus visibles dans l&apos;interface.
-          </p>
-          <div className="mt-6 grid gap-2 text-left sm:grid-cols-3">
-            {['Presets métier', 'Sélection fine', 'Super-admin'].map((step, index) => (
-              <div key={step} className="rounded-xl border border-sss-border bg-white/85 px-3 py-3 text-xs shadow-sss-sm">
-                <p className="font-bold text-sss-brand">0{index + 1}</p>
-                <p className="mt-1 font-semibold text-sss-text">{step}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <Box sx={{ p: 5, textAlign: 'center' }}>
+        <SettingsIcon sx={{ fontSize: 56, color: 'primary.main', mb: 2, opacity: 0.7 }} />
+        <Typography variant="h6" gutterBottom>
+          Sélectionnez un administrateur
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+          Cliquez sur une ligne du tableau pour configurer les menus visibles dans le backoffice.
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <>
-      <section className="admin-workspace relative flex min-h-[680px] flex-col lg:min-h-[760px]">
-        <div className="relative overflow-hidden border-b border-sss-border">
-          <div className="absolute inset-0 bg-gradient-to-br from-sss-brand via-indigo-600 to-violet-600" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_42%)]" />
-          <div className="relative px-4 py-5 sm:px-6 sm:py-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex min-w-0 items-start gap-4">
-                {showBack && (
-                  <button type="button" className="admin-btn-ghost !min-h-10 !bg-white/15 !text-white !ring-white/20 lg:hidden" onClick={onBack}>
-                    <ArrowLeftIcon className="h-4 w-4" />
-                  </button>
-                )}
-                <div className={`admin-avatar-lg bg-gradient-to-br ${getAvatarTone(admin.email || admin.nom)}`}>
-                  {getInitials(admin.nom)}
-                </div>
-                <div className="min-w-0 text-white">
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-white/70">Configuration des accès</p>
-                  <h2 className="mt-1 truncate text-2xl font-bold">{admin.nom}</h2>
-                  <p className="truncate text-sm text-white/85">{admin.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-center backdrop-blur-sm">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-wide text-white/70">Couverture</p>
-                  <p className="text-2xl font-bold text-white">{coverage}%</p>
-                </div>
-                {dirty && (
-                  <span className="admin-badge bg-amber-300/20 text-amber-50 ring-1 ring-amber-200/30">Non enregistré</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-b border-sss-border bg-[#fafbfc] px-4 py-4 sm:px-6">
-          <Switch
-            checked={makeSuperAdmin}
-            onChange={(value) => {
-              setMakeSuperAdmin(value);
-              setDirty(true);
-              setActivePreset(null);
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 480 }}>
+      {/* Profil sélectionné */}
+      <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              bgcolor: getAvatarBgColor(admin.email || admin.nom),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '0.9rem'
             }}
-            label="Super-administrateur"
-            description="Accès total à tous les menus et à la gestion des droits"
-          />
-        </div>
+          >
+            {getInitials(admin.nom)}
+          </Box>
+          <Box flex={1}>
+            <Typography variant="subtitle1" fontWeight={700}>
+              {admin.nom}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {admin.email}
+            </Typography>
+          </Box>
+          <Box sx={{ minWidth: 100, textAlign: 'right' }}>
+            <Typography variant="caption" color="text.secondary">
+              Couverture
+            </Typography>
+            <Typography variant="h6" color="primary.main" fontWeight={700}>
+              {coverage}%
+            </Typography>
+          </Box>
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={coverage}
+          sx={{ mt: 1.5, height: 5, borderRadius: 3 }}
+        />
+      </Box>
 
-        {!makeSuperAdmin && (
-          <div className="border-b border-sss-border px-4 py-4 sm:px-6">
-            <div className="mb-3 flex items-center gap-2">
-              <BoltIcon className="h-4 w-4 text-sss-brand" />
-              <p className="text-sm font-bold text-sss-text">Presets rapides</p>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Super-admin toggle */}
+      <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'grey.50' }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={makeSuperAdmin}
+              onChange={(e) => {
+                setMakeSuperAdmin(e.target.checked);
+                setDirty(true);
+              }}
+              color="secondary"
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2" fontWeight={600}>
+                Super-administrateur
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Accès complet à tous les menus et à la gestion des droits
+              </Typography>
+            </Box>
+          }
+        />
+      </Box>
+
+      {!makeSuperAdmin && (
+        <>
+          {/* Presets */}
+          <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+              <BoltIcon color="primary" sx={{ fontSize: 18 }} />
+              <Typography variant="subtitle2" fontWeight={700}>
+                Presets rapides
+              </Typography>
+            </Box>
+            <Grid container spacing={1.5}>
               {ACCESS_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  className={`admin-preset-card ${activePreset === preset.id ? 'admin-preset-card-active' : ''}`}
-                >
-                  <p className="text-sm font-bold text-sss-text">{preset.label}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-sss-muted">{preset.description}</p>
-                  <p className="mt-2 text-[0.68rem] font-bold uppercase tracking-wide text-sss-brand">
-                    {preset.menuIds.length} menus
-                  </p>
-                </button>
+                <Grid item xs={12} sm={6} key={preset.id}>
+                  <Paper
+                    variant="outlined"
+                    onClick={() => applyPreset(preset)}
+                    sx={{
+                      p: 1.5,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: 'primary.50',
+                        transform: 'translateY(-2px)',
+                        boxShadow: 2
+                      }
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={600}>
+                      {preset.label}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {preset.description}
+                    </Typography>
+                    <Chip label={`${preset.menuIds.length} menus`} size="small" sx={{ mt: 1 }} />
+                  </Paper>
+                </Grid>
               ))}
-            </div>
-          </div>
-        )}
+            </Grid>
+          </Box>
 
-        <div className="border-b border-sss-border px-4 py-4 sm:px-6">
-          <div className="relative">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-sss-muted" />
-            <input
-              className="admin-input !bg-white pl-10"
-              placeholder="Filtrer les menus par nom, groupe ou identifiant..."
+          {/* Search */}
+          <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Filtrer les menus..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              disabled={makeSuperAdmin}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                )
+              }}
             />
-          </div>
-        </div>
-
-        <div className="admin-dot-grid flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map((item) => (
-                <div key={item} className="sss-skeleton h-24 w-full rounded-2xl" />
-              ))}
-            </div>
-          ) : makeSuperAdmin ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[1.2rem] border border-dashed border-sss-brand/25 bg-gradient-to-br from-sss-brand-soft/70 to-white p-10 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-sss-brand text-white shadow-sss-md">
-                <SparklesIcon className="h-7 w-7" />
-              </div>
-              <p className="text-lg font-bold text-sss-text">Accès illimité activé</p>
-              <p className="mt-2 max-w-lg text-sm leading-relaxed text-sss-muted">
-                Ce profil verra l&apos;intégralité du backoffice, y compris la gestion des administrateurs et la
-                configuration des droits des autres membres.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {groupedCatalog.map((group) => {
-                const visibleSections = group.sections
-                  .map((section) => ({
-                    ...section,
-                    items: section.items.filter((item) => {
-                      if (!normalizedSearch) return true;
-                      return (
-                        item.label?.toLowerCase().includes(normalizedSearch) ||
-                        item.menuId?.toLowerCase().includes(normalizedSearch) ||
-                        group.group?.toLowerCase().includes(normalizedSearch) ||
-                        section.label?.toLowerCase().includes(normalizedSearch)
-                      );
-                    })
-                  }))
-                  .filter((section) => section.items.length > 0);
-
-                if (!visibleSections.length) return null;
-
-                const groupIds = visibleSections.flatMap((section) => section.items.map((item) => item.menuId));
-                const selectedInGroup = groupIds.filter((id) => selectedIds.includes(id)).length;
-                const groupChecked = groupIds.length > 0 && selectedInGroup === groupIds.length;
-                const isOpen = openGroups[group.group] ?? normalizedSearch.length > 0;
-
-                return (
-                  <div key={group.group} className="admin-accordion">
-                    <div className="admin-accordion-trigger">
-                      <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpenGroups((prev) => ({ ...prev, [group.group]: !isOpen }))}>
-                        <p className="text-sm font-bold text-sss-text">{group.group}</p>
-                        <p className="text-xs text-sss-muted">
-                          {selectedInGroup}/{groupIds.length} menus sélectionnés
-                        </p>
-                      </button>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="admin-btn-ghost !min-h-8 !px-3 !py-1 !text-xs"
-                          onClick={() => toggleGroup(visibleSections, !groupChecked)}
-                        >
-                          {groupChecked ? 'Retirer' : 'Tout cocher'}
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-lg p-1 text-sss-muted hover:bg-sss-brand-soft"
-                          onClick={() => setOpenGroups((prev) => ({ ...prev, [group.group]: !isOpen }))}
-                        >
-                          <ChevronDownIcon className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {isOpen && (
-                      <div className="space-y-3 border-t border-sss-border bg-[#fafbfc] p-3 sm:p-4">
-                        {visibleSections.map((section) => {
-                          const sectionIds = section.items.map((item) => item.menuId);
-                          const sectionChecked = sectionIds.every((id) => selectedIds.includes(id));
-
-                          return (
-                            <div key={`${group.group}-${section.label || 'root'}`} className="rounded-xl border border-sss-border bg-white p-3">
-                              {section.label && (
-                                <div className="mb-3 flex items-center justify-between gap-2">
-                                  <p className="text-xs font-bold uppercase tracking-wide text-sss-muted">{section.label}</p>
-                                  <button
-                                    type="button"
-                                    className="text-xs font-semibold text-sss-brand hover:underline"
-                                    onClick={() => toggleSection(section.items, !sectionChecked)}
-                                  >
-                                    {sectionChecked ? 'Tout retirer' : 'Tout ajouter'}
-                                  </button>
-                                </div>
-                              )}
-
-                              <div className="grid gap-2 md:grid-cols-2">
-                                {section.items.map((item) => {
-                                  const active = selectedIds.includes(item.menuId);
-                                  return (
-                                    <button
-                                      key={item.menuId}
-                                      type="button"
-                                      onClick={() => toggleMenu(item.menuId)}
-                                      className={`admin-menu-tile text-left ${active ? 'admin-menu-tile-active' : ''}`}
-                                    >
-                                      <span
-                                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                                          active
-                                            ? 'border-sss-brand bg-sss-brand text-white'
-                                            : 'border-sss-border bg-white text-transparent'
-                                        }`}
-                                      >
-                                        <CheckIcon className="h-3.5 w-3.5" />
-                                      </span>
-                                      <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-semibold text-sss-text">{item.label}</p>
-                                        <p className="mt-0.5 truncate text-xs text-sss-muted">{item.path || item.menuId}</p>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {dirty && (
-        <div className="admin-floating-bar animate-sss-fade-up">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold">Modifications en attente</p>
-            <p className="truncate text-xs text-white/70">
-              {makeSuperAdmin ? 'Super-admin activé' : `${selectedIds.length} menu(s) sélectionné(s)`} — pensez à enregistrer
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button type="button" className="admin-btn-ghost !border-white/20 !bg-white/10 !text-white hover:!bg-white/15" onClick={resetChanges}>
-              <XMarkIcon className="h-4 w-4" />
-              Annuler
-            </button>
-            <button type="button" className="admin-btn-primary !shadow-none" disabled={saving || loading} onClick={handleSave}>
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
-          </div>
-        </div>
+          </Box>
+        </>
       )}
-    </>
+
+      {/* Menu groups */}
+      <Box sx={{ flex: 1, overflow: 'auto', px: 2.5, py: 2, maxHeight: 360 }}>
+        {loading ? (
+          <Box>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="rounded" height={56} sx={{ mb: 1 }} />
+            ))}
+          </Box>
+        ) : makeSuperAdmin ? (
+          <Alert severity="success" icon={<CheckCircleIcon />} sx={{ borderRadius: 2 }}>
+            Accès total activé — ce profil verra l&apos;intégralité des menus du backoffice.
+          </Alert>
+        ) : (
+          groupedCatalog.map((group) => {
+            const visibleSections = group.sections
+              .map((section) => ({
+                ...section,
+                items: section.items.filter((item) => {
+                  if (!normalizedSearch) return true;
+                  return (
+                    item.label?.toLowerCase().includes(normalizedSearch) ||
+                    item.menuId?.toLowerCase().includes(normalizedSearch) ||
+                    group.group?.toLowerCase().includes(normalizedSearch)
+                  );
+                })
+              }))
+              .filter((section) => section.items.length > 0);
+
+            if (!visibleSections.length) return null;
+
+            const groupIds = visibleSections.flatMap((s) => s.items.map((i) => i.menuId));
+            const selectedInGroup = groupIds.filter((id) => selectedIds.includes(id)).length;
+            const groupChecked = groupIds.length > 0 && selectedInGroup === groupIds.length;
+            const isExpanded = expandedGroups[group.group] ?? Boolean(normalizedSearch);
+
+            return (
+              <Accordion
+                key={group.group}
+                expanded={isExpanded}
+                onChange={() => setExpandedGroups((prev) => ({ ...prev, [group.group]: !isExpanded }))}
+                sx={{ mb: 1, '&:before': { display: 'none' }, borderRadius: '8px !important', overflow: 'hidden' }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" pr={1}>
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight={700}>
+                        {group.group}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {selectedInGroup}/{groupIds.length} menus
+                      </Typography>
+                    </Box>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleGroup(visibleSections, !groupChecked);
+                      }}
+                      sx={{ mr: 1, minWidth: 'auto', px: 1.5, py: 0.25, fontSize: '0.7rem' }}
+                    >
+                      {groupChecked ? 'Retirer' : 'Tout'}
+                    </Button>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0 }}>
+                  {visibleSections.map((section) => {
+                    const sectionIds = section.items.map((i) => i.menuId);
+                    const sectionChecked = sectionIds.every((id) => selectedIds.includes(id));
+
+                    return (
+                      <Box key={section.label || 'root'} sx={{ mb: 2 }}>
+                        {section.label && (
+                          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase">
+                              {section.label}
+                            </Typography>
+                            <Button size="small" onClick={() => toggleSection(section.items, !sectionChecked)}>
+                              {sectionChecked ? 'Retirer' : 'Ajouter'}
+                            </Button>
+                          </Box>
+                        )}
+                        <Grid container spacing={1}>
+                          {section.items.map((item) => {
+                            const active = selectedIds.includes(item.menuId);
+                            return (
+                              <Grid item xs={12} sm={6} key={item.menuId}>
+                                <Paper
+                                  variant="outlined"
+                                  onClick={() => toggleMenu(item.menuId)}
+                                  sx={{
+                                    p: 1.25,
+                                    cursor: 'pointer',
+                                    borderColor: active ? 'primary.main' : 'divider',
+                                    bgcolor: active ? 'primary.50' : 'background.paper',
+                                    transition: 'all 0.15s',
+                                    '&:hover': { borderColor: 'primary.light', bgcolor: active ? 'primary.100' : 'grey.50' }
+                                  }}
+                                >
+                                  <Typography variant="body2" fontWeight={active ? 600 : 400} noWrap>
+                                    {item.label}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" noWrap display="block">
+                                    {item.path || item.menuId}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            );
+                          })}
+                        </Grid>
+                      </Box>
+                    );
+                  })}
+                </AccordionDetails>
+              </Accordion>
+            );
+          })
+        )}
+      </Box>
+
+      {/* Footer actions — pattern growth filter actions */}
+      {dirty && (
+        <>
+          <Divider />
+          <Box sx={{ px: 2.5, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, bgcolor: 'grey.50' }}>
+            <Typography variant="caption" color="text.secondary">
+              {makeSuperAdmin ? 'Super-admin activé' : `${selectedIds.length} menu(s) sélectionné(s)`} — non enregistré
+            </Typography>
+            <Box display="flex" gap={1}>
+              <Button variant="outlined" size="small" onClick={resetChanges} disabled={loading}>
+                Annuler
+              </Button>
+              <Button variant="contained" size="small" onClick={handleSave} disabled={saving || loading}>
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </Box>
+          </Box>
+        </>
+      )}
+    </Box>
   );
 };
 
@@ -486,9 +484,7 @@ MenuAccessPanel.propTypes = {
   admin: PropTypes.object,
   token: PropTypes.string,
   isSuperAdminViewer: PropTypes.bool,
-  onSaved: PropTypes.func,
-  onBack: PropTypes.func,
-  showBack: PropTypes.bool
+  onSaved: PropTypes.func
 };
 
 export default MenuAccessPanel;

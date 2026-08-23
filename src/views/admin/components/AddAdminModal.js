@@ -1,17 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { XMarkIcon, UserPlusIcon, EnvelopeIcon, KeyIcon, UserIcon } from '@heroicons/react/24/outline';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Box,
+  Typography,
+  IconButton,
+  LinearProgress
+} from '@mui/material';
+import { Close as CloseIcon, PersonAdd as PersonAddIcon } from '@mui/icons-material';
 
 const AddAdminModal = ({ open, onClose, onSubmit, isSubmitting }) => {
   const [form, setForm] = useState({ nom: '', email: '', password: '' });
 
   useEffect(() => {
-    if (!open) {
-      setForm({ nom: '', email: '', password: '' });
-    }
+    if (!open) setForm({ nom: '', email: '', password: '' });
   }, [open]);
-
-  if (!open) return null;
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -22,100 +30,108 @@ const AddAdminModal = ({ open, onClose, onSubmit, isSubmitting }) => {
     onSubmit(form, () => setForm({ nom: '', email: '', password: '' }));
   };
 
-  const passwordStrength = form.password.length >= 10 ? 'Fort' : form.password.length >= 6 ? 'Moyen' : 'Faible';
-  const strengthColor =
-    passwordStrength === 'Fort' ? 'from-emerald-500 to-teal-500' : passwordStrength === 'Moyen' ? 'from-amber-500 to-orange-500' : 'from-rose-500 to-pink-500';
+  const passwordStrength =
+    form.password.length >= 10 ? 100 : form.password.length >= 6 ? 66 : form.password.length > 0 ? 33 : 0;
+  const strengthLabel =
+    form.password.length >= 10 ? 'Fort' : form.password.length >= 6 ? 'Moyen' : form.password.length > 0 ? 'Faible' : '';
 
   return (
-    <div className="fixed inset-0 z-[1300] flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <button type="button" className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} aria-label="Fermer" />
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                bgcolor: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}
+            >
+              <PersonAddIcon />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Nouvel administrateur
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Créez le profil, puis assignez ses menus
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
 
-      <div className="admin-glass relative w-full max-w-xl animate-sss-fade-up overflow-hidden rounded-t-[1.5rem] sm:rounded-[1.35rem]">
-        <div className="relative overflow-hidden border-b border-sss-border px-6 py-5">
-          <div className="absolute inset-0 admin-hero-mesh opacity-80" />
-          <div className="relative flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sss-brand to-indigo-500 text-white shadow-sss-md">
-                <UserPlusIcon className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-sss-text">Nouvel administrateur</h3>
-                <p className="text-sm text-sss-muted">Créez un compte, puis assignez ses menus</p>
-              </div>
-            </div>
-            <button type="button" className="admin-btn-ghost !min-h-9 !px-3" onClick={onClose}>
-              <XMarkIcon className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-sss-muted">
-              <UserIcon className="h-3.5 w-3.5" />
-              Nom complet
-            </span>
-            <input className="admin-input" value={form.nom} onChange={(e) => handleChange('nom', e.target.value)} required />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-sss-muted">
-              <EnvelopeIcon className="h-3.5 w-3.5" />
-              Email professionnel
-            </span>
-            <input
-              className="admin-input"
+      <form onSubmit={handleSubmit}>
+        <DialogContent dividers sx={{ pt: 2 }}>
+          <Box display="flex" flexDirection="column" gap={2.5}>
+            <TextField
+              fullWidth
+              label="Nom complet"
+              value={form.nom}
+              onChange={(e) => handleChange('nom', e.target.value)}
+              required
+              size="small"
+            />
+            <TextField
+              fullWidth
+              label="Email professionnel"
               type="email"
               value={form.email}
               onChange={(e) => handleChange('email', e.target.value)}
               required
+              size="small"
             />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-sss-muted">
-              <KeyIcon className="h-3.5 w-3.5" />
-              Mot de passe temporaire
-            </span>
-            <input
-              className="admin-input"
-              type="password"
-              value={form.password}
-              onChange={(e) => handleChange('password', e.target.value)}
-              required
-              minLength={6}
-            />
-            {form.password && (
-              <div className="mt-2">
-                <div className="mb-1 flex items-center justify-between text-[0.68rem] font-semibold text-sss-muted">
-                  <span>Force du mot de passe</span>
-                  <span>{passwordStrength}</span>
-                </div>
-                <div className="admin-progress-track">
-                  <div
-                    className={`admin-progress-fill bg-gradient-to-r ${strengthColor}`}
-                    style={{ width: passwordStrength === 'Fort' ? '100%' : passwordStrength === 'Moyen' ? '66%' : '33%' }}
+            <Box>
+              <TextField
+                fullWidth
+                label="Mot de passe temporaire"
+                type="password"
+                value={form.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                required
+                size="small"
+                inputProps={{ minLength: 6 }}
+              />
+              {form.password && (
+                <Box sx={{ mt: 1 }}>
+                  <Box display="flex" justifyContent="space-between" mb={0.5}>
+                    <Typography variant="caption" color="text.secondary">
+                      Force du mot de passe
+                    </Typography>
+                    <Typography variant="caption" fontWeight={600} color="primary.main">
+                      {strengthLabel}
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={passwordStrength}
+                    color={passwordStrength >= 100 ? 'success' : passwordStrength >= 66 ? 'warning' : 'error'}
+                    sx={{ height: 4, borderRadius: 2 }}
                   />
-                </div>
-              </div>
-            )}
-          </label>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
 
-          <div className="rounded-2xl border border-sss-border bg-[#fafbfc] px-4 py-3 text-xs leading-relaxed text-sss-muted">
-            Après création, sélectionnez ce profil dans la liste pour lui attribuer des menus ou appliquer un preset métier.
-          </div>
-
-          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-            <button type="button" className="admin-btn-ghost" onClick={onClose}>
-              Annuler
-            </button>
-            <button type="submit" className="admin-btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Création en cours...' : 'Créer le profil'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={onClose} variant="outlined">
+            Annuler
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
+            {isSubmitting ? 'Création...' : 'Créer le profil'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

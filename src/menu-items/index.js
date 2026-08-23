@@ -3,6 +3,7 @@ import repports from './repports';
 import savingsRepports from './savingsRepports';
 import investment from './investment';
 import sssMenu from './sss';
+import challengesMenu from './challenges';
 // import other from './other';
 // import utilities from './utilities';
 // import config from './configuration';
@@ -11,7 +12,7 @@ import sssMenu from './sss';
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, sssMenu, savingsRepports, repports, investment]
+  items: [dashboard, sssMenu, challengesMenu, savingsRepports, repports, investment]
 };
 
 export default menuItems;

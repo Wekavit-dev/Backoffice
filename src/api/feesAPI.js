@@ -2,6 +2,7 @@ import { IP_ADD } from 'api/utils/address';
 import { handleError, handleResponse } from 'api/request/request';
 import setupAxiosInterceptors from 'api/utils/instance';
 
+
 class FeesAPI {
     // Convertir les filtres en query string
     buildQueryString(filters) {

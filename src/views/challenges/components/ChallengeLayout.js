@@ -94,6 +94,7 @@ export const ChallengeListItem = ({
   name,
   subtitle,
   meta,
+  coverImage,
   progress = 0,
   participants,
   maxParticipants,
@@ -110,6 +111,13 @@ export const ChallengeListItem = ({
     }`}
   >
     <div className="flex items-start justify-between gap-3">
+      {coverImage && (
+        <img
+          src={coverImage}
+          alt=""
+          className="h-12 w-12 shrink-0 rounded-xl border border-sss-border object-cover"
+        />
+      )}
       <div className="min-w-0 flex-1">
         <p className="m-0 truncate text-sm font-bold text-sss-text group-hover:text-sss-brand">{name}</p>
         {subtitle && <p className="sss-muted m-0 mt-0.5 truncate text-xs">{subtitle}</p>}
@@ -139,6 +147,7 @@ ChallengeListItem.propTypes = {
   name: PropTypes.string.isRequired,
   subtitle: PropTypes.string,
   meta: PropTypes.string,
+  coverImage: PropTypes.string,
   progress: PropTypes.number,
   participants: PropTypes.number,
   maxParticipants: PropTypes.number,

@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import ConfirmDialog from './ConfirmDialog';
+import CoverImageField from './CoverImageField';
 import { PrimaryButton, GhostButton, fieldSx, CHALLENGE_ACCENT } from './ChallengeLayout';
 import {
   FREQUENCIES,
@@ -36,6 +37,7 @@ const defaultForm = () => {
   return {
     name: '',
     description: '',
+    coverImage: '',
     idTypeEpargne: '',
     idDevise: '',
     goalAmount: '',
@@ -116,6 +118,7 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
     const payload = {
       name: form.name.trim(),
       description: form.description.trim() || undefined,
+      coverImage: form.coverImage.trim() || undefined,
       idTypeEpargne: form.idTypeEpargne,
       idDevise: form.idDevise,
       goalAmount: Number(form.goalAmount),
@@ -217,6 +220,13 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
                 onChange={(e) => handleChange('description', e.target.value)}
                 multiline
                 minRows={2}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <CoverImageField
+                value={form.coverImage}
+                onChange={(value) => handleChange('coverImage', value)}
               />
             </Grid>
 

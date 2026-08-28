@@ -36,6 +36,7 @@ import ChallengesApi from 'api/challenges/challenges';
 import RankingPanel from './RankingPanel';
 import MissedPaymentsPanel from './MissedPaymentsPanel';
 import ConfirmDialog from './ConfirmDialog';
+import CoverImageField from './CoverImageField';
 import {
   EmptyState,
   StatusBadge,
@@ -94,6 +95,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
     setForm({
       name: challenge.name || '',
       description: challenge.description || '',
+      coverImage: challenge.coverImage || '',
       goalAmount: challenge.goalAmount ?? '',
       contributionAmount: challenge.contributionAmount ?? '',
       contributionFrequency: challenge.contributionFrequency || 'weekly',
@@ -187,6 +189,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
+        coverImage: form.coverImage.trim() || undefined,
         goalAmount: Number(form.goalAmount),
         contributionAmount: Number(form.contributionAmount) || 0,
         contributionFrequency: form.contributionFrequency,
@@ -395,6 +398,26 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 520 }}>
       <DetailHeader>
+        {challenge.coverImage && (
+          <Box
+            mb={2}
+            sx={{
+              borderRadius: 2.5,
+              overflow: 'hidden',
+              border: '1px solid',
+              borderColor: 'divider',
+              maxHeight: 160
+            }}
+          >
+            <Box
+              component="img"
+              src={challenge.coverImage}
+              alt={`Couverture — ${challenge.name}`}
+              sx={{ display: 'block', width: '100%', maxHeight: 160, objectFit: 'cover' }}
+            />
+          </Box>
+        )}
+
         <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={2} flexWrap="wrap">
           <Box className="min-w-0 flex-1">
             <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.02em' }}>
@@ -513,6 +536,13 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
                 onChange={(e) => handleFormChange('description', e.target.value)}
                 multiline
                 minRows={2}
+                disabled={challenge.status === 'completed'}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <CoverImageField
+                value={form.coverImage}
+                onChange={(value) => handleFormChange('coverImage', value)}
                 disabled={challenge.status === 'completed'}
               />
             </Grid>

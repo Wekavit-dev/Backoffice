@@ -53,7 +53,7 @@ const defaultForm = () => {
   };
 };
 
-const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTypes, devises }) => {
+const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTypes, devises, token }) => {
   const [form, setForm] = useState(defaultForm);
   const [baselineForm, setBaselineForm] = useState(null);
   const [error, setError] = useState('');
@@ -227,6 +227,7 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
               <CoverImageField
                 value={form.coverImage}
                 onChange={(value) => handleChange('coverImage', value)}
+                token={token}
               />
             </Grid>
 
@@ -411,7 +412,8 @@ CreateChallengeModal.propTypes = {
   onSubmit: PropTypes.func,
   isSubmitting: PropTypes.bool,
   savingTypes: PropTypes.array,
-  devises: PropTypes.array
+  devises: PropTypes.array,
+  token: PropTypes.string
 };
 
 CreateChallengeModal.defaultProps = {

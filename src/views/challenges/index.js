@@ -346,6 +346,7 @@ const ChallengesPage = () => {
           isSubmitting={isSubmitting}
           savingTypes={savingTypes}
           devises={devises}
+          token={globalState?.key}
         />
       </PageFrame>
     </MainCard>

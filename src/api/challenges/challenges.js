@@ -123,6 +123,18 @@ const updateRuleTemplate = async (slug, data, token) => {
     .catch(handleError);
 };
 
+const uploadCoverImage = async (file, token) => {
+  const axiosInstanceWithToken = setupAxiosInterceptors(token);
+  const formData = new FormData();
+  formData.append('coverImage', file);
+  return axiosInstanceWithToken
+    .post(`${CHALLENGE_BASE}/admin/challenges/upload-cover`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    .then(handleResponse)
+    .catch(handleError);
+};
+
 const ChallengesApi = {
   listChallenges,
   getChallenge,
@@ -139,7 +151,8 @@ const ChallengesApi = {
   disqualifyMember,
   reinstateMember,
   listRuleTemplates,
-  updateRuleTemplate
+  updateRuleTemplate,
+  uploadCoverImage
 };
 
 export default ChallengesApi;

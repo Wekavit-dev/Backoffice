@@ -136,7 +136,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
       }))
     );
     setTab(0);
-  }, [challenge?._id]);
+  }, [challenge?._id, challenge?.coverImage, challenge?.updatedAt]);
 
   useEffect(() => {
     if (!token) return;
@@ -543,6 +543,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
               <CoverImageField
                 value={form.coverImage}
                 onChange={(value) => handleFormChange('coverImage', value)}
+                token={token}
                 disabled={challenge.status === 'completed'}
               />
             </Grid>

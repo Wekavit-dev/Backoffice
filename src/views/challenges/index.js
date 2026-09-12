@@ -284,8 +284,9 @@ const ChallengesPage = () => {
                           subtitle={`${getGameModeLabel(challenge.gameMode)} · ${formatAmount(challenge.goalAmount, challenge.idDevise)}`}
                           meta={`${formatDate(challenge.startDate)} → ${formatDate(challenge.endDate)}`}
                           coverImage={
-                            challenge.coverImageUrl ||
-                            challenge.coverImage
+                            challenge.hasCustomCover
+                              ? challenge.coverImageUrl || challenge.coverImagePath || challenge.coverImage
+                              : null
                           }
                           progress={progress}
                           participants={challenge.participantCount || 0}

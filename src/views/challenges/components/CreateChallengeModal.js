@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import ConfirmDialog from './ConfirmDialog';
-import CoverImageField from './CoverImageField';
+import CoverImageField, { toStoredCoverPath } from './CoverImageField';
 import { PrimaryButton, GhostButton, fieldSx, CHALLENGE_ACCENT } from './ChallengeLayout';
 import {
   FREQUENCIES,
@@ -118,7 +118,7 @@ const CreateChallengeModal = ({ open, onClose, onSubmit, isSubmitting, savingTyp
     const payload = {
       name: form.name.trim(),
       description: form.description.trim() || undefined,
-      coverImage: form.coverImage.trim() || undefined,
+      coverImage: toStoredCoverPath(form.coverImage) || undefined,
       idTypeEpargne: form.idTypeEpargne,
       idDevise: form.idDevise,
       goalAmount: Number(form.goalAmount),

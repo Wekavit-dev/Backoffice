@@ -36,7 +36,7 @@ import ChallengesApi from 'api/challenges/challenges';
 import RankingPanel from './RankingPanel';
 import MissedPaymentsPanel from './MissedPaymentsPanel';
 import ConfirmDialog from './ConfirmDialog';
-import CoverImageField, { resolveChallengeCoverUrl } from './CoverImageField';
+import CoverImageField, { resolveChallengeCoverUrl, toStoredCoverPath } from './CoverImageField';
 import {
   EmptyState,
   StatusBadge,
@@ -95,7 +95,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
     setForm({
       name: challenge.name || '',
       description: challenge.description || '',
-      coverImage: challenge.coverImagePath || challenge.coverImage || '',
+      coverImage: toStoredCoverPath(challenge.coverImagePath || challenge.coverImage || ''),
       goalAmount: challenge.goalAmount ?? '',
       contributionAmount: challenge.contributionAmount ?? '',
       contributionFrequency: challenge.contributionFrequency || 'weekly',
@@ -189,7 +189,8 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        coverImage: form.coverImage.trim() || undefined,
+        // Toujours envoyer la cover (null pour revenir au défaut)
+        coverImage: toStoredCoverPath(form.coverImage) || null,
         goalAmount: Number(form.goalAmount),
         contributionAmount: Number(form.contributionAmount) || 0,
         contributionFrequency: form.contributionFrequency,
@@ -398,7 +399,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 520 }}>
       <DetailHeader>
-        {challenge.coverImage && (
+        {(challenge.hasCustomCover || challenge.coverImagePath) && (
           <Box
             mb={2}
             sx={{
@@ -411,7 +412,10 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
           >
             <Box
               component="img"
-              src={challenge.coverImageUrl || resolveChallengeCoverUrl(challenge.coverImagePath || challenge.coverImage)}
+              src={
+                challenge.coverImageUrl ||
+                resolveChallengeCoverUrl(challenge.coverImagePath || challenge.coverImage)
+              }
               alt={`Couverture — ${challenge.name}`}
               sx={{ display: 'block', width: '100%', maxHeight: 160, objectFit: 'cover' }}
             />
@@ -544,6 +548,8 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
                 value={form.coverImage}
                 onChange={(value) => handleFormChange('coverImage', value)}
                 token={token}
+                challengeId={challenge._id}
+                onChallengeUpdated={onUpdated}
                 disabled={challenge.status === 'completed'}
               />
             </Grid>

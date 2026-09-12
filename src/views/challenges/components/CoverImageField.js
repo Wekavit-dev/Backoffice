@@ -23,20 +23,50 @@ export function resolveChallengeCoverUrl(value) {
   return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
 }
 
-const CoverImageField = ({ value, onChange, token, disabled, sx }) => {
+/** Ne garder que les chemins custom /uploads/... (jamais l'image par défaut). */
+export function toStoredCoverPath(value) {
+  if (!value?.trim()) return '';
+  const raw = value.trim();
+  if (/\/assets\/tontine\.jpg/i.test(raw)) return '';
+
+  try {
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      const pathname = new URL(raw).pathname;
+      return pathname.includes('/uploads/') ? pathname : '';
+    }
+  } catch {
+    return '';
+  }
+
+  if (raw.includes('/uploads/challenge-covers/') || raw.startsWith('/uploads/')) {
+    return raw.startsWith('/') ? raw : `/${raw}`;
+  }
+
+  return '';
+}
+
+const CoverImageField = ({ value, onChange, token, disabled, sx, challengeId, onChallengeUpdated }) => {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [previewOverride, setPreviewOverride] = useState('');
 
+  const storedValue = toStoredCoverPath(value);
+
   useEffect(() => {
-    setPreviewOverride('');
     setImgError(false);
-  }, [value]);
+    // Ne pas effacer un override si la value parent vient juste d'être alignée sur le même upload
+    if (previewOverride) {
+      const overridePath = toStoredCoverPath(previewOverride);
+      if (overridePath && storedValue && overridePath === storedValue) {
+        setPreviewOverride('');
+      }
+    }
+  }, [storedValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const previewUrl = useMemo(
-    () => previewOverride || resolveChallengeCoverUrl(value),
-    [previewOverride, value]
+    () => previewOverride || resolveChallengeCoverUrl(storedValue),
+    [previewOverride, storedValue]
   );
   const showPreview = Boolean(previewUrl && !imgError);
 
@@ -62,17 +92,33 @@ const CoverImageField = ({ value, onChange, token, disabled, sx }) => {
     setImgError(false);
 
     try {
-      const res = await ChallengesApi.uploadCoverImage(file, token);
+      const res = await ChallengesApi.uploadCoverImage(file, token, { challengeId });
       if (!isApiSuccess(res)) {
         toast.error(res?.data?.error || 'Upload impossible', { position: 'top-right' });
         return;
       }
 
       const data = extractData(res);
-      const storedPath = data?.coverImage || '';
+      const storedPath = toStoredCoverPath(data?.coverImagePath || data?.coverImage || '');
+      if (!storedPath) {
+        toast.error('Upload OK mais chemin image manquant', { position: 'top-right' });
+        return;
+      }
+
       onChange(storedPath);
       setPreviewOverride(data?.coverImageUrl || resolveChallengeCoverUrl(storedPath));
-      toast.success('Image de couverture uploadée', { position: 'top-right' });
+
+      if (data?.challenge) {
+        onChallengeUpdated?.(data.challenge);
+        toast.success('Couverture enregistrée sur le défi', { position: 'top-right' });
+      } else {
+        toast.success(
+          challengeId
+            ? 'Image uploadée — enregistrez le défi pour confirmer'
+            : 'Image de couverture uploadée',
+          { position: 'top-right' }
+        );
+      }
     } catch (err) {
       toast.error(err?.data?.error || err?.message || 'Upload impossible', { position: 'top-right' });
     } finally {
@@ -180,7 +226,9 @@ const CoverImageField = ({ value, onChange, token, disabled, sx }) => {
       )}
 
       <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-        L&apos;image sera visible sur la fiche du défi dans l&apos;app mobile.
+        {challengeId
+          ? 'L’image est enregistrée dès l’upload sur ce défi.'
+          : 'Uploadez une image puis créez le défi pour la conserver.'}
       </Typography>
 
       <input
@@ -199,7 +247,9 @@ CoverImageField.propTypes = {
   onChange: PropTypes.func.isRequired,
   token: PropTypes.string,
   disabled: PropTypes.bool,
-  sx: PropTypes.object
+  sx: PropTypes.object,
+  challengeId: PropTypes.string,
+  onChallengeUpdated: PropTypes.func
 };
 
 export default CoverImageField;

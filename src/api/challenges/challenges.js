@@ -123,10 +123,13 @@ const updateRuleTemplate = async (slug, data, token) => {
     .catch(handleError);
 };
 
-const uploadCoverImage = async (file, token) => {
+const uploadCoverImage = async (file, token, { challengeId } = {}) => {
   const axiosInstanceWithToken = setupAxiosInterceptors(token);
   const formData = new FormData();
   formData.append('coverImage', file);
+  if (challengeId) {
+    formData.append('challengeId', challengeId);
+  }
   return axiosInstanceWithToken
     .post(`${CHALLENGE_BASE}/admin/challenges/upload-cover`, formData)
     .then(handleResponse)

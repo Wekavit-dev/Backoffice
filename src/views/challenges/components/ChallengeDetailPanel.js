@@ -36,7 +36,7 @@ import ChallengesApi from 'api/challenges/challenges';
 import RankingPanel from './RankingPanel';
 import MissedPaymentsPanel from './MissedPaymentsPanel';
 import ConfirmDialog from './ConfirmDialog';
-import CoverImageField from './CoverImageField';
+import CoverImageField, { resolveChallengeCoverUrl } from './CoverImageField';
 import {
   EmptyState,
   StatusBadge,
@@ -95,7 +95,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
     setForm({
       name: challenge.name || '',
       description: challenge.description || '',
-      coverImage: challenge.coverImage || '',
+      coverImage: challenge.coverImagePath || challenge.coverImage || '',
       goalAmount: challenge.goalAmount ?? '',
       contributionAmount: challenge.contributionAmount ?? '',
       contributionFrequency: challenge.contributionFrequency || 'weekly',
@@ -411,7 +411,7 @@ const ChallengeDetailPanel = ({ challenge, token, onUpdated }) => {
           >
             <Box
               component="img"
-              src={challenge.coverImage}
+              src={challenge.coverImageUrl || resolveChallengeCoverUrl(challenge.coverImagePath || challenge.coverImage)}
               alt={`Couverture — ${challenge.name}`}
               sx={{ display: 'block', width: '100%', maxHeight: 160, objectFit: 'cover' }}
             />

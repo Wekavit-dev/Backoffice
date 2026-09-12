@@ -283,7 +283,10 @@ const ChallengesPage = () => {
                           name={challenge.name}
                           subtitle={`${getGameModeLabel(challenge.gameMode)} · ${formatAmount(challenge.goalAmount, challenge.idDevise)}`}
                           meta={`${formatDate(challenge.startDate)} → ${formatDate(challenge.endDate)}`}
-                          coverImage={challenge.coverImage}
+                          coverImage={
+                            challenge.coverImageUrl ||
+                            challenge.coverImage
+                          }
                           progress={progress}
                           participants={challenge.participantCount || 0}
                           maxParticipants={challenge.maxParticipants}

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { LinearProgress, Skeleton } from '@mui/material';
+import { CHALLENGE_IP } from 'api/utils/address';
 import {
   PageToolbar,
   KpiCard,
@@ -35,6 +36,13 @@ export {
 /** Accent doré « défi / trophée » */
 export const CHALLENGE_ACCENT = '#d97706';
 export const CHALLENGE_ACCENT_SOFT = '#fff7ed';
+
+const resolveCoverSrc = (value) => {
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  const base = CHALLENGE_IP.replace(/\/$/, '');
+  return value.startsWith('/') ? `${base}${value}` : `${base}/${value}`;
+};
 
 export const fieldSx = {
   '& .MuiOutlinedInput-root': {
@@ -113,7 +121,7 @@ export const ChallengeListItem = ({
     <div className="flex items-start justify-between gap-3">
       {coverImage && (
         <img
-          src={coverImage}
+          src={resolveCoverSrc(coverImage)}
           alt=""
           className="h-12 w-12 shrink-0 rounded-xl border border-sss-border object-cover"
         />

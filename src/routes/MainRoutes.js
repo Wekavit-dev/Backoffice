@@ -41,6 +41,7 @@ const SssSettings = Loadable(lazy(() => import('views/sss/Settings')));
 // Challenges
 const ChallengesPage = Loadable(lazy(() => import('views/challenges')));
 const ChallengesRulesPage = Loadable(lazy(() => import('views/challenges/Rules')));
+const AdminTransactionsPage = Loadable(lazy(() => import('views/adminTransactions')));
 
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
@@ -139,6 +140,11 @@ const MainRoutes = {
       path: 'challenges/rules',
       element: <ChallengesRulesPage />,
       title: 'Comment fonctionnent les défis'
+    },
+    {
+      path: 'admin-transactions',
+      element: <AdminTransactionsPage />,
+      title: 'Transactions wallet'
     },
     {
       path: 'savings',

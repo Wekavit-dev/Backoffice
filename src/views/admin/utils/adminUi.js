@@ -29,7 +29,8 @@ export const ACCESS_PRESETS = [
       'sss-overdue',
       'sss-people',
       'users-overview',
-      'deposits-overview'
+      'deposits-overview',
+      'admin-transactions-list'
     ]
   },
   {
@@ -43,7 +44,8 @@ export const ACCESS_PRESETS = [
       'fees-top-payers',
       'fees-transactions',
       'fees-by-devise',
-      'accounting-light'
+      'accounting-light',
+      'admin-transactions-list'
     ]
   },
   {
@@ -69,7 +71,8 @@ export const ACCESS_PRESETS = [
       'users-overview',
       'deposits-overview',
       'agents-overview',
-      'addons-overview'
+      'addons-overview',
+      'admin-transactions-list'
     ]
   },
   {

@@ -249,6 +249,15 @@ export const StatCard = ({ title, value, hint, color = SSS_COLORS.brand, icon, o
 export const PersonAvatar = ({ user, size = 32, showStatus = false, status, onClick }) => {
   const statusColors = { online: '#4caf50', away: '#ff9800', busy: '#f44336', offline: '#9e9e9e' };
   const Comp = onClick ? 'button' : 'div';
+  const [imgError, setImgError] = useState(false);
+
+  const photoUrl =
+    user?.pictureUrl ||
+    user?.avatarUrl ||
+    (typeof user?.picture === 'string' ? user.picture : null) ||
+    null;
+
+  const showPhoto = Boolean(photoUrl) && !imgError;
 
   return (
     <div className="relative inline-block">
@@ -256,17 +265,27 @@ export const PersonAvatar = ({ user, size = 32, showStatus = false, status, onCl
         type={onClick ? 'button' : undefined}
         onClick={onClick}
         className={cn(
-          'inline-flex items-center justify-center rounded-full font-bold text-white transition-transform',
+          'inline-flex items-center justify-center overflow-hidden rounded-full font-bold text-white transition-transform',
           onClick && 'cursor-pointer hover:scale-110 border-0'
         )}
         style={{
           width: size,
           height: size,
           fontSize: size * 0.42,
-          backgroundColor: avatarColor(user)
+          backgroundColor: showPhoto ? 'transparent' : avatarColor(user),
+          padding: 0
         }}
       >
-        {initials(user)}
+        {showPhoto ? (
+          <img
+            src={photoUrl}
+            alt={displayName(user) || 'Avatar'}
+            onError={() => setImgError(true)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          initials(user)
+        )}
       </Comp>
       {showStatus && status && (
         <span

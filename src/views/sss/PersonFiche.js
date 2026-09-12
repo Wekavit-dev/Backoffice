@@ -63,6 +63,7 @@ import {
 import { AlertChips, EmptyState, PersonAvatar, StageChip, StatusChip, UrgencyChip } from './components/Chips';
 import HealthMeter from './components/HealthMeter';
 import { GhostButton, PrimaryButton, SSS_COLORS } from './components/SssLayout';
+import UserTransactionsPanel from 'views/adminTransactions/components/UserTransactionsPanel';
 
 const Row = ({ label, value, tone, icon }) => (
   <div className="flex items-start justify-between gap-3 border-b border-sss-border/80 py-2.5 last:border-0">
@@ -364,6 +365,7 @@ const PersonFichePage = () => {
   const tabs = [
     { label: 'Situation', icon: <PeopleAltIcon /> },
     { label: 'Épargne', icon: <WalletIcon /> },
+    { label: 'Ops wallet', icon: <SavingsIcon /> },
     { label: 'Notes', icon: <HistoryIcon /> },
     { label: 'Historique', icon: <TimelineIcon /> },
     { label: 'Modifier', icon: <SettingsIcon /> }
@@ -490,7 +492,7 @@ const PersonFichePage = () => {
                     Copier le message
                   </PrimaryButton>
                 )}
-                <GhostButton size="small" startIcon={<SettingsIcon />} onClick={() => setTab(4)}>
+                <GhostButton size="small" startIcon={<SettingsIcon />} onClick={() => setTab(5)}>
                   Modifier l’action
                 </GhostButton>
               </div>
@@ -537,7 +539,7 @@ const PersonFichePage = () => {
                 hint="Où en est cette personne dans le cycle"
                 icon={<TimelineIcon />}
                 action={
-                  <button type="button" className="text-sm font-bold text-sss-brand" onClick={() => setTab(4)}>
+                  <button type="button" className="text-sm font-bold text-sss-brand" onClick={() => setTab(5)}>
                     Modifier
                   </button>
                 }
@@ -614,8 +616,25 @@ const PersonFichePage = () => {
           </Grid>
         </TabPanel>
 
-        {/* Notes & actions */}
+        {/* Ops wallet (admin transactions via CHALLENGE_IP) */}
         <TabPanel value={tab} index={2}>
+          <SectionCard
+            title="Opérations wallet"
+            hint="Créer, valider ou rejeter des dépôts et retraits (CHALLENGE_IP)"
+            icon={<WalletIcon />}
+            tone={SSS_COLORS.info}
+          >
+            <UserTransactionsPanel
+              token={globalState?.key}
+              lockedUserId={id}
+              defaultPhone={identity.phone}
+              showUserColumn={false}
+            />
+          </SectionCard>
+        </TabPanel>
+
+        {/* Notes & actions */}
+        <TabPanel value={tab} index={3}>
           <Grid container spacing={2.5}>
             <Grid item xs={12} md={6}>
               <SectionCard title="Notes" hint="Capturer le contexte utile pour le prochain contact" icon={<AddIcon />}>
@@ -665,7 +684,7 @@ const PersonFichePage = () => {
         </TabPanel>
 
         {/* Timeline */}
-        <TabPanel value={tab} index={3}>
+        <TabPanel value={tab} index={4}>
           <SectionCard title="Historique d’accompagnement" hint="Événements système et actions admin" icon={<TimelineIcon />} tone={SSS_COLORS.info}>
             {(fiche.timeline || []).length === 0 ? (
               <p className="sss-muted m-0 py-8 text-center text-sm">Aucun événement encore.</p>
@@ -698,7 +717,7 @@ const PersonFichePage = () => {
         </TabPanel>
 
         {/* Modifier */}
-        <TabPanel value={tab} index={4}>
+        <TabPanel value={tab} index={5}>
           <Grid container spacing={2.5}>
             <Grid item xs={12} md={4}>
               <SectionCard title="Changer l’étape" icon={<FlagIcon />}>

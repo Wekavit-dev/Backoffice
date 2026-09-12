@@ -7,6 +7,7 @@ const ROUTE_RULES = [
   { test: /^\/wekavit\/sss\/?$/i, menuId: 'sss-home' },
   { test: /^\/wekavit\/challenges\/rules/i, menuId: 'challenges-rules' },
   { test: /^\/wekavit\/challenges/i, menuId: 'challenges-list' },
+  { test: /^\/wekavit\/admin-transactions/i, menuId: 'admin-transactions-list' },
   { test: /^\/wekavit\/dashboard\/default/i, menuId: 'default' },
   { test: /^\/wekavit\/savings/i, menuId: 'savings-overview' },
   { test: /^\/wekavit\/users/i, menuId: 'users-overview' },

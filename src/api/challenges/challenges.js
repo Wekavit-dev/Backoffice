@@ -128,9 +128,7 @@ const uploadCoverImage = async (file, token) => {
   const formData = new FormData();
   formData.append('coverImage', file);
   return axiosInstanceWithToken
-    .post(`${CHALLENGE_BASE}/admin/challenges/upload-cover`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    .post(`${CHALLENGE_BASE}/admin/challenges/upload-cover`, formData)
     .then(handleResponse)
     .catch(handleError);
 };
